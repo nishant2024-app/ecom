@@ -1,7 +1,6 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { invoiceKind, invoiceNumber, invoiceTotals, splitInclusive } from '../src/gst';
-import { assertBalanced, canCharge, postings, validateTopup } from '../src/ledger';
 import { allocateFefo, productionNeed } from '../src/fefo';
 import { priceLines } from '../src/pricing';
 
@@ -32,31 +31,6 @@ describe('GST', () => {
   });
   it('numbers invoices within 16 characters', () => {
     expect(invoiceNumber('2026-12-02', 123)).toBe('INV/26-27/000123');
-  });
-});
-
-describe('ledger', () => {
-  it('builds balanced postings', () => {
-    for (const g of [
-      postings.topup(50000),
-      postings.deliveryCharge(6000),
-      postings.refund(6000),
-      postings.promo(5000),
-      postings.adjustment(100, 'debit'),
-      postings.reversal(postings.deliveryCharge(6000)),
-    ]) {
-      expect(() => assertBalanced(g)).not.toThrow();
-    }
-    expect(postings.deliveryCharge(6000).customerDelta).toBe(-6000);
-  });
-  it('respects the overdraft limit', () => {
-    expect(canCharge(5000, 6000)).toBe(false);
-    expect(canCharge(5000, 6000, 1000)).toBe(true);
-  });
-  it('enforces top-up limits', () => {
-    expect(() => validateTopup(5000, 0)).toThrow();
-    expect(() => validateTopup(50000, 1_990_000)).toThrow();
-    expect(() => validateTopup(50000, 0)).not.toThrow();
   });
 });
 

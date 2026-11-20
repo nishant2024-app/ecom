@@ -5,10 +5,9 @@ BEGIN
   IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'app') THEN
     GRANT USAGE ON SCHEMA public TO app;
     GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO app;
-    -- Append-only tables: no UPDATE or DELETE for the app.
-    REVOKE UPDATE, DELETE ON wallet_ledger, stock_movements, delivery_events, order_events, audit_log FROM app;
-    -- webhook_events: rows are inserted once and only marked processed.
-    REVOKE DELETE ON webhook_events FROM app;
+    -- Append-only history tables: no UPDATE or DELETE for the app.
+    REVOKE UPDATE, DELETE ON stock_movements, order_events, audit_log FROM app;
+    REVOKE DELETE ON webhook_events, payments, refunds, orders, order_items FROM app;
     ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO app;
   END IF;
 END $$;
