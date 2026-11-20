@@ -1,0 +1,22 @@
+import { Suspense } from 'react';
+import { GoogleSignIn } from '@/components/GoogleSignIn';
+
+export const metadata = { title: 'Sign in' };
+
+export default function SignIn() {
+  return (
+    <div className="mx-auto grid max-w-[1200px] gap-10 px-4 py-16 md:grid-cols-12 md:px-6">
+      <div className="md:col-span-5">
+        <h1 className="font-display text-2xl md:text-[44px] md:leading-tight">Sign in to manage your milk card</h1>
+        <p className="mt-4 text-lg text-ink-2">
+          We use your Google account, so there&rsquo;s no password and no OTP to wait for. We only receive your name and email.
+        </p>
+      </div>
+      <div className="md:col-span-5 md:col-start-8 md:pt-4">
+        <Suspense>
+          <GoogleSignIn />
+        </Suspense>
+      </div>
+    </div>
+  );
+}

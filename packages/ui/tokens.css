@@ -1,0 +1,81 @@
+/*
+ * "Milk Card" design tokens. Single source of truth for colour, type, space, radius and motion.
+ * Spec: docs/08-design-system.md. Never hard-code colours in apps; use these tokens.
+ */
+:root {
+  color-scheme: light;
+  --paper: #f6f2e7;
+  --paper-2: #ece6d6;
+  --paper-3: #e2dac6;
+  --ink: #1b2340;
+  --ink-2: #5b6075;
+  --ink-3: #868a9a;
+  --rule: #d6cfbc;
+  --signal: #e3a21a; /* marigold: fill only, never text on paper */
+  --on-signal: #1b2340;
+  --tick: #2f7a4b;
+  --alert: #b93a2b;
+  --veg: #1e8e3e;
+
+  --font-display: 'Tiro Devanagari Hindi', 'Noto Serif', Georgia, serif;
+  --font-text: 'Mukta', 'Noto Sans', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+  --r-0: 0;
+  --r-1: 2px;
+  --r-2: 4px;
+
+  --dur-1: 120ms;
+  --dur-2: 200ms;
+  --dur-3: 320ms;
+  --ease: cubic-bezier(0.2, 0.7, 0.1, 1);
+  --ease-emph: cubic-bezier(0.3, 0, 0, 1);
+
+  --focus: 0 0 0 2px var(--paper), 0 0 0 4px var(--signal), 0 0 0 6px var(--ink);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --paper: #0f1424;
+    --paper-2: #171d31;
+    --paper-3: #20273e;
+    --ink: #ece8dc;
+    --ink-2: #a3a7b8;
+    --ink-3: #767b8f;
+    --rule: #2a3149;
+    --signal: #f0b53a;
+    --on-signal: #0f1424;
+    --tick: #5dbb83;
+    --alert: #e5634f;
+    --veg: #3dba5e;
+  }
+}
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --paper: #0f1424;
+  --paper-2: #171d31;
+  --paper-3: #20273e;
+  --ink: #ece8dc;
+  --ink-2: #a3a7b8;
+  --ink-3: #767b8f;
+  --rule: #2a3149;
+  --signal: #f0b53a;
+  --on-signal: #0f1424;
+  --tick: #5dbb83;
+  --alert: #e5634f;
+  --veg: #3dba5e;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-1: 0ms;
+    --dur-2: 0ms;
+    --dur-3: 0ms;
+  }
+}
+:root[data-lite='true'] {
+  --dur-1: 0ms;
+  --dur-2: 0ms;
+  --dur-3: 0ms;
+}
