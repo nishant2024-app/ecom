@@ -652,3 +652,33 @@ export const notifications = pgTable(
   },
   (t) => [index('notifications_customer_idx').on(t.customerId, t.createdAt)],
 );
+
+/** Verified reviews: only customers with a delivered order for the product can write one; staff approve before it shows. */
+export const productReviews = pgTable(
+  'product_reviews',
+  {
+    id: id(),
+    productId: text('product_id')
+      .notNull()
+      .references(() => products.id),
+    customerId: text('customer_id')
+      .notNull()
+      .references(() => customers.id),
+    orderId: text('order_id')
+      .notNull()
+      .references(() => orders.id),
+    rating: integer('rating').notNull(),
+    title: text('title').notNull().default(''),
+    body: text('body').notNull().default(''),
+    authorName: text('author_name').notNull(),
+    status: text('status').notNull().default('pending'),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    uniqueIndex('product_reviews_one_per_customer_uq').on(t.productId, t.customerId),
+    index('product_reviews_product_idx').on(t.productId, t.status, t.createdAt),
+    check('product_reviews_rating_ck', sql`${t.rating} between 1 and 5`),
+    check('product_reviews_status_ck', sql`${t.status} in ('pending','approved','rejected')`),
+  ],
+);

@@ -5,10 +5,11 @@ import { notFound } from 'next/navigation';
 import { ProductBuy } from '@/components/ProductBuy';
 import { ProductCard } from '@/components/ProductCard';
 import { Reveal } from '@/components/Reveal';
+import { Reviews } from '@/components/Reviews';
 import { apiGet } from '@/lib/api-server';
 import { shelfLife } from '@/lib/format';
 import { SITE_NAME, SITE_URL } from '@/lib/site';
-import type { ProductDetail } from '@/lib/types';
+import type { ProductDetail, ReviewPage } from '@/lib/types';
 
 export const revalidate = 30;
 
@@ -30,7 +31,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const product = await getProduct(slug);
+  const [product, reviews] = await Promise.all([getProduct(slug), apiGet<ReviewPage>(`/v1/store/products/${slug}/reviews`, { revalidate: 60 })]);
   if (!product) notFound();
   const a = product.attributes;
   const first = product.variants[0];
@@ -55,6 +56,12 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         brand: { '@type': 'Brand', name: SITE_NAME },
         category: product.category.name,
         ...(product.gallery.length ? { image: product.gallery.map((g) => g.url) } : {}),
+        ...(reviews && reviews.summary.count > 0
+          ? {
+              aggregateRating: { '@type': 'AggregateRating', ratingValue: reviews.summary.average, reviewCount: reviews.summary.count, bestRating: 5, worstRating: 1 },
+              review: reviews.data.slice(0, 5).map((r) => ({ '@type': 'Review', reviewRating: { '@type': 'Rating', ratingValue: r.rating, bestRating: 5 }, author: { '@type': 'Person', name: r.author }, datePublished: r.createdAt.slice(0, 10), ...(r.body ? { reviewBody: r.body } : {}) })),
+            }
+          : {}),
         offers: product.variants.map((v) => ({
           '@type': 'Offer',
           sku: v.sku,
@@ -89,6 +96,13 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       <ProductBuy product={product}>
         <p className="text-[13px] font-semibold text-forest">{product.category.name}</p>
         <h1 className="mt-1 text-[28px] font-extrabold leading-tight tracking-[-0.03em] md:text-[36px]">{product.name}</h1>
+        {product.rating && (
+          <a href="#reviews" className="mt-2 inline-flex items-center gap-1.5 text-[14px] hover:underline">
+            <span className="text-[#e3a008]" aria-hidden>★</span>
+            <span className="font-semibold">{product.rating.average.toFixed(1)}</span>
+            <span className="text-ink-2">({product.rating.count} review{product.rating.count === 1 ? '' : 's'})</span>
+          </a>
+        )}
         <p className="mt-2 flex items-center gap-2 text-[16px] text-ink-2">
           {product.isVeg && <VegMark />}
           {product.tagline}
@@ -140,6 +154,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           </section>
         </Reveal>
       </div>
+
+      <Reviews slug={product.slug} initial={reviews} />
 
       {product.related.length > 0 && (
         <section className="mt-14">

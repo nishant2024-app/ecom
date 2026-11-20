@@ -25,6 +25,8 @@ Staff only (`client: "admin"` sign-in). Each endpoint requires the permission sh
 | PATCH / DELETE | `/v1/admin/media/{id}` | `catalog.write` | Edit alt text `{alt}` / delete a product photo (files removed from storage) |
 | GET / POST | `/v1/admin/site-media` | `catalog.read` / `catalog.write` | Storefront image library / upload (same rules as product photos) |
 | DELETE | `/v1/admin/site-media/{id}` | `catalog.write` | Delete; 409 while the image is used on the storefront |
+| GET | `/v1/admin/reviews?status=pending\|approved\|rejected` | `catalog.read` | Reviews with product, customer email and order number, plus counts per status |
+| PATCH | `/v1/admin/reviews/{id}` | `catalog.write` | `{status: approved\|rejected}`; audited |
 | GET / PUT | `/v1/admin/storefront` | `catalog.read` / `catalog.write` | Home page copy and images: announcement, hero, story, promises, SEO title and description. Image ids must come from the site-media library |
 | GET | `/v1/admin/inventory` | `catalog.read` | Per size: on hand, reserved, available, reorder level, next expiry, batch count |
 | GET | `/v1/admin/batches?variantId=` | `catalog.read` | Batches (first to expire first) and recent stock movements |

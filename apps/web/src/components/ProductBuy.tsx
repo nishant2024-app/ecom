@@ -6,7 +6,8 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { api } from '@/lib/api-client';
 import { useCart } from '@/lib/cart';
-import { etaText, shelfLife } from '@/lib/format';
+import { etaText, longDate, monthYear, shelfLife, unitPriceText } from '@/lib/format';
+import Link from 'next/link';
 import type { ProductDetail, ShippingInfo } from '@/lib/types';
 
 interface Estimate {
@@ -64,7 +65,18 @@ export function ProductBuy({ product, children }: { product: ProductDetail; chil
             </>
           )}
         </div>
-        <p className="mt-1 text-sm text-ink-2">Inclusive of GST</p>
+        <p className="mt-1 text-sm text-ink-2">
+          Inclusive of GST{v.unitPrice && <> · <span className="num">{unitPriceText(v.unitPrice)}</span></>}
+        </p>
+        {v.nextBatch && (
+          <div className="mt-4 flex items-start gap-3 rounded-4 border border-forest/25 bg-meadow p-3.5">
+            <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-pill bg-forest text-[15px] text-on-forest" aria-hidden>✓</span>
+            <p className="text-[14px] leading-snug">
+              <span className="font-bold">Fresh batch:</span> made on <span className="num font-semibold">{longDate(v.nextBatch.manufacturedOn)}</span>, best before <span className="num font-semibold">{monthYear(v.nextBatch.bestBefore)}</span>.
+              <span className="block text-ink-2">We ship the oldest safe batch first and print its code on the pack. <Link href="/verify" className="font-semibold text-forest underline underline-offset-2">Verify a pack</Link></span>
+            </p>
+          </div>
+        )}
 
         <fieldset className="mt-6">
           <legend className="text-[14px] font-bold">Choose size</legend>
@@ -148,6 +160,19 @@ export function ProductBuy({ product, children }: { product: ProductDetail; chil
           <dt className="font-semibold text-ink-3">Pay</dt>
           <dd>UPI, cards, net banking through Cashfree</dd>
         </dl>
+      </div>
+
+      {/* Mobile: keep price and the main action in reach while reading the page. */}
+      <div className="fixed inset-x-0 bottom-[calc(57px+env(safe-area-inset-bottom))] z-30 border-t border-rule bg-paper/95 px-4 py-2.5 backdrop-blur md:hidden">
+        <div className="flex items-center gap-3">
+          <div className="min-w-0 leading-tight">
+            <p className="num text-[17px] font-bold">₹{((v.price.amount * qty) / 100).toLocaleString('en-IN')}</p>
+            <p className="truncate text-[12px] text-ink-2">{v.packSize}{qty > 1 ? ` × ${qty}` : ''}</p>
+          </div>
+          <button type="button" onClick={addToCart} disabled={!v.inStock} className="ml-auto h-11 flex-1 rounded-pill bg-forest font-bold text-on-forest disabled:bg-ink-3">
+            {!v.inStock ? 'Out of stock' : added ? 'Added ✓' : 'Add to cart'}
+          </button>
+        </div>
       </div>
     </div>
   );

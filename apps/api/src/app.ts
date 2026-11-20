@@ -20,6 +20,8 @@ import adminCatalogRoutes from './routes/admin/catalog';
 import adminContentRoutes from './routes/admin/content';
 import adminMediaRoutes from './routes/admin/media';
 import contentRoutes from './routes/store/content';
+import reviewRoutes from './routes/store/reviews';
+import adminReviewRoutes from './routes/admin/reviews';
 import { MAX_UPLOAD_BYTES } from './services/images';
 import { createStorage } from './services/storage';
 import { mkdirSync } from 'node:fs';
@@ -132,6 +134,7 @@ export async function buildApp(deps: AppDeps, opts: { logger?: boolean | object 
       await v1.register(authRoutes, { prefix: '/auth' });
       await v1.register(catalogRoutes, { prefix: '/store' });
       await v1.register(contentRoutes, { prefix: '/store' });
+      await v1.register(reviewRoutes, { prefix: '/store' });
       await v1.register(meRoutes, { prefix: '/store' });
       await v1.register(checkoutRoutes, { prefix: '/store' });
       await v1.register(orderRoutes, { prefix: '/store' });
@@ -143,6 +146,7 @@ export async function buildApp(deps: AppDeps, opts: { logger?: boolean | object 
       await v1.register(adminCatalogRoutes, { prefix: '/admin' });
       await v1.register(adminMediaRoutes, { prefix: '/admin' });
       await v1.register(adminContentRoutes, { prefix: '/admin' });
+      await v1.register(adminReviewRoutes, { prefix: '/admin' });
       await v1.register(adminInventoryRoutes, { prefix: '/admin' });
       await v1.register(adminPeopleRoutes, { prefix: '/admin' });
     },

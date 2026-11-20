@@ -1,4 +1,4 @@
-import { todayIST } from '@dairy/core';
+import { todayIST, unitPrice } from '@dairy/core';
 import { schema as s } from '@dairy/db';
 import type { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { Type } from '@sinclair/typebox';
@@ -7,7 +7,8 @@ import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { notFound } from '../../lib/errors';
 import { ErrorResponses, Money, Nullable, PageInfo, decodeCursor, encodeCursor, money } from '../../lib/schemas';
 import { imageOut } from '../../services/images';
-import { availability } from '../../services/stock';
+import { ratings } from '../../services/reviews';
+import { availability, nextBatches } from '../../services/stock';
 
 export const lang = (req: FastifyRequest): 'en' | 'hi' =>
   String(req.headers['accept-language'] ?? '').toLowerCase().startsWith('hi') ? 'hi' : 'en';
@@ -31,6 +32,9 @@ const Variant = Type.Object({
   inStock: Type.Boolean(),
   lowStock: Type.Boolean(),
   maxPerOrder: Type.Integer(),
+  unitPrice: Nullable(Type.Object({ amount: Money, per: Type.String() })),
+  /** The batch this size ships from next: proof of freshness before buying. */
+  nextBatch: Nullable(Type.Object({ manufacturedOn: Type.String(), bestBefore: Type.String() })),
 });
 const ProductSummary = Type.Object({
   id: Type.String(),
@@ -44,6 +48,7 @@ const ProductSummary = Type.Object({
   featured: Type.Boolean(),
   attributes: Type.Record(Type.String(), Type.Unknown()),
   fromPrice: Money,
+  rating: Nullable(Type.Object({ average: Type.Number(), count: Type.Integer() })),
   variants: Type.Array(Variant),
 });
 const ProductDetail = Type.Intersect([
@@ -92,7 +97,8 @@ export default async function catalogRoutes(fastify: FastifyInstance) {
         .orderBy(asc(s.productVariants.sort)),
       db.select().from(s.productMedia).where(inArray(s.productMedia.productId, ids)).orderBy(asc(s.productMedia.sort)),
     ]);
-    const stock = await availability(db, variants.map((v) => v.id), todayIST(app.deps.now()));
+    const today = todayIST(app.deps.now());
+    const [stock, fresh, stars] = await Promise.all([availability(db, variants.map((v) => v.id), today), nextBatches(db, variants.map((v) => v.id), today), ratings(db, ids)]);
     return rows.map(({ p, c }) => {
       const vs = variants.filter((v) => v.productId === p.id);
       const gallery = media
@@ -117,6 +123,7 @@ export default async function catalogRoutes(fastify: FastifyInstance) {
           featured: p.featured,
           attributes: p.attributes as Record<string, unknown>,
           fromPrice: money(vs.length ? Math.min(...vs.map((v) => v.pricePaise)) : 0),
+          rating: stars.get(p.id) ?? null,
           variants: vs.map((v) => {
             const available = stock.get(v.id) ?? 0;
             return {
@@ -130,6 +137,14 @@ export default async function catalogRoutes(fastify: FastifyInstance) {
               inStock: available > 0,
               lowStock: available > 0 && available <= v.lowStockThreshold,
               maxPerOrder: Math.max(0, Math.min(v.maxPerOrder, available)),
+              unitPrice: (() => {
+                const u = unitPrice(v.pricePaise, v.packSize);
+                return u ? { amount: money(u.paise), per: u.per } : null;
+              })(),
+              nextBatch: (() => {
+                const b = fresh.get(v.id);
+                return b ? { manufacturedOn: b.manufacturedOn, bestBefore: b.expiresOn } : null;
+              })(),
             };
           }),
         },

@@ -11,6 +11,7 @@ Online shop for shelf-stable dairy products (ghee, milk powder, UHT and flavoure
 | API guide · OpenAPI (generated) · rendered reference | [docs/api/README.md](docs/api/README.md) · [openapi.json](docs/api/openapi.json) · [reference.html](docs/api/reference.html) |
 | Design system | [docs/08-design-system.md](docs/08-design-system.md) |
 | **Launching: keys to provide and setup steps** | [docs/14-go-live.md](docs/14-go-live.md) |
+| Competitor research (Amul and others) and feature decisions | [docs/15-competitor-research.md](docs/15-competitor-research.md) |
 
 ## Repository
 
@@ -48,8 +49,8 @@ pnpm --filter @dairy/video studio   # Remotion studio; `render` writes the reel
 Tests (need a `dairy_test` database; see `apps/api/vitest.config.ts`):
 
 ```bash
-pnpm --filter @dairy/core test      # 34 unit and property tests
-pnpm --filter @dairy/api test       # 35 integration tests on real Postgres: Cashfree webhooks, photo uploads, admin tools
+pnpm --filter @dairy/core test      # 44 unit and property tests
+pnpm --filter @dairy/api test       # 38 integration tests on real Postgres: Cashfree webhooks, photos, reviews, batch verification
 pnpm --filter @dairy/ui contrast    # WCAG contrast for every token pair, light and dark
 ```
 

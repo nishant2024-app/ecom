@@ -7,3 +7,4 @@ export * from './pricing';
 export * from './phone';
 export * from './shipping';
 export * from './orders';
+export * from './quantity';

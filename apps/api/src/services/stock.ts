@@ -17,6 +17,24 @@ export async function availability(db: DbOrTx, variantIds: string[], today: Busi
   return new Map(rows.map((r) => [r.variantId, Number(r.available)]));
 }
 
+/** The batch each variant will ship from next (first to expire among sellable batches), for showing freshness. */
+export async function nextBatches(db: DbOrTx, variantIds: string[], today: BusinessDate): Promise<Map<string, { manufacturedOn: string; expiresOn: string }>> {
+  if (variantIds.length === 0) return new Map();
+  const rows = await db
+    .selectDistinctOn([s.batches.variantId], { variantId: s.batches.variantId, manufacturedOn: s.batches.manufacturedOn, expiresOn: s.batches.expiresOn })
+    .from(s.batches)
+    .where(
+      and(
+        inArray(s.batches.variantId, [...new Set(variantIds)]),
+        eq(s.batches.status, 'active'),
+        gte(s.batches.expiresOn, addDays(today, MIN_SHELF_DAYS)),
+        sql`${s.batches.onHand} > ${s.batches.reserved}`,
+      ),
+    )
+    .orderBy(s.batches.variantId, asc(s.batches.expiresOn), asc(s.batches.id));
+  return new Map(rows.map((r) => [r.variantId, { manufacturedOn: r.manufacturedOn, expiresOn: r.expiresOn }]));
+}
+
 /**
  * Reserve stock for order items, first-expiry-first-out, with row locks so two checkouts
  * can't sell the same unit. Throws OUT_OF_STOCK if any item can't be fully reserved.

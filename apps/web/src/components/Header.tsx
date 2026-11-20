@@ -90,7 +90,7 @@ function BottomNav({ count, subtotal, onCart }: { count: number; subtotal: numbe
   if (pathname.startsWith('/checkout')) return null;
   return (
     <div className="fixed inset-x-0 bottom-0 z-40 md:hidden">
-      {count > 0 && (
+      {count > 0 && !pathname.startsWith('/p/') && (
         <motion.button initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} type="button" onClick={onCart} className="mx-3 mb-2 flex w-[calc(100%-24px)] items-center justify-between rounded-4 bg-forest px-4 py-3 text-on-forest shadow-float">
           <span className="text-left leading-tight">
             <span className="num block text-[13px] opacity-90">{count} item{count === 1 ? '' : 's'}</span>

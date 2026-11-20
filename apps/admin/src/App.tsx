@@ -6,6 +6,7 @@ import { OrderDetailPage, OrdersPage } from './pages/Orders';
 import { CustomerDetailPage, CustomersPage, SettingsPage } from './pages/People';
 import { CategoriesPage } from './pages/Categories';
 import { ProductsPage } from './pages/Products';
+import { ReviewsPage } from './pages/Reviews';
 import { StorefrontPage } from './pages/Storefront';
 import { SignIn } from './pages/SignIn';
 
@@ -23,6 +24,7 @@ const NAV = [
   { id: 'products', label: 'Products', key: 'p', permission: 'catalog.read' },
   { id: 'categories', label: 'Categories', key: 'k', permission: 'catalog.read' },
   { id: 'inventory', label: 'Inventory', key: 'i', permission: 'catalog.read' },
+  { id: 'reviews', label: 'Reviews', key: 'r', permission: 'catalog.read' },
   { id: 'storefront', label: 'Storefront', key: 'f', permission: 'catalog.read' },
   { id: 'customers', label: 'Customers', key: 'c', permission: 'customers.read' },
   { id: 'settings', label: 'Settings', key: 's', permission: 'catalog.read' },
@@ -114,6 +116,7 @@ export function App() {
         {section === 'orders' && (route.id ? <OrderDetailPage id={route.id} permissions={perms} /> : <OrdersPage key={route.params.get('status') ?? ''} status={route.params.get('status') ?? ''} permissions={perms} />)}
         {section === 'products' && <ProductsPage permissions={perms} />}
         {section === 'categories' && <CategoriesPage permissions={perms} />}
+        {section === 'reviews' && <ReviewsPage permissions={perms} />}
         {section === 'storefront' && <StorefrontPage permissions={perms} />}
         {section === 'inventory' && <InventoryPage permissions={perms} />}
         {section === 'customers' && (route.id ? <CustomerDetailPage id={route.id} /> : <CustomersPage />)}

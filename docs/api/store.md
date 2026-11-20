@@ -7,6 +7,9 @@ Customer-facing endpoints for the storefront and the future Android app. Convent
 | GET | `/v1/store/categories` | Public | Categories with product count and pack visuals |
 | GET | `/v1/store/products` | Public | List/search; each product has `image` (main photo with `srcset`, or `null` → draw the pack) (`category`, `q`, `featured`, `sort=price_asc|price_desc`, cursor) |
 | GET | `/v1/store/products/{slug}` | Public | Detail with sizes, stock flags, photo `gallery`, nutrition, FSSAI/HSN, related products |
+| GET | `/v1/store/products/{slug}/reviews` | Public | Approved reviews with average, count and 1–5 breakdown (cursor) |
+| GET / PUT | `/v1/store/products/{slug}/reviews/mine` | Customer | Whether I can review (needs a delivered order with this product) / write or edit my review `{rating, title?, body?}`. New and edited reviews wait for staff approval |
+| GET | `/v1/store/verify/{code}` | Public · 20/min | Check a batch code printed on a pack: product, made-on and best-before dates, `expired`; `404 BATCH_NOT_FOUND` if unknown |
 | GET | `/v1/store/content` | Public | Home page copy and images edited in Admin → Storefront (announcement, hero, story, promises, SEO) |
 | GET | `/v1/store/shipping/estimate?pincode=` | Public | Zone, fee, free-shipping threshold, delivery dates |
 | POST | `/v1/store/checkout/quote` | Public | Price a cart `{lines, pincode?}` with live prices, stock problems and shipping |
@@ -68,3 +71,12 @@ Errors: `NOT_SERVICEABLE`, `OUT_OF_STOCK` (detail names the product and how many
 ## Development-only
 
 With the mock provider and `AUTH_TEST_MODE=true` (never in production): `POST /v1/dev/sign-in {email}` signs in a test customer; `GET /v1/dev/payments/{id}` and `POST /v1/dev/payments/{id}/simulate {outcome}` complete a mock payment.
+
+## Trust fields on products
+
+Every variant in product responses also has:
+
+- `unitPrice`: `{amount, per: "100 ml" | "100 g"}`, worked out from the pack size label (`null` if the label has no quantity).
+- `nextBatch`: `{manufacturedOn, bestBefore}` for the batch this size will ship from next (first to expire among sellable batches, at least 7 days left), or `null` when out of stock.
+
+Products have `rating: {average, count}` from approved reviews, or `null` when there are none. Clients must not show stars when it is `null`.

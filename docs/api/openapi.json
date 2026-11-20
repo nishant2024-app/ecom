@@ -949,6 +949,7 @@
                           "featured",
                           "attributes",
                           "fromPrice",
+                          "rating",
                           "variants"
                         ],
                         "properties": {
@@ -1060,6 +1061,28 @@
                           "fromPrice": {
                             "$ref": "#/components/schemas/def-0"
                           },
+                          "rating": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "required": [
+                                  "average",
+                                  "count"
+                                ],
+                                "properties": {
+                                  "average": {
+                                    "type": "number"
+                                  },
+                                  "count": {
+                                    "type": "integer"
+                                  }
+                                }
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
                           "variants": {
                             "type": "array",
                             "items": {
@@ -1074,7 +1097,9 @@
                                 "shelfLifeDays",
                                 "inStock",
                                 "lowStock",
-                                "maxPerOrder"
+                                "maxPerOrder",
+                                "unitPrice",
+                                "nextBatch"
                               ],
                               "properties": {
                                 "id": {
@@ -1106,6 +1131,50 @@
                                 },
                                 "maxPerOrder": {
                                   "type": "integer"
+                                },
+                                "unitPrice": {
+                                  "anyOf": [
+                                    {
+                                      "type": "object",
+                                      "required": [
+                                        "amount",
+                                        "per"
+                                      ],
+                                      "properties": {
+                                        "amount": {
+                                          "$ref": "#/components/schemas/def-0"
+                                        },
+                                        "per": {
+                                          "type": "string"
+                                        }
+                                      }
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "nextBatch": {
+                                  "anyOf": [
+                                    {
+                                      "type": "object",
+                                      "required": [
+                                        "manufacturedOn",
+                                        "bestBefore"
+                                      ],
+                                      "properties": {
+                                        "manufacturedOn": {
+                                          "type": "string"
+                                        },
+                                        "bestBefore": {
+                                          "type": "string"
+                                        }
+                                      }
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
                                 }
                               }
                             }
@@ -1182,6 +1251,7 @@
                         "featured",
                         "attributes",
                         "fromPrice",
+                        "rating",
                         "variants"
                       ],
                       "properties": {
@@ -1293,6 +1363,28 @@
                         "fromPrice": {
                           "$ref": "#/components/schemas/def-0"
                         },
+                        "rating": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "required": [
+                                "average",
+                                "count"
+                              ],
+                              "properties": {
+                                "average": {
+                                  "type": "number"
+                                },
+                                "count": {
+                                  "type": "integer"
+                                }
+                              }
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
                         "variants": {
                           "type": "array",
                           "items": {
@@ -1307,7 +1399,9 @@
                               "shelfLifeDays",
                               "inStock",
                               "lowStock",
-                              "maxPerOrder"
+                              "maxPerOrder",
+                              "unitPrice",
+                              "nextBatch"
                             ],
                             "properties": {
                               "id": {
@@ -1339,6 +1433,50 @@
                               },
                               "maxPerOrder": {
                                 "type": "integer"
+                              },
+                              "unitPrice": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "required": [
+                                      "amount",
+                                      "per"
+                                    ],
+                                    "properties": {
+                                      "amount": {
+                                        "$ref": "#/components/schemas/def-0"
+                                      },
+                                      "per": {
+                                        "type": "string"
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "nextBatch": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "required": [
+                                      "manufacturedOn",
+                                      "bestBefore"
+                                    ],
+                                    "properties": {
+                                      "manufacturedOn": {
+                                        "type": "string"
+                                      },
+                                      "bestBefore": {
+                                        "type": "string"
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
                               }
                             }
                           }
@@ -1455,6 +1593,7 @@
                               "featured",
                               "attributes",
                               "fromPrice",
+                              "rating",
                               "variants"
                             ],
                             "properties": {
@@ -1566,6 +1705,28 @@
                               "fromPrice": {
                                 "$ref": "#/components/schemas/def-0"
                               },
+                              "rating": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "required": [
+                                      "average",
+                                      "count"
+                                    ],
+                                    "properties": {
+                                      "average": {
+                                        "type": "number"
+                                      },
+                                      "count": {
+                                        "type": "integer"
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
                               "variants": {
                                 "type": "array",
                                 "items": {
@@ -1580,7 +1741,9 @@
                                     "shelfLifeDays",
                                     "inStock",
                                     "lowStock",
-                                    "maxPerOrder"
+                                    "maxPerOrder",
+                                    "unitPrice",
+                                    "nextBatch"
                                   ],
                                   "properties": {
                                     "id": {
@@ -1612,6 +1775,50 @@
                                     },
                                     "maxPerOrder": {
                                       "type": "integer"
+                                    },
+                                    "unitPrice": {
+                                      "anyOf": [
+                                        {
+                                          "type": "object",
+                                          "required": [
+                                            "amount",
+                                            "per"
+                                          ],
+                                          "properties": {
+                                            "amount": {
+                                              "$ref": "#/components/schemas/def-0"
+                                            },
+                                            "per": {
+                                              "type": "string"
+                                            }
+                                          }
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ]
+                                    },
+                                    "nextBatch": {
+                                      "anyOf": [
+                                        {
+                                          "type": "object",
+                                          "required": [
+                                            "manufacturedOn",
+                                            "bestBefore"
+                                          ],
+                                          "properties": {
+                                            "manufacturedOn": {
+                                              "type": "string"
+                                            },
+                                            "bestBefore": {
+                                              "type": "string"
+                                            }
+                                          }
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ]
                                     }
                                   }
                                 }
@@ -1967,6 +2174,600 @@
                       }
                     }
                   ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/store/products/{slug}/reviews": {
+      "get": {
+        "summary": "Approved reviews with rating breakdown (every review is from a delivered order)",
+        "tags": [
+          "Catalog"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false
+          },
+          {
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 10,
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false
+          },
+          {
+            "schema": {
+              "maxLength": 80,
+              "type": "string"
+            },
+            "in": "path",
+            "name": "slug",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "summary",
+                    "data",
+                    "page"
+                  ],
+                  "properties": {
+                    "summary": {
+                      "type": "object",
+                      "required": [
+                        "average",
+                        "count",
+                        "breakdown"
+                      ],
+                      "properties": {
+                        "average": {
+                          "type": "number"
+                        },
+                        "count": {
+                          "type": "integer"
+                        },
+                        "breakdown": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "rating",
+                          "title",
+                          "body",
+                          "author",
+                          "verified",
+                          "createdAt"
+                        ],
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "rating": {
+                            "type": "integer"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "body": {
+                            "type": "string"
+                          },
+                          "author": {
+                            "type": "string"
+                          },
+                          "verified": {
+                            "type": "boolean"
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "page": {
+                      "type": "object",
+                      "required": [
+                        "nextCursor",
+                        "hasMore"
+                      ],
+                      "properties": {
+                        "nextCursor": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "hasMore": {
+                          "type": "boolean"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/store/products/{slug}/reviews/mine": {
+      "get": {
+        "summary": "Whether I can review this product (needs a delivered order) and my existing review",
+        "tags": [
+          "Catalog"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "maxLength": 80,
+              "type": "string"
+            },
+            "in": "path",
+            "name": "slug",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "eligible",
+                    "review"
+                  ],
+                  "properties": {
+                    "eligible": {
+                      "type": "boolean"
+                    },
+                    "review": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "required": [
+                            "rating",
+                            "title",
+                            "body",
+                            "status"
+                          ],
+                          "properties": {
+                            "rating": {
+                              "type": "integer"
+                            },
+                            "title": {
+                              "type": "string"
+                            },
+                            "body": {
+                              "type": "string"
+                            },
+                            "status": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Write or edit my review. Only after a delivered order; shows after staff approve it",
+        "tags": [
+          "Catalog"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                  "rating"
+                ],
+                "properties": {
+                  "rating": {
+                    "minimum": 1,
+                    "maximum": 5,
+                    "type": "integer"
+                  },
+                  "title": {
+                    "maxLength": 80,
+                    "type": "string"
+                  },
+                  "body": {
+                    "maxLength": 2000,
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "maxLength": 80,
+              "type": "string"
+            },
+            "in": "path",
+            "name": "slug",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "status"
+                  ],
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/store/verify/{code}": {
+      "get": {
+        "summary": "Check a batch code printed on a pack: genuine or not, with its dates",
+        "tags": [
+          "Catalog"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "minLength": 3,
+              "maxLength": 40,
+              "type": "string"
+            },
+            "in": "path",
+            "name": "code",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "genuine",
+                    "code",
+                    "product",
+                    "manufacturedOn",
+                    "bestBefore",
+                    "expired"
+                  ],
+                  "properties": {
+                    "genuine": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "code": {
+                      "type": "string"
+                    },
+                    "product": {
+                      "type": "object",
+                      "required": [
+                        "name",
+                        "slug",
+                        "packSize"
+                      ],
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "slug": {
+                          "type": "string"
+                        },
+                        "packSize": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "manufacturedOn": {
+                      "type": "string"
+                    },
+                    "bestBefore": {
+                      "type": "string"
+                    },
+                    "expired": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
                 }
               }
             }
@@ -6317,6 +7118,111 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/v1/admin/reviews": {
+      "get": {
+        "summary": "Customer reviews to moderate",
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "pending"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "approved"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "rejected"
+                  ]
+                }
+              ]
+            },
+            "in": "query",
+            "name": "status",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/v1/admin/reviews/{reviewId}": {
+      "patch": {
+        "summary": "Approve or reject a review",
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                  "status"
+                ],
+                "properties": {
+                  "status": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "pending"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "approved"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "rejected"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "minLength": 4,
+              "maxLength": 40,
+              "type": "string"
+            },
+            "in": "path",
+            "name": "reviewId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
           }
         }
       }

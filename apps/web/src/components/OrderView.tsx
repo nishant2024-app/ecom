@@ -160,6 +160,11 @@ export function OrderView({ id }: { id: string }) {
                   <p className="text-sm text-ink-2">
                     {i.packSize} × <span className="num">{i.quantity}</span>
                   </p>
+                  {order.status === 'delivered' && (
+                    <Link href={`/p/${i.slug}#reviews`} className="mt-1 inline-flex items-center gap-1 text-[13px] font-semibold text-forest hover:underline">
+                      <span className="text-[#e3a008]" aria-hidden>★</span> Rate this product
+                    </Link>
+                  )}
                 </div>
                 <Money paise={i.total.amount} />
               </li>

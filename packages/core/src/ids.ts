@@ -18,6 +18,7 @@ export const ID_PREFIXES = {
   product: 'prd',
   variant: 'var',
   media: 'med',
+  review: 'rvw',
   zone: 'zon',
   slot: 'slt',
   holiday: 'hol',

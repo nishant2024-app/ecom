@@ -156,7 +156,9 @@ Clients must branch on `code`, never on `title` or `detail` (those are human tex
 | 409 | `IDEMPOTENCY_KEY_REUSED` | Same key, different body |
 | 409 | `IDEMPOTENCY_IN_PROGRESS` | Same key, first request still running |
 | 422 | `NOT_SERVICEABLE` | We don't ship to this pincode |
-| 422 | `OUT_OF_STOCK` | Not enough sellable stock (detail names the product and how many are left) |
+| 422 | `REVIEW_NOT_ALLOWED` | 403 | Reviews need a delivered order containing the product |
+| `BATCH_NOT_FOUND` | 404 | Batch code not recognised on the verify page |
+| `OUT_OF_STOCK` | Not enough sellable stock (detail names the product and how many are left) |
 | 422 | `PRODUCT_UNAVAILABLE` | Variant not sold in this zone, or archived |
 | 426 | `APP_VERSION_UNSUPPORTED` | Client older than the minimum version → force update |
 | 429 | `RATE_LIMITED` | Too many requests; see `Retry-After` |

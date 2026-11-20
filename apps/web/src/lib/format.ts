@@ -21,3 +21,14 @@ export const STATUS_LABEL: Record<string, string> = {
   cancelled: 'Cancelled',
   refunded: 'Refunded',
 };
+
+export const rupeesShort = (paise: number) => `₹${(paise / 100).toLocaleString('en-IN', { maximumFractionDigits: paise % 100 ? 2 : 0 })}`;
+
+/** "₹230 / 100 ml" */
+export const unitPriceText = (u: { amount: { amount: number }; per: string } | null) => (u ? `${rupeesShort(u.amount.amount)} / ${u.per}` : '');
+
+/** "Nov 2026" */
+export const monthYear = (iso: string) => new Date(`${iso}T00:00:00+05:30`).toLocaleDateString('en-IN', { month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' });
+
+/** "17 Nov 2026" */
+export const longDate = (iso: string) => new Date(`${iso}T00:00:00+05:30`).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' });

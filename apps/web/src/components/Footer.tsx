@@ -22,6 +22,7 @@ export function Footer({ fssai, phone, email }: { fssai?: string; phone?: string
         </Col>
         <Col title="Help">
           <Link href="/account">My orders</Link>
+          <Link href="/verify">Verify your pack</Link>
           <Link href="/shipping-policy">Shipping</Link>
           <Link href="/refunds">Cancellation & refunds</Link>
           <Link href="/contact">Contact us</Link>

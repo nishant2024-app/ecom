@@ -37,6 +37,8 @@ export interface Variant {
   inStock: boolean;
   lowStock: boolean;
   maxPerOrder: number;
+  unitPrice: { amount: Money; per: string } | null;
+  nextBatch: { manufacturedOn: string; bestBefore: string } | null;
 }
 
 export interface ProductSummary {
@@ -51,6 +53,7 @@ export interface ProductSummary {
   featured: boolean;
   attributes: { animal?: string; fatPercent?: number; a2?: boolean; process?: string; sourceFarm?: string; ingredients?: string };
   fromPrice: Money;
+  rating: { average: number; count: number } | null;
   variants: Variant[];
 }
 
@@ -135,4 +138,20 @@ export interface Order {
   canCancel?: boolean;
   payment: (Partial<PaymentStart> & { id: string; status: string; method: string | null }) | null;
   refunds: { id: string; amount: Money; status: string; reason: string }[];
+}
+
+export interface Review {
+  id: string;
+  rating: number;
+  title: string;
+  body: string;
+  author: string;
+  verified: boolean;
+  createdAt: string;
+}
+
+export interface ReviewPage {
+  summary: { average: number; count: number; breakdown: Record<string, number> };
+  data: Review[];
+  page: { nextCursor: string | null; hasMore: boolean };
 }
