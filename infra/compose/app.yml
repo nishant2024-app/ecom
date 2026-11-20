@@ -28,6 +28,7 @@ services:
     build: { context: ../.., dockerfile: apps/web/Dockerfile }
     image: dairy-web:${GIT_SHA:-local}
     restart: unless-stopped
+    env_file: /opt/dairy/.env.web   # SITE_URL, SITE_NAME, SITE_NOINDEX (read at runtime)
     environment:
       API_INTERNAL_URL: http://api:4000
     depends_on: [api]

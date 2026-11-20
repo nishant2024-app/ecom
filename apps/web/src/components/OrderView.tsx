@@ -111,7 +111,7 @@ export function OrderView({ id }: { id: string }) {
           </h1>
           <p className="mt-2 text-on-forest/80">
             {order.status === 'pending_payment' && order.expiresAt && <>We&rsquo;re holding your items until {dateTime(order.expiresAt)}.</>}
-            {done && order.status !== 'delivered' && <>Arrives in {order.delivery.etaMinDays}–{order.delivery.etaMaxDays} days from dispatch. We&rsquo;ll email you the tracking link.</>}
+            {done && order.status !== 'delivered' && <>Arrives in {order.delivery.etaMinDays}–{order.delivery.etaMaxDays} days from dispatch. The courier tracking link appears on this page when it ships.</>}
             {cancelled && order.cancelReason}
           </p>
         </div>

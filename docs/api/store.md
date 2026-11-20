@@ -5,8 +5,9 @@ Customer-facing endpoints for the storefront and the future Android app. Convent
 | Method | Path | Auth | Description |
 |---|---|---|---|
 | GET | `/v1/store/categories` | Public | Categories with product count and pack visuals |
-| GET | `/v1/store/products` | Public | List/search (`category`, `q`, `featured`, `sort=price_asc|price_desc`, cursor) |
-| GET | `/v1/store/products/{slug}` | Public | Detail with sizes, stock flags, nutrition, FSSAI/HSN, related products |
+| GET | `/v1/store/products` | Public | List/search; each product has `image` (main photo with `srcset`, or `null` → draw the pack) (`category`, `q`, `featured`, `sort=price_asc|price_desc`, cursor) |
+| GET | `/v1/store/products/{slug}` | Public | Detail with sizes, stock flags, photo `gallery`, nutrition, FSSAI/HSN, related products |
+| GET | `/v1/store/content` | Public | Home page copy and images edited in Admin → Storefront (announcement, hero, story, promises, SEO) |
 | GET | `/v1/store/shipping/estimate?pincode=` | Public | Zone, fee, free-shipping threshold, delivery dates |
 | POST | `/v1/store/checkout/quote` | Public | Price a cart `{lines, pincode?}` with live prices, stock problems and shipping |
 | GET / PATCH / DELETE | `/v1/store/me` | Customer | Profile; delete starts account deletion |

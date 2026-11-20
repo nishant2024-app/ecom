@@ -2,12 +2,18 @@
 
 ## Direction
 
-Fresh, warm and animated, in the spirit of the reference sites the owner shared (green farm palettes, product-led heroes, rounded organic surfaces). The aim is to make it this brand's own rather than a template:
+Version 2 (November 2026). The first version was rounded, glowing and floaty, and the owner said it looked AI-generated. We checked it against published lists of "AI look" tells (sources below) and found most of them: pill shapes everywhere, a rounded hero card with a blurred sun, floating products, a marquee, animated counters, three-step icon process, and a repeated small-caps eyebrow above every serif heading. Version 2 removes all of them.
 
-- **Forest green, cream and ghee gold.** Gold comes from the hero product.
-- **Drawn packaging (`PackShot`)** stands in for photography until the product shoot: jars, tins, cartons, cans, boxes and pouches drawn in SVG with the product's real name and size. It's one consistent visual language across site, admin and video, with no stock photos and no AI-generated food or animals.
-- **Motion with a purpose:** things move to show where they come from or go (packs fly into the basket, a parcel closes when the order is confirmed, process steps advance as you scroll).
-- **Honest content:** no fake testimonials, no invented customer counts, no "2K happy customers" avatars. Facts are product facts: shelf life, process, fat %, delivery days.
+The direction now is **a printed shop label, not a startup landing page**:
+
+- **Square corners and printed rules.** Hairlines, 1–2 px black borders, and the back-of-pack label as a layout device (the product page's "On the label" panel). Corners are square except tiny UI controls.
+- **Photography first.** Every image slot (hero, story, product cards, product gallery) shows the owner's real photos uploaded in the admin. Until a photo exists the slot falls back to drawn packaging (`PackShot`) on wooden shelves with kirana-style price tags, so the site never shows stock or AI-generated images.
+- **Type with character.** Young Serif for headings, Newsreader (italic) for editorial text and captions, Mukta for UI text (Latin + Devanagari), JetBrains Mono for prices, dates, batch codes and labels.
+- **Specific, checkable content.** The delivery timeline uses today's real dates ("Fri 20 Nov → packed Sat → arrives Sun–Mon in Pune"); the batch-label graphic shows the real batch-code format. No testimonials, counters or badges we can't back up.
+- **Motion that explains.** Headline words rise once, products drop onto the shelf, the hero photo unwraps, packs fly into the basket. Nothing floats or loops forever.
+- **Forest green, cream and ghee gold** stay as the palette. Cream areas carry a faint paper grain.
+
+Sources used for the review: [21st.dev: why your website looks AI-generated](https://21st.dev/blog/website-not-look-ai-generated), [UX skill wiki: detecting AI slop in design](https://github.com/Laith0003/ux-skill/wiki/How-to-detect-AI-slop-in-your-design), [Utsubo: trust signals for AI-built sites](https://www.utsubo.com/blog/built-with-ai-trust-signals-2026), [DEV: fixing the AI-generated look in your frontend](https://dev.to/alanwest/how-to-fix-the-ai-generated-look-in-your-frontend-1ahh), [Creative Bloq: everything looks the same now](https://www.creativebloq.com/ai/everything-looks-the-same-now-what), [Search Engine Journal: common AI website mistakes](https://searchenginejournal.com/7-common-ai-website-mistakes-that-are-easy-to-avoid/574196/).
 
 ## Tokens
 
@@ -26,28 +32,31 @@ Fresh, warm and animated, in the spirit of the reference sites the owner shared 
 
 `pnpm --filter @dairy/ui contrast` checks every text pair against WCAG AA in both themes (all pass).
 
-**Type:** Tiro Devanagari Hindi (display, bilingual), Mukta (text, Latin + Devanagari), JetBrains Mono (prices, SKUs, order numbers, tabular). Self-hosted via `@fontsource`.
+**Type:** Young Serif (headings; Tiro Devanagari Hindi covers Hindi), Newsreader (editorial text, captions), Mukta (UI text, Latin + Devanagari), JetBrains Mono (prices, SKUs, dates, `label` utility). Self-hosted via `@fontsource`; no font CDN.
 
 ## Components
 
 | Component | Where | Notes |
 |---|---|---|
-| `PackShot` | Everywhere | `kind`, `color`, `accent`, `label`, `size`; stored per product in `products.pack`, editable with live preview in admin |
-| Hero | Home | Word-by-word headline reveal; five packs float on their own rhythm, follow the pointer slightly and spread apart on scroll; parallax sun and hills |
-| Marquee | Home | Endless facts strip; pauses on hover; static with reduced motion |
-| Category tiles | Home | Three packs fan out on hover |
-| Product card | Shop, home | Lifts and tilts its pack on hover; badges for discount, low stock, sold out, shelf life; Add triggers the fly-to-basket arc |
-| Process | Home | Sticky section: five steps advance with scroll, progress line fills, illustration swaps |
-| Stats | Home | Counters animate once in view |
-| Reel | Home | Remotion-rendered video, plays muted only while visible |
-| Cart drawer | Global | Spring slide-in, live server quote, free-shipping progress bar, pincode ETA |
-| Order hero | Order page | Parcel flaps close and a tick draws when payment confirms; animated progress timeline |
-| Admin | Admin | Dense, calm: forest sidebar, rounded cards, status badges, drawers for editing, keyboard shortcuts |
+| `Photo` / `ProductImage` | Everywhere | Owner's photo with `srcset` from the API's pre-resized WebP files (no image optimiser needed on the server); falls back to `PackShot` |
+| `PackShot` | Fallback art | `kind`, `color`, `accent`, `label`, `size`; stored per product in `products.pack`, editable in admin |
+| Announcement bar | Global | Text from Admin → Storefront; hidden when empty |
+| Header | Global | Flat bar, text links, outlined Basket button with count; bottom rule appears on scroll; categories scroll horizontally on mobile |
+| Hero | Home | Copy from Admin → Storefront. Photo version: clip-path reveal and slow settle. No photo: products drop onto two wooden shelves, tags swing in |
+| Promises | Home | Four numbered facts between two rules, edited in admin |
+| Product card | Shop, home, related | Square-cornered 4:5 image, mono category and shelf-life line, outlined Add button that triggers the fly-to-basket arc |
+| Shelves | Home | Category index set like a contents page |
+| Story | Home | Admin-edited text with drop cap; photo, or the batch-label graphic until a photo is uploaded |
+| Delivery timeline | Home | Real dates from today in IST, skipping Sundays |
+| Gallery | Product page | Main photo with thumbnails and counter; drawn pack that changes with size if no photos |
+| "On the label" | Product page | Back-of-pack style: milk source, ingredients, process, shelf life, storage, nutrition, HSN, FSSAI |
+| Cart drawer | Global | Live server quote, free-shipping progress, pincode ETA |
+| Admin | Admin | Dense, calm: forest sidebar, drawers for editing, photo manager with drag-to-reorder, storefront editor with character counters, bulk order actions, keyboard shortcuts |
 
 ## Motion rules
 
-- Every animation explains something (arrival, departure, progress, state change) or is ambient and slow (floating packs, sun).
-- `prefers-reduced-motion`: no floating, no parallax, no marquee, no counters running; content appears instantly. The reel shows its poster with a Play button.
+- Every animation explains something (arrival, departure, progress, state change). Nothing floats or loops endlessly on the storefront.
+- `prefers-reduced-motion`: everything appears in place instantly.
 - Scroll reveals use `whileInView` once; content is in the server-rendered HTML, so search engines and no-JS readers still get it.
 - Keep it light: the storefront's first-load JS is ~155–170 KB (Motion included). The budget is **180 KB**; anything heavier needs lazy loading.
 
@@ -61,7 +70,8 @@ Plain, warm, specific. "Bilona ghee cooked over a wood fire" rather than "Elevat
 
 - [ ] Only token colours; gold is for the main action and highlights, never small text on cream
 - [ ] Real facts only: no fabricated reviews, counts, badges or avatars
-- [ ] PackShot or real photography; no stock/AI imagery
+- [ ] Owner's photography, or PackShot until then; no stock or AI imagery
+- [ ] None of the AI tells: pill-shaped everything, glowing blobs, floating objects, marquees, counters, icon-trio process rows, eyebrow-over-heading on every section
 - [ ] Every animation has a reason, and reduced motion is verified
 - [ ] Works at 360px; tap targets ≥ 44px
 - [ ] Prices in ₹ with Indian grouping and tabular figures

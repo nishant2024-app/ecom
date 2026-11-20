@@ -9,6 +9,7 @@ Documentation for the Mulshi Dairy shop: storefront, admin panel, public API, vi
 | If you are… | Read |
 |---|---|
 | New to the project | [Overview](01-overview.md) → [Architecture](02-architecture.md) → [Development guide](12-development.md) |
+| Launching the shop | [Go-live checklist](14-go-live.md) |
 | Building the Android app | [Android integration](13-android-integration.md) → [API guide](api/README.md) → [OpenAPI spec](api/openapi.json) |
 | Building a UI | [Design system](08-design-system.md) |
 | Running the servers | [Infrastructure](03-infrastructure.md) → [Operations & runbooks](11-operations.md) |
@@ -31,6 +32,7 @@ Documentation for the Mulshi Dairy shop: storefront, admin panel, public API, vi
 | 11 | [Operations & runbooks](11-operations.md) | Monitoring, alerts, backups, deploys, incident runbooks |
 | 12 | [Development guide](12-development.md) | Local setup, repo layout, environment variables, standards, testing, git workflow |
 | 13 | [Android integration](13-android-integration.md) | Using the API from the future Android app |
+| 14 | [Go-live checklist](14-go-live.md) | The keys and details the owner provides, first deploy, setting up the shop in the admin, launch tests |
 
 ### API
 

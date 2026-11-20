@@ -6,7 +6,7 @@
 
 | ID | Size | Length | Use |
 |---|---|---|---|
-| `PantryReel` | 1080 × 1080 | 10 s | Home page "Why shelf-stable" section, Instagram/WhatsApp. Headline reveal, packs spring in on a hill, fact chips, logo outro. |
+| `PantryReel` | 1080 × 1080 | 10 s | Instagram/WhatsApp posts and ads (removed from the home page in design v2; `ReelVideo` remains available). Headline reveal, packs spring in on a hill, fact chips, logo outro. |
 | `ProductReel` | 1080 × 1350 | 8 s | One product from catalog data: pack rises in, name, tagline, three facts, price stamp. Props: `name, size, tagline, price, pack, facts`. |
 
 ## Commands

@@ -39,7 +39,7 @@ export default async function metaRoutes(fastify: FastifyInstance) {
             minVersions: Type.Object({ android: Type.Integer(), web: Type.String() }),
             features: Type.Record(Type.String(), Type.Boolean()),
             support: Type.Object({ phone: Type.String(), email: Type.String() }),
-            legal: Type.Object({ fssai: Type.String(), privacyUrl: Type.String(), termsUrl: Type.String() }),
+            legal: Type.Object({ fssai: Type.String(), name: Type.String(), address: Type.String(), privacyUrl: Type.String(), termsUrl: Type.String() }),
             auth: Type.Object({ googleClientId: Type.String(), devSignIn: Type.Boolean() }),
             payments: Type.Object({ provider: Type.String(), environment: Type.String() }),
           }),
@@ -49,14 +49,14 @@ export default async function metaRoutes(fastify: FastifyInstance) {
     async (_req, reply) => {
       const sellerId = await defaultSellerId(db);
       const settings = await settingsMap(db, sellerId);
-      const [seller] = await db.execute<{ fssai_number: string | null }>(sql`select fssai_number from sellers where id = ${sellerId}`);
+      const [seller] = await db.execute<{ fssai_number: string | null; legal_name: string | null }>(sql`select fssai_number, legal_name from sellers where id = ${sellerId}`);
       const web = app.deps.config.PUBLIC_WEB_URL;
       reply.header('cache-control', 'public, max-age=60');
       return {
         minVersions: { android: settingNumber(settings, 'app.minAndroidVersion', 1), web: '1.0.0' },
         features: { cashOnDelivery: false, guestCheckout: false },
         support: { phone: String(settings['support.phone'] ?? ''), email: String(settings['support.email'] ?? '') },
-        legal: { fssai: seller?.fssai_number ?? '', privacyUrl: `${web}/privacy`, termsUrl: `${web}/terms` },
+        legal: { fssai: seller?.fssai_number ?? '', name: seller?.legal_name ?? '', address: String(settings['store.address'] ?? settings['store.dispatchFrom'] ?? ''), privacyUrl: `${web}/privacy`, termsUrl: `${web}/terms` },
         auth: { googleClientId: app.deps.config.GOOGLE_WEB_CLIENT_ID, devSignIn: app.deps.config.AUTH_TEST_MODE && !app.deps.config.isProduction && app.deps.payments.name === 'mock' },
         payments: { provider: app.deps.payments.name, environment: app.deps.payments.environment },
 

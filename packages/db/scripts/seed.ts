@@ -265,8 +265,23 @@ const zones: (typeof s.shippingZones.$inferInsert)[] = [
 
 const variantRows = new Map<string, { id: string; price: number; name: string; packSize: string; grams: number; hsn: string; gst: number; batchId: string }>();
 
+const isProd = process.env.APP_ENV === 'production';
+/**
+ * SEED_CATALOG: "demo" = sample products on sale with sample stock (default outside production);
+ * "draft" = sample products as hidden drafts with no stock, for the owner to edit (default in production);
+ * "none" = categories and shipping zones only.
+ */
+const catalogMode = (process.env.SEED_CATALOG ?? (isProd ? 'draft' : 'demo')) as 'demo' | 'draft' | 'none';
+if (!['demo', 'draft', 'none'].includes(catalogMode)) throw new Error('SEED_CATALOG must be demo, draft or none');
+
 await db.transaction(async (tx) => {
-  await tx.insert(s.sellers).values({ id: sellerId, name: 'Mulshi Dairy', legalName: 'Mulshi Dairy Private Limited', fssaiNumber: '00000000000000', state: 'Maharashtra' });
+  await tx.insert(s.sellers).values({
+    id: sellerId,
+    name: process.env.SEED_STORE_NAME ?? 'Mulshi Dairy',
+    legalName: process.env.SEED_LEGAL_NAME ?? 'Mulshi Dairy Private Limited',
+    fssaiNumber: process.env.SEED_FSSAI_NUMBER ?? '00000000000000',
+    state: process.env.SEED_STATE ?? 'Maharashtra',
+  });
   await tx.insert(s.shippingZones).values(zones);
 
   const categoryIds = new Map<string, string>();
@@ -276,7 +291,7 @@ await db.transaction(async (tx) => {
     await tx.insert(s.categories).values({ id: cid, slug: c.slug, nameEn: c.en, nameHi: c.hi, blurb: c.blurb, sort: i });
   }
 
-  for (const [i, p] of catalog.entries()) {
+  for (const [i, p] of (catalogMode === 'none' ? [] : catalog).entries()) {
     const productId = newId('prd');
     await tx.insert(s.products).values({
       id: productId,
@@ -292,7 +307,7 @@ await db.transaction(async (tx) => {
       pack: p.pack,
       searchTerms: p.terms,
       featured: p.featured ?? false,
-      status: 'active',
+      status: catalogMode === 'demo' ? 'active' : 'draft',
       sort: i,
     });
     for (const [j, v] of p.variants.entries()) {
@@ -316,7 +331,7 @@ await db.transaction(async (tx) => {
       const made = (daysAgo: number) => addDays(today, -daysAgo);
       const older = { id: newId('bat'), code: `${v.sku}-A`, manufacturedOn: made(Math.min(20, Math.floor(v.shelf / 3))), qty: v.sku === 'SW-MC-250' ? 6 : 40 };
       const fresh = { id: newId('bat'), code: `${v.sku}-B`, manufacturedOn: made(2), qty: v.sku === 'SW-MC-250' ? 12 : 160 };
-      for (const b of [older, fresh]) {
+      for (const b of catalogMode === 'demo' ? [older, fresh] : []) {
         await tx.insert(s.batches).values({
           id: b.id,
           variantId,
@@ -337,9 +352,10 @@ await db.transaction(async (tx) => {
     Object.entries({
       'orders.paymentWindowMinutes': 30,
       'orders.minShelfDaysAtDispatch': 7,
-      'support.phone': '+910000000000',
-      'support.email': 'support@example.in',
+      'support.phone': process.env.SEED_SUPPORT_PHONE ?? '+910000000000',
+      'support.email': process.env.SEED_SUPPORT_EMAIL ?? 'support@example.in',
       'store.dispatchFrom': 'Mulshi, Pune',
+      'store.address': process.env.SEED_STORE_ADDRESS ?? 'Mulshi, Pune, Maharashtra 412108',
     }).map(([key, value]) => ({ sellerId, key, value })),
   );
 
@@ -349,7 +365,7 @@ await db.transaction(async (tx) => {
     console.log(`owner staff: ${ownerEmail}`);
   }
 
-  if (process.env.APP_ENV !== 'production') {
+  if (!isProd && catalogMode === 'demo') {
     const customerId = newId('cus');
     const address = {
       name: 'Asha Verma',

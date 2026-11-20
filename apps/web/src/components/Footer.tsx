@@ -21,7 +21,9 @@ export function Footer({ fssai, phone, email }: { fssai?: string; phone?: string
         </FooterCol>
         <FooterCol title="Help">
           <Link href="/account">Track an order</Link>
-          <Link href="/#questions">Shipping & returns</Link>
+          <Link href="/shipping-policy">Shipping</Link>
+          <Link href="/refunds">Cancellations & refunds</Link>
+          <Link href="/contact">Contact us</Link>
           {phone && <a href={`tel:${phone.replace(/\s/g, '')}`} className="num">{phone}</a>}
           {email && <a href={`mailto:${email}`}>{email}</a>}
         </FooterCol>
@@ -32,6 +34,8 @@ export function Footer({ fssai, phone, email }: { fssai?: string; phone?: string
             </span>
           )}
           <span>All prices include GST</span>
+          <Link href="/terms">Terms</Link>
+          <Link href="/privacy">Privacy</Link>
           <Link href="/account/delete">Delete my account</Link>
         </FooterCol>
       </div>

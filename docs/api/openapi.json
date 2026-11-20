@@ -184,11 +184,19 @@
                       "type": "object",
                       "required": [
                         "fssai",
+                        "name",
+                        "address",
                         "privacyUrl",
                         "termsUrl"
                       ],
                       "properties": {
                         "fssai": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "address": {
                           "type": "string"
                         },
                         "privacyUrl": {
@@ -998,7 +1006,8 @@
                                   "url",
                                   "alt",
                                   "width",
-                                  "height"
+                                  "height",
+                                  "srcset"
                                 ],
                                 "properties": {
                                   "url": {
@@ -1012,6 +1021,24 @@
                                   },
                                   "height": {
                                     "type": "integer"
+                                  },
+                                  "srcset": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "required": [
+                                        "url",
+                                        "width"
+                                      ],
+                                      "properties": {
+                                        "url": {
+                                          "type": "string"
+                                        },
+                                        "width": {
+                                          "type": "integer"
+                                        }
+                                      }
+                                    }
                                   }
                                 }
                               },
@@ -1212,7 +1239,8 @@
                                 "url",
                                 "alt",
                                 "width",
-                                "height"
+                                "height",
+                                "srcset"
                               ],
                               "properties": {
                                 "url": {
@@ -1226,6 +1254,24 @@
                                 },
                                 "height": {
                                   "type": "integer"
+                                },
+                                "srcset": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "required": [
+                                      "url",
+                                      "width"
+                                    ],
+                                    "properties": {
+                                      "url": {
+                                        "type": "string"
+                                      },
+                                      "width": {
+                                        "type": "integer"
+                                      }
+                                    }
+                                  }
                                 }
                               }
                             },
@@ -1307,6 +1353,7 @@
                         "storage",
                         "hsnCode",
                         "fssaiNumber",
+                        "gallery",
                         "related"
                       ],
                       "properties": {
@@ -1346,6 +1393,51 @@
                               "type": "null"
                             }
                           ]
+                        },
+                        "gallery": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "url",
+                              "alt",
+                              "width",
+                              "height",
+                              "srcset"
+                            ],
+                            "properties": {
+                              "url": {
+                                "type": "string"
+                              },
+                              "alt": {
+                                "type": "string"
+                              },
+                              "width": {
+                                "type": "integer"
+                              },
+                              "height": {
+                                "type": "integer"
+                              },
+                              "srcset": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "required": [
+                                    "url",
+                                    "width"
+                                  ],
+                                  "properties": {
+                                    "url": {
+                                      "type": "string"
+                                    },
+                                    "width": {
+                                      "type": "integer"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
                         },
                         "related": {
                           "type": "array",
@@ -1420,7 +1512,8 @@
                                       "url",
                                       "alt",
                                       "width",
-                                      "height"
+                                      "height",
+                                      "srcset"
                                     ],
                                     "properties": {
                                       "url": {
@@ -1434,6 +1527,24 @@
                                       },
                                       "height": {
                                         "type": "integer"
+                                      },
+                                      "srcset": {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "object",
+                                          "required": [
+                                            "url",
+                                            "width"
+                                          ],
+                                          "properties": {
+                                            "url": {
+                                              "type": "string"
+                                            },
+                                            "width": {
+                                              "type": "integer"
+                                            }
+                                          }
+                                        }
                                       }
                                     }
                                   },
@@ -1571,6 +1682,291 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/store/content": {
+      "get": {
+        "summary": "Storefront copy and images (hero, story, promises, SEO)",
+        "tags": [
+          "Catalog"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "allOf": [
+                    {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "announcement",
+                        "hero",
+                        "story",
+                        "promises",
+                        "seo"
+                      ],
+                      "properties": {
+                        "announcement": {
+                          "maxLength": 140,
+                          "type": "string"
+                        },
+                        "hero": {
+                          "additionalProperties": false,
+                          "type": "object",
+                          "required": [
+                            "eyebrow",
+                            "title",
+                            "subtitle",
+                            "ctaLabel",
+                            "imageId"
+                          ],
+                          "properties": {
+                            "eyebrow": {
+                              "maxLength": 80,
+                              "type": "string"
+                            },
+                            "title": {
+                              "minLength": 3,
+                              "maxLength": 120,
+                              "type": "string"
+                            },
+                            "subtitle": {
+                              "maxLength": 280,
+                              "type": "string"
+                            },
+                            "ctaLabel": {
+                              "minLength": 2,
+                              "maxLength": 30,
+                              "type": "string"
+                            },
+                            "imageId": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            }
+                          }
+                        },
+                        "story": {
+                          "additionalProperties": false,
+                          "type": "object",
+                          "required": [
+                            "title",
+                            "paragraphs",
+                            "signature",
+                            "imageId"
+                          ],
+                          "properties": {
+                            "title": {
+                              "maxLength": 120,
+                              "type": "string"
+                            },
+                            "paragraphs": {
+                              "maxItems": 4,
+                              "type": "array",
+                              "items": {
+                                "maxLength": 800,
+                                "type": "string"
+                              }
+                            },
+                            "signature": {
+                              "maxLength": 80,
+                              "type": "string"
+                            },
+                            "imageId": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            }
+                          }
+                        },
+                        "promises": {
+                          "minItems": 1,
+                          "maxItems": 4,
+                          "type": "array",
+                          "items": {
+                            "additionalProperties": false,
+                            "type": "object",
+                            "required": [
+                              "title",
+                              "body"
+                            ],
+                            "properties": {
+                              "title": {
+                                "minLength": 2,
+                                "maxLength": 40,
+                                "type": "string"
+                              },
+                              "body": {
+                                "maxLength": 140,
+                                "type": "string"
+                              }
+                            }
+                          }
+                        },
+                        "seo": {
+                          "additionalProperties": false,
+                          "type": "object",
+                          "required": [
+                            "title",
+                            "description"
+                          ],
+                          "properties": {
+                            "title": {
+                              "minLength": 10,
+                              "maxLength": 70,
+                              "type": "string"
+                            },
+                            "description": {
+                              "minLength": 50,
+                              "maxLength": 170,
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "images"
+                      ],
+                      "properties": {
+                        "images": {
+                          "type": "object",
+                          "required": [
+                            "hero",
+                            "story"
+                          ],
+                          "properties": {
+                            "hero": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "required": [
+                                    "id",
+                                    "url",
+                                    "alt",
+                                    "width",
+                                    "height",
+                                    "srcset"
+                                  ],
+                                  "properties": {
+                                    "id": {
+                                      "type": "string"
+                                    },
+                                    "url": {
+                                      "type": "string"
+                                    },
+                                    "alt": {
+                                      "type": "string"
+                                    },
+                                    "width": {
+                                      "type": "integer"
+                                    },
+                                    "height": {
+                                      "type": "integer"
+                                    },
+                                    "srcset": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "object",
+                                        "required": [
+                                          "url",
+                                          "width"
+                                        ],
+                                        "properties": {
+                                          "url": {
+                                            "type": "string"
+                                          },
+                                          "width": {
+                                            "type": "integer"
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "story": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "required": [
+                                    "id",
+                                    "url",
+                                    "alt",
+                                    "width",
+                                    "height",
+                                    "srcset"
+                                  ],
+                                  "properties": {
+                                    "id": {
+                                      "type": "string"
+                                    },
+                                    "url": {
+                                      "type": "string"
+                                    },
+                                    "alt": {
+                                      "type": "string"
+                                    },
+                                    "width": {
+                                      "type": "integer"
+                                    },
+                                    "height": {
+                                      "type": "integer"
+                                    },
+                                    "srcset": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "object",
+                                        "required": [
+                                          "url",
+                                          "width"
+                                        ],
+                                        "properties": {
+                                          "url": {
+                                            "type": "string"
+                                          },
+                                          "width": {
+                                            "type": "integer"
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
                 }
               }
             }
@@ -3534,6 +3930,164 @@
         }
       }
     },
+    "/v1/admin/orders/export.csv": {
+      "get": {
+        "summary": "Download orders as CSV (opens in Excel / Google Sheets)",
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "pending_payment"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "confirmed"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "packed"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "shipped"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "delivered"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "cancelled"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "refunded"
+                  ]
+                }
+              ]
+            },
+            "in": "query",
+            "name": "status",
+            "required": false
+          },
+          {
+            "schema": {
+              "format": "date",
+              "type": "string"
+            },
+            "in": "query",
+            "name": "from",
+            "required": false
+          },
+          {
+            "schema": {
+              "format": "date",
+              "type": "string"
+            },
+            "in": "query",
+            "name": "to",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/v1/admin/orders/bulk/pack": {
+      "post": {
+        "summary": "Mark several confirmed orders packed; returns which succeeded",
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                  "orderIds"
+                ],
+                "properties": {
+                  "orderIds": {
+                    "minItems": 1,
+                    "maxItems": 100,
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/v1/admin/orders/packing-slips": {
+      "post": {
+        "summary": "Full detail for several orders, for printing packing slips",
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                  "orderIds"
+                ],
+                "properties": {
+                  "orderIds": {
+                    "minItems": 1,
+                    "maxItems": 100,
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
     "/v1/admin/orders/{orderId}": {
       "get": {
         "summary": "Order detail",
@@ -3714,9 +4268,154 @@
     },
     "/v1/admin/categories": {
       "get": {
-        "summary": "Categories",
+        "summary": "Categories with product counts",
         "tags": [
           "Admin"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a category",
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                  "slug",
+                  "nameEn",
+                  "nameHi"
+                ],
+                "properties": {
+                  "slug": {
+                    "minLength": 2,
+                    "maxLength": 60,
+                    "pattern": "^[a-z0-9-]+$",
+                    "type": "string"
+                  },
+                  "nameEn": {
+                    "minLength": 2,
+                    "maxLength": 60,
+                    "type": "string"
+                  },
+                  "nameHi": {
+                    "minLength": 1,
+                    "maxLength": 60,
+                    "type": "string"
+                  },
+                  "blurb": {
+                    "maxLength": 200,
+                    "type": "string"
+                  },
+                  "sort": {
+                    "minimum": 0,
+                    "maximum": 1000,
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/v1/admin/categories/{categoryId}": {
+      "put": {
+        "summary": "Update a category",
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                  "slug",
+                  "nameEn",
+                  "nameHi"
+                ],
+                "properties": {
+                  "slug": {
+                    "minLength": 2,
+                    "maxLength": 60,
+                    "pattern": "^[a-z0-9-]+$",
+                    "type": "string"
+                  },
+                  "nameEn": {
+                    "minLength": 2,
+                    "maxLength": 60,
+                    "type": "string"
+                  },
+                  "nameHi": {
+                    "minLength": 1,
+                    "maxLength": 60,
+                    "type": "string"
+                  },
+                  "blurb": {
+                    "maxLength": 200,
+                    "type": "string"
+                  },
+                  "sort": {
+                    "minimum": 0,
+                    "maximum": 1000,
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "minLength": 4,
+              "maxLength": 40,
+              "type": "string"
+            },
+            "in": "path",
+            "name": "categoryId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete an empty category",
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "minLength": 4,
+              "maxLength": 40,
+              "type": "string"
+            },
+            "in": "path",
+            "name": "categoryId",
+            "required": true
+          }
         ],
         "responses": {
           "200": {
@@ -4333,6 +5032,1291 @@
         "responses": {
           "200": {
             "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/v1/admin/products/{productId}/media": {
+      "get": {
+        "summary": "Product photos, in display order",
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "minLength": 4,
+              "maxLength": 40,
+              "type": "string"
+            },
+            "in": "path",
+            "name": "productId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "url",
+                          "alt",
+                          "width",
+                          "height",
+                          "srcset"
+                        ],
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "url": {
+                            "type": "string"
+                          },
+                          "alt": {
+                            "type": "string"
+                          },
+                          "width": {
+                            "type": "integer"
+                          },
+                          "height": {
+                            "type": "integer"
+                          },
+                          "srcset": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "required": [
+                                "url",
+                                "width"
+                              ],
+                              "properties": {
+                                "url": {
+                                  "type": "string"
+                                },
+                                "width": {
+                                  "type": "integer"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Upload product photos (multipart, field \"file\", repeatable; optional \"alt\")",
+        "tags": [
+          "Admin"
+        ],
+        "description": "JPG, PNG, WebP or HEIC, up to 20 MB each and at least 400 px wide. Stored as WebP at 480, 960 and 1600 px. The first photo is the main product image.",
+        "parameters": [
+          {
+            "schema": {
+              "minLength": 4,
+              "maxLength": 40,
+              "type": "string"
+            },
+            "in": "path",
+            "name": "productId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "url",
+                          "alt",
+                          "width",
+                          "height",
+                          "srcset"
+                        ],
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "url": {
+                            "type": "string"
+                          },
+                          "alt": {
+                            "type": "string"
+                          },
+                          "width": {
+                            "type": "integer"
+                          },
+                          "height": {
+                            "type": "integer"
+                          },
+                          "srcset": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "required": [
+                                "url",
+                                "width"
+                              ],
+                              "properties": {
+                                "url": {
+                                  "type": "string"
+                                },
+                                "width": {
+                                  "type": "integer"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/products/{productId}/media/order": {
+      "put": {
+        "summary": "Reorder product photos; the first is the main image",
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                  "ids"
+                ],
+                "properties": {
+                  "ids": {
+                    "minItems": 1,
+                    "maxItems": 30,
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "minLength": 4,
+              "maxLength": 40,
+              "type": "string"
+            },
+            "in": "path",
+            "name": "productId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "url",
+                          "alt",
+                          "width",
+                          "height",
+                          "srcset"
+                        ],
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "url": {
+                            "type": "string"
+                          },
+                          "alt": {
+                            "type": "string"
+                          },
+                          "width": {
+                            "type": "integer"
+                          },
+                          "height": {
+                            "type": "integer"
+                          },
+                          "srcset": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "required": [
+                                "url",
+                                "width"
+                              ],
+                              "properties": {
+                                "url": {
+                                  "type": "string"
+                                },
+                                "width": {
+                                  "type": "integer"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/media/{mediaId}": {
+      "patch": {
+        "summary": "Edit a product photo's alt text",
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                  "alt"
+                ],
+                "properties": {
+                  "alt": {
+                    "maxLength": 200,
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "minLength": 4,
+              "maxLength": 40,
+              "type": "string"
+            },
+            "in": "path",
+            "name": "mediaId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "url",
+                    "alt",
+                    "width",
+                    "height",
+                    "srcset"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "type": "string"
+                    },
+                    "alt": {
+                      "type": "string"
+                    },
+                    "width": {
+                      "type": "integer"
+                    },
+                    "height": {
+                      "type": "integer"
+                    },
+                    "srcset": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "url",
+                          "width"
+                        ],
+                        "properties": {
+                          "url": {
+                            "type": "string"
+                          },
+                          "width": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a product photo",
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "minLength": 4,
+              "maxLength": 40,
+              "type": "string"
+            },
+            "in": "path",
+            "name": "mediaId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/v1/admin/site-media": {
+      "get": {
+        "summary": "Storefront image library",
+        "tags": [
+          "Admin"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "url",
+                          "alt",
+                          "width",
+                          "height",
+                          "srcset"
+                        ],
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "url": {
+                            "type": "string"
+                          },
+                          "alt": {
+                            "type": "string"
+                          },
+                          "width": {
+                            "type": "integer"
+                          },
+                          "height": {
+                            "type": "integer"
+                          },
+                          "srcset": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "required": [
+                                "url",
+                                "width"
+                              ],
+                              "properties": {
+                                "url": {
+                                  "type": "string"
+                                },
+                                "width": {
+                                  "type": "integer"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Upload storefront images (multipart, field \"file\"; optional \"alt\")",
+        "tags": [
+          "Admin"
+        ],
+        "responses": {
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "url",
+                          "alt",
+                          "width",
+                          "height",
+                          "srcset"
+                        ],
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "url": {
+                            "type": "string"
+                          },
+                          "alt": {
+                            "type": "string"
+                          },
+                          "width": {
+                            "type": "integer"
+                          },
+                          "height": {
+                            "type": "integer"
+                          },
+                          "srcset": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "required": [
+                                "url",
+                                "width"
+                              ],
+                              "properties": {
+                                "url": {
+                                  "type": "string"
+                                },
+                                "width": {
+                                  "type": "integer"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/site-media/{mediaId}": {
+      "delete": {
+        "summary": "Delete a storefront image",
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "minLength": 4,
+              "maxLength": 40,
+              "type": "string"
+            },
+            "in": "path",
+            "name": "mediaId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/v1/admin/storefront": {
+      "get": {
+        "summary": "Storefront copy and images",
+        "tags": [
+          "Admin"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "allOf": [
+                    {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "announcement",
+                        "hero",
+                        "story",
+                        "promises",
+                        "seo"
+                      ],
+                      "properties": {
+                        "announcement": {
+                          "maxLength": 140,
+                          "type": "string"
+                        },
+                        "hero": {
+                          "additionalProperties": false,
+                          "type": "object",
+                          "required": [
+                            "eyebrow",
+                            "title",
+                            "subtitle",
+                            "ctaLabel",
+                            "imageId"
+                          ],
+                          "properties": {
+                            "eyebrow": {
+                              "maxLength": 80,
+                              "type": "string"
+                            },
+                            "title": {
+                              "minLength": 3,
+                              "maxLength": 120,
+                              "type": "string"
+                            },
+                            "subtitle": {
+                              "maxLength": 280,
+                              "type": "string"
+                            },
+                            "ctaLabel": {
+                              "minLength": 2,
+                              "maxLength": 30,
+                              "type": "string"
+                            },
+                            "imageId": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            }
+                          }
+                        },
+                        "story": {
+                          "additionalProperties": false,
+                          "type": "object",
+                          "required": [
+                            "title",
+                            "paragraphs",
+                            "signature",
+                            "imageId"
+                          ],
+                          "properties": {
+                            "title": {
+                              "maxLength": 120,
+                              "type": "string"
+                            },
+                            "paragraphs": {
+                              "maxItems": 4,
+                              "type": "array",
+                              "items": {
+                                "maxLength": 800,
+                                "type": "string"
+                              }
+                            },
+                            "signature": {
+                              "maxLength": 80,
+                              "type": "string"
+                            },
+                            "imageId": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            }
+                          }
+                        },
+                        "promises": {
+                          "minItems": 1,
+                          "maxItems": 4,
+                          "type": "array",
+                          "items": {
+                            "additionalProperties": false,
+                            "type": "object",
+                            "required": [
+                              "title",
+                              "body"
+                            ],
+                            "properties": {
+                              "title": {
+                                "minLength": 2,
+                                "maxLength": 40,
+                                "type": "string"
+                              },
+                              "body": {
+                                "maxLength": 140,
+                                "type": "string"
+                              }
+                            }
+                          }
+                        },
+                        "seo": {
+                          "additionalProperties": false,
+                          "type": "object",
+                          "required": [
+                            "title",
+                            "description"
+                          ],
+                          "properties": {
+                            "title": {
+                              "minLength": 10,
+                              "maxLength": 70,
+                              "type": "string"
+                            },
+                            "description": {
+                              "minLength": 50,
+                              "maxLength": 170,
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "images"
+                      ],
+                      "properties": {
+                        "images": {
+                          "type": "object",
+                          "required": [
+                            "hero",
+                            "story"
+                          ],
+                          "properties": {
+                            "hero": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "required": [
+                                    "id",
+                                    "url",
+                                    "alt",
+                                    "width",
+                                    "height",
+                                    "srcset"
+                                  ],
+                                  "properties": {
+                                    "id": {
+                                      "type": "string"
+                                    },
+                                    "url": {
+                                      "type": "string"
+                                    },
+                                    "alt": {
+                                      "type": "string"
+                                    },
+                                    "width": {
+                                      "type": "integer"
+                                    },
+                                    "height": {
+                                      "type": "integer"
+                                    },
+                                    "srcset": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "object",
+                                        "required": [
+                                          "url",
+                                          "width"
+                                        ],
+                                        "properties": {
+                                          "url": {
+                                            "type": "string"
+                                          },
+                                          "width": {
+                                            "type": "integer"
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "story": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "required": [
+                                    "id",
+                                    "url",
+                                    "alt",
+                                    "width",
+                                    "height",
+                                    "srcset"
+                                  ],
+                                  "properties": {
+                                    "id": {
+                                      "type": "string"
+                                    },
+                                    "url": {
+                                      "type": "string"
+                                    },
+                                    "alt": {
+                                      "type": "string"
+                                    },
+                                    "width": {
+                                      "type": "integer"
+                                    },
+                                    "height": {
+                                      "type": "integer"
+                                    },
+                                    "srcset": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "object",
+                                        "required": [
+                                          "url",
+                                          "width"
+                                        ],
+                                        "properties": {
+                                          "url": {
+                                            "type": "string"
+                                          },
+                                          "width": {
+                                            "type": "integer"
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update storefront copy and images",
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                  "announcement",
+                  "hero",
+                  "story",
+                  "promises",
+                  "seo"
+                ],
+                "properties": {
+                  "announcement": {
+                    "maxLength": 140,
+                    "type": "string"
+                  },
+                  "hero": {
+                    "additionalProperties": false,
+                    "type": "object",
+                    "required": [
+                      "eyebrow",
+                      "title",
+                      "subtitle",
+                      "ctaLabel",
+                      "imageId"
+                    ],
+                    "properties": {
+                      "eyebrow": {
+                        "maxLength": 80,
+                        "type": "string"
+                      },
+                      "title": {
+                        "minLength": 3,
+                        "maxLength": 120,
+                        "type": "string"
+                      },
+                      "subtitle": {
+                        "maxLength": 280,
+                        "type": "string"
+                      },
+                      "ctaLabel": {
+                        "minLength": 2,
+                        "maxLength": 30,
+                        "type": "string"
+                      },
+                      "imageId": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "story": {
+                    "additionalProperties": false,
+                    "type": "object",
+                    "required": [
+                      "title",
+                      "paragraphs",
+                      "signature",
+                      "imageId"
+                    ],
+                    "properties": {
+                      "title": {
+                        "maxLength": 120,
+                        "type": "string"
+                      },
+                      "paragraphs": {
+                        "maxItems": 4,
+                        "type": "array",
+                        "items": {
+                          "maxLength": 800,
+                          "type": "string"
+                        }
+                      },
+                      "signature": {
+                        "maxLength": 80,
+                        "type": "string"
+                      },
+                      "imageId": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "promises": {
+                    "minItems": 1,
+                    "maxItems": 4,
+                    "type": "array",
+                    "items": {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "title",
+                        "body"
+                      ],
+                      "properties": {
+                        "title": {
+                          "minLength": 2,
+                          "maxLength": 40,
+                          "type": "string"
+                        },
+                        "body": {
+                          "maxLength": 140,
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "seo": {
+                    "additionalProperties": false,
+                    "type": "object",
+                    "required": [
+                      "title",
+                      "description"
+                    ],
+                    "properties": {
+                      "title": {
+                        "minLength": 10,
+                        "maxLength": 70,
+                        "type": "string"
+                      },
+                      "description": {
+                        "minLength": 50,
+                        "maxLength": 170,
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "allOf": [
+                    {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "announcement",
+                        "hero",
+                        "story",
+                        "promises",
+                        "seo"
+                      ],
+                      "properties": {
+                        "announcement": {
+                          "maxLength": 140,
+                          "type": "string"
+                        },
+                        "hero": {
+                          "additionalProperties": false,
+                          "type": "object",
+                          "required": [
+                            "eyebrow",
+                            "title",
+                            "subtitle",
+                            "ctaLabel",
+                            "imageId"
+                          ],
+                          "properties": {
+                            "eyebrow": {
+                              "maxLength": 80,
+                              "type": "string"
+                            },
+                            "title": {
+                              "minLength": 3,
+                              "maxLength": 120,
+                              "type": "string"
+                            },
+                            "subtitle": {
+                              "maxLength": 280,
+                              "type": "string"
+                            },
+                            "ctaLabel": {
+                              "minLength": 2,
+                              "maxLength": 30,
+                              "type": "string"
+                            },
+                            "imageId": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            }
+                          }
+                        },
+                        "story": {
+                          "additionalProperties": false,
+                          "type": "object",
+                          "required": [
+                            "title",
+                            "paragraphs",
+                            "signature",
+                            "imageId"
+                          ],
+                          "properties": {
+                            "title": {
+                              "maxLength": 120,
+                              "type": "string"
+                            },
+                            "paragraphs": {
+                              "maxItems": 4,
+                              "type": "array",
+                              "items": {
+                                "maxLength": 800,
+                                "type": "string"
+                              }
+                            },
+                            "signature": {
+                              "maxLength": 80,
+                              "type": "string"
+                            },
+                            "imageId": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            }
+                          }
+                        },
+                        "promises": {
+                          "minItems": 1,
+                          "maxItems": 4,
+                          "type": "array",
+                          "items": {
+                            "additionalProperties": false,
+                            "type": "object",
+                            "required": [
+                              "title",
+                              "body"
+                            ],
+                            "properties": {
+                              "title": {
+                                "minLength": 2,
+                                "maxLength": 40,
+                                "type": "string"
+                              },
+                              "body": {
+                                "maxLength": 140,
+                                "type": "string"
+                              }
+                            }
+                          }
+                        },
+                        "seo": {
+                          "additionalProperties": false,
+                          "type": "object",
+                          "required": [
+                            "title",
+                            "description"
+                          ],
+                          "properties": {
+                            "title": {
+                              "minLength": 10,
+                              "maxLength": 70,
+                              "type": "string"
+                            },
+                            "description": {
+                              "minLength": 50,
+                              "maxLength": 170,
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "images"
+                      ],
+                      "properties": {
+                        "images": {
+                          "type": "object",
+                          "required": [
+                            "hero",
+                            "story"
+                          ],
+                          "properties": {
+                            "hero": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "required": [
+                                    "id",
+                                    "url",
+                                    "alt",
+                                    "width",
+                                    "height",
+                                    "srcset"
+                                  ],
+                                  "properties": {
+                                    "id": {
+                                      "type": "string"
+                                    },
+                                    "url": {
+                                      "type": "string"
+                                    },
+                                    "alt": {
+                                      "type": "string"
+                                    },
+                                    "width": {
+                                      "type": "integer"
+                                    },
+                                    "height": {
+                                      "type": "integer"
+                                    },
+                                    "srcset": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "object",
+                                        "required": [
+                                          "url",
+                                          "width"
+                                        ],
+                                        "properties": {
+                                          "url": {
+                                            "type": "string"
+                                          },
+                                          "width": {
+                                            "type": "integer"
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "story": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "required": [
+                                    "id",
+                                    "url",
+                                    "alt",
+                                    "width",
+                                    "height",
+                                    "srcset"
+                                  ],
+                                  "properties": {
+                                    "id": {
+                                      "type": "string"
+                                    },
+                                    "url": {
+                                      "type": "string"
+                                    },
+                                    "alt": {
+                                      "type": "string"
+                                    },
+                                    "width": {
+                                      "type": "integer"
+                                    },
+                                    "height": {
+                                      "type": "integer"
+                                    },
+                                    "srcset": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "object",
+                                        "required": [
+                                          "url",
+                                          "width"
+                                        ],
+                                        "properties": {
+                                          "url": {
+                                            "type": "string"
+                                          },
+                                          "width": {
+                                            "type": "integer"
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
           }
         }
       }

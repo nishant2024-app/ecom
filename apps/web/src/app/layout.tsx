@@ -18,7 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: { type: 'website', siteName: SITE_NAME, locale: 'en_IN', title: seo.title, description: seo.description, url: '/', images: [{ url: '/og', width: 1200, height: 630, alt: SITE_NAME }] },
     twitter: { card: 'summary_large_image', title: seo.title, description: seo.description },
     formatDetection: { telephone: false },
-    robots: process.env.NEXT_PUBLIC_NOINDEX === 'true' ? { index: false, follow: false } : { index: true, follow: true },
+    robots: process.env.SITE_NOINDEX === 'true' ? { index: false, follow: false } : { index: true, follow: true },
   };
 }
 
