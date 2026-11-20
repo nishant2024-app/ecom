@@ -114,13 +114,13 @@ describe('Google sign-in', () => {
     const cookies = Object.fromEntries(res.cookies.map((c) => [c.name, c.value]));
     const headers = { cookie: `access_token=${cookies.access_token}; csrf_token=${cookies.csrf_token}`, 'x-csrf-token': cookies.csrf_token! };
 
-    const slots = await t.db.select().from(s.deliverySlots);
-    const forbidden = await t.app.inject({ url: `/v1/admin/dispatch?date=2030-01-01&slotId=${slots[0]!.id}`, headers });
-    expect(forbidden.json().code).toBe('FORBIDDEN');
+    const forbidden = await t.app.inject({ url: '/v1/admin/inventory', headers: { ...headers } });
+    expect(forbidden.statusCode).toBe(200); // support can read the catalog
+    expect((await t.app.inject({ url: '/v1/admin/staff', headers })).json().code).toBe('FORBIDDEN');
 
     // A customer token can't reach admin routes at all.
     const customer = await signInAndroid(t.app);
-    expect((await t.app.inject({ url: `/v1/admin/dispatch?date=2030-01-01&slotId=${slots[0]!.id}`, headers: customer.headers })).statusCode).toBe(403);
+    expect((await t.app.inject({ url: '/v1/admin/orders', headers: customer.headers })).statusCode).toBe(403);
   });
 });
 
@@ -130,6 +130,6 @@ describe('docs', () => {
     expect([200, 301, 302]).toContain(res.statusCode);
     expect((await t.app.inject('/docs/')).statusCode).toBe(200);
     const spec = t.app.swagger() as { paths: Record<string, unknown> };
-    expect(Object.keys(spec.paths)).toContain('/v1/store/calendar');
+    expect(Object.keys(spec.paths)).toContain('/v1/store/orders');
   });
 });

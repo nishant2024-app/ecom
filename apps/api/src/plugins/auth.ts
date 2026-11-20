@@ -9,7 +9,7 @@ export const COOKIE_REFRESH = 'refresh_token';
 export const COOKIE_CSRF = 'csrf_token';
 
 const UNSAFE = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
-const AUDIENCE_FOR = { customer: 'store', staff: 'admin', agent: 'agent' } as const;
+const AUDIENCE_FOR = { customer: 'store', staff: 'admin' } as const;
 
 export const revokedKey = (sid: string) => `revoked:sid:${sid}`;
 

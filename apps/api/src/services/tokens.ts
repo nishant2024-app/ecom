@@ -13,9 +13,9 @@ import {
 } from 'jose';
 import { AppError } from '../lib/errors';
 
-export type Audience = 'store' | 'admin' | 'agent';
-export type UserType = 'customer' | 'staff' | 'agent';
-export type Client = 'web' | 'admin' | 'agent' | 'android';
+export type Audience = 'store' | 'admin';
+export type UserType = 'customer' | 'staff';
+export type Client = 'web' | 'admin' | 'android';
 
 export interface AccessClaims {
   sub: string;
@@ -30,7 +30,6 @@ export const ACCESS_TTL_SECONDS = 15 * 60;
 export const REFRESH_TTL_SECONDS: Record<UserType, number> = {
   customer: 30 * 24 * 3600,
   staff: 12 * 3600,
-  agent: 7 * 24 * 3600,
 };
 
 type PrivateKey = Awaited<ReturnType<typeof importPKCS8>>;

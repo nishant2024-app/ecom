@@ -22,7 +22,7 @@ const REFRESH_GRACE_MS = 30_000;
 const nonceKey = (n: string) => `nonce:${n}`;
 
 const UserSummary = Type.Object({
-  type: Type.Union([Type.Literal('customer'), Type.Literal('staff'), Type.Literal('agent')]),
+  type: Type.Union([Type.Literal('customer'), Type.Literal('staff')]),
   id: Type.String(),
   name: Type.String(),
   email: Type.String(),
@@ -44,11 +44,6 @@ type UserSummaryT = typeof UserSummary.static;
 
 const ipPrefix = (ip: string) => (ip.includes(':') ? ip.split(':').slice(0, 4).join(':') : ip.split('.').slice(0, 3).join('.') + '.0');
 
-function referralCode(name: string): string {
-  const base = name.replace(/[^A-Za-z]/g, '').slice(0, 5).toUpperCase() || 'DAIRY';
-  return `${base}${newOpaque(3).replace(/[^A-Za-z0-9]/g, '').slice(0, 4).toUpperCase()}`;
-}
-
 async function customerSummary(db: DbOrTx, id: string): Promise<UserSummaryT> {
   const [c] = await db.select().from(s.customers).where(eq(s.customers.id, id));
   if (!c) throw notFound('Customer');
@@ -59,7 +54,7 @@ async function customerSummary(db: DbOrTx, id: string): Promise<UserSummaryT> {
     email: c.email,
     phone: c.phone,
     language: c.language,
-    profileComplete: !!c.phone && !!c.defaultAddressId,
+    profileComplete: !!c.defaultAddressId,
   };
 }
 
@@ -109,7 +104,7 @@ export default async function authRoutes(fastify: FastifyInstance) {
     const accessToken = await tokens.signAccess({
       sub: user.id,
       sid: sessionId,
-      aud: user.type === 'customer' ? 'store' : user.type === 'staff' ? 'admin' : 'agent',
+      aud: user.type === 'customer' ? 'store' : 'admin',
       typ: user.type,
       role: user.role,
       client,
@@ -145,7 +140,7 @@ export default async function authRoutes(fastify: FastifyInstance) {
         summary: 'Exchange a Google ID token for a session',
         body: Type.Object({
           idToken: Type.String({ minLength: 20, maxLength: 4096 }),
-          client: Type.Union([Type.Literal('web'), Type.Literal('admin'), Type.Literal('agent'), Type.Literal('android')]),
+          client: Type.Union([Type.Literal('web'), Type.Literal('admin'), Type.Literal('android')]),
           deviceName: Type.Optional(Type.String({ maxLength: 80 })),
         }),
         response: { 200: AuthResult, ...ErrorResponses },
@@ -171,8 +166,7 @@ export default async function authRoutes(fastify: FastifyInstance) {
           }
           isNewUser = true;
           const id = newId('cus');
-          await tx.insert(s.customers).values({ id, name: identity.name, email: identity.email, referralCode: referralCode(identity.name) });
-          await tx.insert(s.wallets).values({ id: newId('wlt'), customerId: id });
+          await tx.insert(s.customers).values({ id, name: identity.name, email: identity.email });
           await tx.insert(s.authIdentities).values({ id: newId('idn'), userType: 'customer', userId: id, provider: 'google', subject: identity.sub, email: identity.email });
           return id;
         });
@@ -186,9 +180,9 @@ export default async function authRoutes(fastify: FastifyInstance) {
         return { user: await customerSummary(db, customerId), isNewUser, ...tokensOut };
       }
 
-      // Staff and agents: invite-only, bound to one Google account.
-      const table = client === 'admin' ? s.staff : s.agents;
-      const userType: UserType = client === 'admin' ? 'staff' : 'agent';
+      // Staff: invite-only, bound to one Google account.
+      const table = s.staff;
+      const userType: UserType = 'staff';
       const [byIdentity] = await db.select().from(table).where(eq(table.googleSub, identity.sub));
       let member = byIdentity;
       if (!member) {
@@ -203,8 +197,8 @@ export default async function authRoutes(fastify: FastifyInstance) {
       }
       const active = member && (member.status === 'active');
       if (!member || !active) throw new AppError('STAFF_NOT_ALLOWED', 403, 'This Google account is not an active team member');
-      const role = 'role' in member ? (member.role as string) : undefined;
-      if (userType === 'staff') await db.update(s.staff).set({ lastSignInAt: app.deps.now() }).where(eq(s.staff.id, member.id));
+      const role = member.role;
+      await db.update(s.staff).set({ lastSignInAt: app.deps.now() }).where(eq(s.staff.id, member.id));
       const tokensOut = await issue(req, reply, { type: userType, id: member.id, role }, client, deviceName);
       return {
         user: { type: userType, id: member.id, name: member.name, email: member.email, ...(role ? { role } : {}) },
@@ -258,13 +252,12 @@ export default async function authRoutes(fastify: FastifyInstance) {
       if (userType === 'customer') {
         user = await customerSummary(db, session.userId);
       } else {
-        const table = userType === 'staff' ? s.staff : s.agents;
-        const [m] = await db.select().from(table).where(eq(table.id, session.userId));
+        const [m] = await db.select().from(s.staff).where(eq(s.staff.id, session.userId));
         if (!m || m.status !== 'active') {
           await db.update(s.sessions).set({ revokedAt: now }).where(eq(s.sessions.id, session.id));
           throw new AppError('AUTH_REFRESH_INVALID', 401, 'Account is no longer active');
         }
-        role = 'role' in m ? (m.role as string) : undefined;
+        role = m.role;
         user = { type: userType, id: m.id, name: m.name, email: m.email, ...(role ? { role } : {}) };
       }
 
@@ -285,7 +278,7 @@ export default async function authRoutes(fastify: FastifyInstance) {
       const accessToken = await tokens.signAccess({
         sub: session.userId,
         sid: session.id,
-        aud: userType === 'customer' ? 'store' : userType === 'staff' ? 'admin' : 'agent',
+        aud: userType === 'customer' ? 'store' : 'admin',
         typ: userType,
         role,
         client,

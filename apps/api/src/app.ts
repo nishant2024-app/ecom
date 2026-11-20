@@ -14,14 +14,20 @@ import { errorHandler, sendProblem } from './lib/errors';
 import { MoneySchema, Problem } from './lib/schemas';
 import authPlugin from './plugins/auth';
 import idempotencyPlugin from './plugins/idempotency';
-import dispatchRoutes from './routes/admin/dispatch';
+import adminCatalogRoutes from './routes/admin/catalog';
+import dashboardRoutes from './routes/admin/dashboard';
+import adminInventoryRoutes from './routes/admin/inventory';
 import adminMeRoutes from './routes/admin/me';
+import adminOrderRoutes from './routes/admin/orders';
+import adminPeopleRoutes from './routes/admin/people';
+import devRoutes from './routes/dev';
+import checkoutRoutes from './routes/store/checkout';
+import orderRoutes from './routes/store/orders';
+import webhookRoutes from './routes/webhooks';
 import authRoutes from './routes/auth';
 import metaRoutes from './routes/meta';
 import catalogRoutes from './routes/store/catalog';
 import meRoutes from './routes/store/me';
-import subscriptionRoutes from './routes/store/subscriptions';
-import walletRoutes from './routes/store/wallet';
 
 /** pino-pretty is a dev dependency; production images don't ship it. */
 function hasPrettyLogger(): boolean {
@@ -103,10 +109,16 @@ export async function buildApp(deps: AppDeps, opts: { logger?: boolean | object 
       await v1.register(authRoutes, { prefix: '/auth' });
       await v1.register(catalogRoutes, { prefix: '/store' });
       await v1.register(meRoutes, { prefix: '/store' });
-      await v1.register(subscriptionRoutes, { prefix: '/store' });
-      await v1.register(walletRoutes, { prefix: '/store' });
+      await v1.register(checkoutRoutes, { prefix: '/store' });
+      await v1.register(orderRoutes, { prefix: '/store' });
+      await v1.register(webhookRoutes, { prefix: '/webhooks' });
+      if (deps.payments.name === 'mock' && !deps.config.isProduction) await v1.register(devRoutes, { prefix: '/dev' });
       await v1.register(adminMeRoutes, { prefix: '/admin' });
-      await v1.register(dispatchRoutes, { prefix: '/admin' });
+      await v1.register(dashboardRoutes, { prefix: '/admin' });
+      await v1.register(adminOrderRoutes, { prefix: '/admin' });
+      await v1.register(adminCatalogRoutes, { prefix: '/admin' });
+      await v1.register(adminInventoryRoutes, { prefix: '/admin' });
+      await v1.register(adminPeopleRoutes, { prefix: '/admin' });
     },
     { prefix: '/v1' },
   );

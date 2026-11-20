@@ -3,6 +3,7 @@ import type { Config } from './config';
 import type { Permission } from './lib/permissions';
 import type { GoogleVerifier } from './services/google';
 import type { Kv } from './services/kv';
+import type { PaymentProvider } from './services/payments';
 import type { AccessClaims, TokenService } from './services/tokens';
 
 export interface AppDeps {
@@ -11,11 +12,12 @@ export interface AppDeps {
   kv: Kv;
   tokens: TokenService;
   google: GoogleVerifier;
+  payments: PaymentProvider;
   /** Injectable clock for tests. */
   now: () => Date;
 }
 
-export type AuthMode = 'public' | 'customer' | 'staff' | 'agent' | 'any';
+export type AuthMode = 'public' | 'customer' | 'staff' | 'any';
 
 export interface AuthContext extends AccessClaims {
   via: 'bearer' | 'cookie';

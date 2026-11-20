@@ -1,4 +1,4 @@
-import { newId, postings } from '@dairy/core';
+import { newId } from '@dairy/core';
 import { createDb, schema as s } from '@dairy/db';
 import { eq } from 'drizzle-orm';
 import type { FastifyInstance } from 'fastify';
@@ -8,7 +8,7 @@ import { loadConfig } from '../src/config';
 import { createGoogleVerifier } from '../src/services/google';
 import { createMemoryKv } from '../src/services/kv';
 import { TokenService } from '../src/services/tokens';
-import { postToWallet } from '../src/services/wallet';
+import { createMockProvider, type PaymentProvider } from '../src/services/payments';
 
 export const CLIENT_ID = 'test-client.apps.googleusercontent.com';
 
@@ -31,10 +31,11 @@ export interface TestApp {
   app: FastifyInstance;
   db: ReturnType<typeof createDb>['db'];
   now: Date;
+  payments: PaymentProvider;
   close: () => Promise<void>;
 }
 
-export async function createTestApp(now = new Date()): Promise<TestApp> {
+export async function createTestApp(now = new Date(), payments: PaymentProvider = createMockProvider()): Promise<TestApp> {
   const config = loadConfig();
   const handle = createDb(config.DATABASE_URL, { max: 5, appName: 'test' });
   const app = await buildApp(
@@ -44,12 +45,13 @@ export async function createTestApp(now = new Date()): Promise<TestApp> {
       kv: createMemoryKv(),
       tokens: await TokenService.fromConfig('', config.PUBLIC_API_URL, true),
       google: createGoogleVerifier(CLIENT_ID, createLocalJWKSet({ keys: [googleJwk] })),
+      payments,
       now: () => now,
     },
     { logger: false },
   );
   await app.ready();
-  return { app, db: handle.db, now, close: async () => { await app.close(); await handle.close(); } };
+  return { app, db: handle.db, now, payments, close: async () => { await app.close(); await handle.close(); } };
 }
 
 export const uniq = () => newId('req').slice(-10).toLowerCase();
@@ -64,28 +66,38 @@ export async function signInAndroid(app: FastifyInstance, sub = `g-${uniq()}`, e
   return { body, headers: { authorization: `Bearer ${body.accessToken}` }, customerId: body.user.id as string, sub };
 }
 
-/** A signed-in customer with a phone, a serviceable address and wallet credit. */
-export async function readyCustomer(t: TestApp, walletPaise = 50_000) {
+/** A signed-in customer with a default delivery address. */
+export async function readyCustomer(t: TestApp, pincode = '411045') {
   const user = await signInAndroid(t.app);
-  await t.app.inject({ method: 'PATCH', url: '/v1/store/me', headers: user.headers, payload: { phone: '98765 43210' } });
-  const address = (
-    await t.app.inject({
-      method: 'POST',
-      url: '/v1/store/me/addresses',
-      headers: user.headers,
-      payload: { line1: 'B-704, Sai Residency', city: 'Pune', state: 'Maharashtra', pincode: '411045', location: { lat: 18.559, lng: 73.7868 } },
-    })
-  ).json();
-  if (walletPaise > 0) {
-    const [wallet] = await t.db.select().from(s.wallets).where(eq(s.wallets.customerId, user.customerId));
-    await t.db.transaction((tx) => postToWallet(tx, wallet!.id, postings.topup(walletPaise), { type: 'test', id: newId('top') }, 'Test top-up'));
-  }
-  return { ...user, addressId: address.id as string };
+  const res = await t.app.inject({
+    method: 'POST',
+    url: '/v1/store/me/addresses',
+    headers: user.headers,
+    payload: { name: 'Asha Test', phone: '98765 43210', line1: 'B-704, Sai Residency', city: 'Pune', pincode, ...(pincode.startsWith('9') ? { state: 'Army Post' } : {}) },
+  });
+  if (res.statusCode !== 201) throw new Error(`address failed: ${res.body}`);
+  return { ...user, addressId: res.json().id as string };
 }
 
-export async function catalogIds(t: TestApp) {
+export async function variantIds(t: TestApp) {
   const variants = await t.db.select().from(s.productVariants);
-  const slots = await t.db.select().from(s.deliverySlots);
   const bySku = (sku: string) => variants.find((v) => v.sku === sku)!.id;
-  return { slotId: slots[0]!.id, toned500: bySku('TM-500'), curd400: bySku('CU-400'), paneer200: bySku('PN-200') };
+  return { ghee500: bySku('GH-A2-500'), powder500: bySku('MP-WH-500'), uht1l: bySku('UHT-TM-1L'), milkCake: bySku('SW-MC-250'), peda: bySku('SW-PD-250'), buffalo500: bySku('GH-BF-500') };
+}
+
+/** Sign in a staff member with a role through the real Google flow; returns cookie + CSRF headers. */
+export async function staffHeaders(t: TestApp, role: string) {
+  const email = `${role}-${uniq()}@example.in`;
+  await t.db.insert(s.staff).values({ id: newId('stf'), email, name: `${role} user`, role });
+  const { nonce } = (await t.app.inject({ method: 'POST', url: '/v1/auth/nonce' })).json();
+  const login = await t.app.inject({ method: 'POST', url: '/v1/auth/google', payload: { idToken: await googleIdToken({ sub: `g-${uniq()}`, email, nonce }), client: 'admin' } });
+  if (login.statusCode !== 200) throw new Error(`staff login failed: ${login.body}`);
+  const c = Object.fromEntries(login.cookies.map((x) => [x.name, x.value]));
+  return { cookie: `access_token=${c.access_token}; csrf_token=${c.csrf_token}`, 'x-csrf-token': c.csrf_token! };
+}
+
+/** Available units for a variant (on hand − reserved over active batches). */
+export async function stockOf(t: TestApp, variantId: string) {
+  const rows = await t.db.select().from(s.batches).where(eq(s.batches.variantId, variantId));
+  return rows.reduce((n, b) => n + b.onHand - b.reserved, 0);
 }

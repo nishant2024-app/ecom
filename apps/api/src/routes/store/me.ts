@@ -1,29 +1,25 @@
-import { newId, normalizeIndianMobile } from '@dairy/core';
+import { newId, normalizeIndianMobile, stateForPincode } from '@dairy/core';
 import { schema as s } from '@dairy/db';
 import type { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { Type } from '@sinclair/typebox';
-import { and, asc, eq, isNull, sql } from 'drizzle-orm';
+import { and, asc, eq, isNull } from 'drizzle-orm';
 import type { FastifyInstance } from 'fastify';
 import { AppError, notFound } from '../../lib/errors';
-import { ErrorResponses, IdParam, Nullable, money } from '../../lib/schemas';
+import { ErrorResponses, IdParam, Nullable } from '../../lib/schemas';
 import { requireAuth, revokedKey } from '../../plugins/auth';
-import { resolveZone } from '../../services/store';
 import { ACCESS_TTL_SECONDS } from '../../services/tokens';
-
-const GeoPoint = Type.Object({ lat: Type.Number({ minimum: -90, maximum: 90 }), lng: Type.Number({ minimum: -180, maximum: 180 }) });
 
 const AddressInput = Type.Object(
   {
     label: Type.Optional(Type.String({ maxLength: 30 })),
+    name: Type.String({ minLength: 2, maxLength: 80 }),
+    phone: Type.String({ maxLength: 20 }),
     line1: Type.String({ minLength: 3, maxLength: 120 }),
     line2: Type.Optional(Type.String({ maxLength: 120 })),
     landmark: Type.Optional(Type.String({ maxLength: 120 })),
-    society: Type.Optional(Type.String({ maxLength: 120 })),
     city: Type.String({ minLength: 2, maxLength: 60 }),
-    state: Type.String({ minLength: 2, maxLength: 60 }),
+    state: Type.Optional(Type.String({ minLength: 2, maxLength: 60 })),
     pincode: Type.String({ pattern: '^[1-9][0-9]{5}$' }),
-    location: Type.Optional(GeoPoint),
-    deliveryInstructions: Type.Optional(Type.String({ maxLength: 300 })),
     isDefault: Type.Optional(Type.Boolean()),
   },
   { additionalProperties: false },
@@ -32,16 +28,14 @@ const AddressInput = Type.Object(
 const AddressOut = Type.Object({
   id: Type.String(),
   label: Nullable(Type.String()),
+  name: Type.String(),
+  phone: Type.String(),
   line1: Type.String(),
   line2: Nullable(Type.String()),
   landmark: Nullable(Type.String()),
-  society: Nullable(Type.String()),
   city: Type.String(),
   state: Type.String(),
   pincode: Type.String(),
-  location: Nullable(GeoPoint),
-  deliveryInstructions: Nullable(Type.String()),
-  zoneId: Type.String(),
   isDefault: Type.Boolean(),
 });
 
@@ -58,10 +52,8 @@ const CustomerOut = Type.Object({
 
 const Prefs = Type.Object(
   {
-    marketingPush: Type.Optional(Type.Boolean()),
     marketingEmail: Type.Optional(Type.Boolean()),
-    cutoffReminder: Type.Optional(Type.Boolean()),
-    deliveredPush: Type.Optional(Type.Boolean()),
+    orderUpdates: Type.Optional(Type.Boolean()),
   },
   { additionalProperties: false },
 );
@@ -82,36 +74,49 @@ export default async function meRoutes(fastify: FastifyInstance) {
     email: c.email,
     phone: c.phone,
     language: c.language,
-    profileComplete: !!c.phone && !!c.defaultAddressId,
+    profileComplete: !!c.defaultAddressId,
     defaultAddressId: c.defaultAddressId,
     createdAt: c.createdAt.toISOString(),
   });
 
   async function listAddresses(customerId: string, defaultId: string | null) {
     const rows = await db
-      .select({
-        a: s.addresses,
-        lat: sql<number | null>`ST_Y(${s.addresses.location}::geometry)`,
-        lng: sql<number | null>`ST_X(${s.addresses.location}::geometry)`,
-      })
+      .select()
       .from(s.addresses)
       .where(and(eq(s.addresses.customerId, customerId), isNull(s.addresses.archivedAt)))
       .orderBy(asc(s.addresses.createdAt));
-    return rows.map(({ a, lat, lng }) => ({
+    return rows.map((a) => ({
       id: a.id,
       label: a.label,
+      name: a.name,
+      phone: a.phone,
       line1: a.line1,
       line2: a.line2,
       landmark: a.landmark,
-      society: a.society,
       city: a.city,
       state: a.state,
       pincode: a.pincode,
-      location: lat !== null && lng !== null ? { lat: Number(lat), lng: Number(lng) } : null,
-      deliveryInstructions: a.deliveryInstructions,
-      zoneId: a.zoneId ?? '',
       isDefault: a.id === defaultId,
     }));
+  }
+
+  /** Validate and normalise an address body; state comes from the pincode when not given. */
+  function cleanAddress(body: typeof AddressInput.static) {
+    const phone = normalizeIndianMobile(body.phone);
+    if (!phone) throw new AppError('VALIDATION_FAILED', 400, 'Enter a valid 10-digit Indian mobile number', [{ field: '/phone', code: 'format', message: 'Invalid Indian mobile number' }]);
+    const state = body.state ?? stateForPincode(body.pincode);
+    if (!state) throw new AppError('VALIDATION_FAILED', 400, 'Enter a valid pincode', [{ field: '/pincode', code: 'format', message: 'Unknown pincode' }]);
+    return {
+      label: body.label ?? null,
+      name: body.name.trim(),
+      phone,
+      line1: body.line1.trim(),
+      line2: body.line2?.trim() || null,
+      landmark: body.landmark?.trim() || null,
+      city: body.city.trim(),
+      state,
+      pincode: body.pincode,
+    };
   }
 
   app.get('/me', { config: customerCfg, schema: { tags: ['Profile'], summary: 'My profile', response: { 200: CustomerOut } } }, async (req) =>
@@ -160,7 +165,7 @@ export default async function meRoutes(fastify: FastifyInstance) {
       schema: {
         tags: ['Profile'],
         summary: 'Request account deletion',
-        response: { 202: Type.Object({ status: Type.String(), erasesOn: Type.String(), walletRefund: Type.Any() }) },
+        response: { 202: Type.Object({ status: Type.String(), erasesOn: Type.String() }) },
       },
     },
     async (req, reply) => {
@@ -168,21 +173,16 @@ export default async function meRoutes(fastify: FastifyInstance) {
       const now = app.deps.now();
       const result = await db.transaction(async (tx) => {
         await tx.update(s.customers).set({ status: 'deletion_requested', deletionRequestedAt: now }).where(eq(s.customers.id, auth.sub));
-        await tx
-          .update(s.subscriptions)
-          .set({ status: 'cancelled', cancelReason: 'account_deleted' })
-          .where(and(eq(s.subscriptions.customerId, auth.sub), eq(s.subscriptions.status, 'active')));
         const sessions = await tx
           .update(s.sessions)
           .set({ revokedAt: now })
           .where(and(eq(s.sessions.userType, 'customer'), eq(s.sessions.userId, auth.sub), isNull(s.sessions.revokedAt)))
           .returning({ id: s.sessions.id });
-        const [wallet] = await tx.select({ balance: s.wallets.balancePaise }).from(s.wallets).where(eq(s.wallets.customerId, auth.sub));
-        return { sessions, balance: Math.max(0, wallet?.balance ?? 0) };
+        return { sessions };
       });
       for (const ses of result.sessions) await app.deps.kv.set(revokedKey(ses.id), '1', ACCESS_TTL_SECONDS);
       const erasesOn = new Date(now.getTime() + 30 * 86_400_000).toISOString().slice(0, 10);
-      return reply.status(202).send({ status: 'deletion_requested', erasesOn, walletRefund: money(result.balance) });
+      return reply.status(202).send({ status: 'deletion_requested', erasesOn });
     },
   );
 
@@ -203,30 +203,12 @@ export default async function meRoutes(fastify: FastifyInstance) {
     },
     async (req, reply) => {
       const customerId = requireAuth(req).sub;
-      const body = req.body;
-      const zone = await resolveZone(db, { pincode: body.pincode, location: body.location ?? null });
-      if (!zone.zoneId) {
-        throw new AppError('NOT_SERVICEABLE', 422, zone.needsPin ? 'Drop a pin on the map so we can find your delivery area' : 'We do not deliver to this address yet');
-      }
+      const values = cleanAddress(req.body);
       const id = newId('adr');
       const c = await loadCustomer(customerId);
       await db.transaction(async (tx) => {
-        await tx.insert(s.addresses).values({
-          id,
-          customerId,
-          label: body.label ?? null,
-          line1: body.line1,
-          line2: body.line2 ?? null,
-          landmark: body.landmark ?? null,
-          society: body.society ?? null,
-          city: body.city,
-          state: body.state,
-          pincode: body.pincode,
-          location: body.location ?? null,
-          zoneId: zone.zoneId,
-          deliveryInstructions: body.deliveryInstructions ?? null,
-        });
-        if (body.isDefault || !c.defaultAddressId) await tx.update(s.customers).set({ defaultAddressId: id }).where(eq(s.customers.id, customerId));
+        await tx.insert(s.addresses).values({ id, customerId, ...values });
+        if (req.body.isDefault || !c.defaultAddressId) await tx.update(s.customers).set({ defaultAddressId: id }).where(eq(s.customers.id, customerId));
       });
       const fresh = await loadCustomer(customerId);
       const out = (await listAddresses(customerId, fresh.defaultAddressId)).find((a) => a.id === id)!;
@@ -248,24 +230,7 @@ export default async function meRoutes(fastify: FastifyInstance) {
         .from(s.addresses)
         .where(and(eq(s.addresses.id, req.params.addressId), eq(s.addresses.customerId, customerId), isNull(s.addresses.archivedAt)));
       if (!existing) throw notFound('Address');
-      const zone = await resolveZone(db, { pincode: body.pincode, location: body.location ?? null });
-      if (!zone.zoneId) throw new AppError('NOT_SERVICEABLE', 422, 'We do not deliver to this address yet');
-      await db
-        .update(s.addresses)
-        .set({
-          label: body.label ?? null,
-          line1: body.line1,
-          line2: body.line2 ?? null,
-          landmark: body.landmark ?? null,
-          society: body.society ?? null,
-          city: body.city,
-          state: body.state,
-          pincode: body.pincode,
-          location: body.location ?? null,
-          zoneId: zone.zoneId,
-          deliveryInstructions: body.deliveryInstructions ?? null,
-        })
-        .where(eq(s.addresses.id, existing.id));
+      await db.update(s.addresses).set(cleanAddress(body)).where(eq(s.addresses.id, existing.id));
       if (body.isDefault) await db.update(s.customers).set({ defaultAddressId: existing.id }).where(eq(s.customers.id, customerId));
       const c = await loadCustomer(customerId);
       return (await listAddresses(customerId, c.defaultAddressId)).find((a) => a.id === existing.id)!;
@@ -277,12 +242,6 @@ export default async function meRoutes(fastify: FastifyInstance) {
     { config: customerCfg, schema: { tags: ['Profile'], summary: 'Remove address', params: IdParam('addressId') } },
     async (req, reply) => {
       const customerId = requireAuth(req).sub;
-      const [inUse] = await db
-        .select({ id: s.subscriptions.id })
-        .from(s.subscriptions)
-        .where(and(eq(s.subscriptions.addressId, req.params.addressId), eq(s.subscriptions.status, 'active')))
-        .limit(1);
-      if (inUse) throw new AppError('CONFLICT', 409, 'This address is used by an active subscription; change the subscription first');
       const archived = await db
         .update(s.addresses)
         .set({ archivedAt: app.deps.now() })
