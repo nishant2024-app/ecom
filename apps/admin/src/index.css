@@ -9,3 +9,11 @@
 html {
   font-size: 14px;
 }
+:root {
+  --chart: #1d5a40;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --chart: #6cc48f;
+  }
+}

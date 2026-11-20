@@ -6,6 +6,7 @@ export interface Problem {
   detail?: string;
   status: number;
   requestId: string;
+  errors?: { field: string; code: string; message: string }[];
 }
 export class ApiError extends Error {
   constructor(public readonly problem: Problem) {
@@ -42,4 +43,3 @@ export async function api<T>(path: string, init: RequestInit & { idempotencyKey?
   throw new ApiError(body ?? { code: 'INTERNAL', title: 'Network error', status: res.status, requestId: '' });
 }
 
-export const tomorrowIST = () => new Date(Date.now() + 5.5 * 3600_000 + 86_400_000).toISOString().slice(0, 10);
