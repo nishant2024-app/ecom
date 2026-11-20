@@ -1,0 +1,25 @@
+# Local development services. Usage: docker compose -f infra/compose/dev.yml up -d
+name: dairy-dev
+services:
+  postgres:
+    image: postgis/postgis:17-3.5
+    environment:
+      POSTGRES_USER: migrator
+      POSTGRES_PASSWORD: migrator
+      POSTGRES_DB: dairy
+    ports: ['5432:5432']
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init-dev.sql:/docker-entrypoint-initdb.d/10-init.sql:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U migrator -d dairy']
+      interval: 5s
+      retries: 10
+  valkey:
+    image: valkey/valkey:8-alpine
+    ports: ['6379:6379']
+  mailpit:
+    image: axllent/mailpit:latest
+    ports: ['8025:8025', '1025:1025']
+volumes:
+  pgdata:

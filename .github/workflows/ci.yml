@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_USER: migrator
+          POSTGRES_PASSWORD: migrator
+          POSTGRES_DB: dairy_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U migrator" --health-interval 5s --health-retries 10
+      valkey:
+        image: valkey/valkey:8-alpine
+        ports: ['6379:6379']
+    env:
+      TEST_DATABASE_URL: postgres://app:app@localhost:5432/dairy_test
+      TEST_DATABASE_MIGRATOR_URL: postgres://migrator:migrator@localhost:5432/dairy_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Create app role and extensions
+        run: |
+          PGPASSWORD=migrator psql -h localhost -U migrator -d dairy_test -c "CREATE ROLE app LOGIN PASSWORD 'app'; CREATE EXTENSION IF NOT EXISTS postgis; CREATE EXTENSION IF NOT EXISTS pg_trgm; GRANT ALL ON SCHEMA public TO app;"
+      - name: Typecheck
+        run: pnpm -r --filter "./packages/*" --filter @dairy/api --filter @dairy/admin --filter @dairy/web typecheck
+      - name: Core unit tests
+        run: pnpm --filter @dairy/core test
+      - name: API integration tests
+        run: pnpm --filter @dairy/api test
+      - name: Design token contrast
+        run: pnpm --filter @dairy/ui contrast
+      - name: OpenAPI contract lint
+        run: pnpm exec redocly lint docs/api/openapi.yaml --config docs/api/redocly.yaml
+      - name: Build
+        run: |
+          pnpm --filter @dairy/api build
+          pnpm --filter @dairy/admin build
+          NODE_ENV=production pnpm --filter @dairy/web build

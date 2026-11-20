@@ -7,6 +7,7 @@ import scalar from '@scalar/fastify-api-reference';
 import type { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { newId } from '@dairy/core';
 import Fastify, { type FastifyInstance } from 'fastify';
+import { createRequire } from 'node:module';
 import './context';
 import type { AppDeps } from './context';
 import { errorHandler, sendProblem } from './lib/errors';
@@ -22,6 +23,16 @@ import meRoutes from './routes/store/me';
 import subscriptionRoutes from './routes/store/subscriptions';
 import walletRoutes from './routes/store/wallet';
 
+/** pino-pretty is a dev dependency; production images don't ship it. */
+function hasPrettyLogger(): boolean {
+  try {
+    createRequire(import.meta.url).resolve('pino-pretty');
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function buildApp(deps: AppDeps, opts: { logger?: boolean | object } = {}): Promise<FastifyInstance> {
   const app = Fastify({
     logger:
@@ -29,7 +40,7 @@ export async function buildApp(deps: AppDeps, opts: { logger?: boolean | object 
       {
         level: deps.config.LOG_LEVEL,
         redact: ['req.headers.authorization', 'req.headers.cookie', 'res.headers["set-cookie"]'],
-        ...(deps.config.NODE_ENV === 'development' ? { transport: { target: 'pino-pretty' } } : {}),
+        ...(deps.config.NODE_ENV === 'development' && hasPrettyLogger() ? { transport: { target: 'pino-pretty' } } : {}),
       },
     genReqId: () => newId('req'),
     requestIdHeader: false,
