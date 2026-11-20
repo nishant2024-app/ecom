@@ -41,6 +41,8 @@ export const ID_PREFIXES = {
   batch: 'bat',
   stockMovement: 'stm',
   cutoffRun: 'cor',
+  orderEvent: 'oev',
+  productionPlan: 'ppl',
   webhookEvent: 'whe',
   upload: 'upl',
   audit: 'aud',
