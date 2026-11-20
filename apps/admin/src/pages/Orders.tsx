@@ -1,7 +1,8 @@
 import { PackShot } from '@dairy/ui';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Btn, Card, Empty, Field, Page, StatusBadge, input, td, th } from '../components/ui';
-import { api, ApiError } from '../lib/api';
+import { api, ApiError, download } from '../lib/api';
+import { printPackingSlips } from '../lib/packing-slip';
 import { STATUS, rupees, when, type Money } from '../lib/format';
 
 interface Row {
@@ -23,8 +24,12 @@ interface Row {
 
 const TABS = ['', 'confirmed', 'packed', 'shipped', 'delivered', 'pending_payment', 'cancelled'];
 
-export function OrdersPage({ status: initial }: { status?: string }) {
+export function OrdersPage({ status: initial, permissions = [] }: { status?: string; permissions?: string[] }) {
   const [status, setStatus] = useState(initial ?? '');
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [note, setNote] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const canFulfil = permissions.includes('orders.fulfil');
   const [q, setQ] = useState('');
   const [data, setData] = useState<{ data: Row[]; counts: Record<string, number> } | null>(null);
   const load = useCallback(() => {
@@ -37,8 +42,45 @@ export function OrdersPage({ status: initial }: { status?: string }) {
   }, [load, q]);
 
   const total = data ? Object.values(data.counts).reduce((a, b) => a + b, 0) : 0;
+  const rows = data?.data ?? [];
+  const toggle = (id: string) => setSelected((s0) => {
+    const s1 = new Set(s0);
+    if (s1.has(id)) s1.delete(id);
+    else s1.add(id);
+    return s1;
+  });
+  const allOn = rows.length > 0 && rows.every((r) => selected.has(r.id));
+  const picked = rows.filter((r) => selected.has(r.id));
+
+  async function bulkPack() {
+    setBusy(true);
+    setNote(null);
+    try {
+      const r = await api<{ packed: string[]; failed: { id: string; reason: string }[] }>('/v1/admin/orders/bulk/pack', { method: 'POST', body: JSON.stringify({ orderIds: picked.map((o) => o.id) }) });
+      setNote(`${r.packed.length} marked packed${r.failed.length ? `, ${r.failed.length} skipped (not in “Paid” status)` : ''}.`);
+      setSelected(new Set());
+      await load();
+    } catch (e) {
+      setNote(e instanceof ApiError ? (e.problem.detail ?? e.problem.title) : 'Failed');
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function slips() {
+    const r = await api<{ data: SlipOrder[] }>('/v1/admin/orders/packing-slips', { method: 'POST', body: JSON.stringify({ orderIds: picked.map((o) => o.id) }) });
+    printPackingSlips(r.data);
+  }
+
   return (
-    <Page title="Orders" subtitle="Pack, ship and track every order.">
+    <Page
+      title="Orders"
+      subtitle="Pack, ship and track every order."
+      actions={
+        <Btn variant="outline" onClick={() => download(`/v1/admin/orders/export.csv${status ? `?status=${status}` : ''}`, 'orders.csv').catch(() => setNote('Export failed'))}>
+          Export CSV
+        </Btn>
+      }
+    >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap gap-1">
           {TABS.map((t) => (
@@ -54,10 +96,22 @@ export function OrdersPage({ status: initial }: { status?: string }) {
         </div>
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search number, name, phone, pincode, AWB" aria-label="Search orders" className={`${input} max-w-xs`} />
       </div>
+      {picked.length > 0 && (
+        <div className="sticky top-0 z-10 mt-4 flex flex-wrap items-center gap-2 rounded-3 bg-forest px-4 py-2 text-on-forest">
+          <span className="num mr-2">{picked.length} selected</span>
+          <Btn variant="primary" onClick={slips}>Print packing slips</Btn>
+          {canFulfil && <Btn variant="primary" disabled={busy} onClick={bulkPack}>Mark packed</Btn>}
+          <button type="button" className="ml-auto text-sm underline" onClick={() => setSelected(new Set())}>Clear</button>
+        </div>
+      )}
+      {note && <p role="status" className="mt-3 text-sm text-ink-2">{note}</p>}
       <div className="mt-4 overflow-x-auto rounded-4 border border-rule bg-paper">
         <table className="w-full min-w-[820px]">
           <thead>
             <tr className="rule-b">
+              <th className={`${th} w-10`}>
+                <input type="checkbox" aria-label="Select all orders on this page" checked={allOn} onChange={() => setSelected(allOn ? new Set() : new Set(rows.map((r) => r.id)))} className="accent-[var(--forest)]" />
+              </th>
               <th className={th}>Order</th>
               <th className={th}>Customer</th>
               <th className={th}>Items</th>
@@ -68,7 +122,10 @@ export function OrdersPage({ status: initial }: { status?: string }) {
           </thead>
           <tbody>
             {data?.data.map((o) => (
-              <tr key={o.id} onClick={() => (location.hash = `#/orders/${o.id}`)} className="cursor-pointer rule-b hover:bg-paper-2">
+              <tr key={o.id} onClick={() => (location.hash = `#/orders/${o.id}`)} className={`cursor-pointer rule-b hover:bg-paper-2 ${selected.has(o.id) ? 'bg-meadow/20' : ''}`}>
+                <td className={td} onClick={(e) => e.stopPropagation()}>
+                  <input type="checkbox" aria-label={`Select order ${o.number}`} checked={selected.has(o.id)} onChange={() => toggle(o.id)} className="accent-[var(--forest)]" />
+                </td>
                 <td className={td}>
                   <span className="num">{o.number}</span>
                   <span className="block text-xs text-ink-2">{when(o.placedAt)}</span>
@@ -98,6 +155,8 @@ export function OrdersPage({ status: initial }: { status?: string }) {
     </Page>
   );
 }
+
+export type SlipOrder = Pick<Detail, 'number' | 'placedAt' | 'items' | 'shippingAddress' | 'delivery' | 'total' | 'note'>;
 
 interface Detail {
   id: string;

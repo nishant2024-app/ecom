@@ -1,5 +1,6 @@
 import { PackShot } from '@dairy/ui';
 import { useEffect, useState } from 'react';
+import { PhotoManager } from '../components/PhotoManager';
 import { Btn, Card, Drawer, Field, Page, input, td, th } from '../components/ui';
 import { api, ApiError } from '../lib/api';
 import { rupees, type Money } from '../lib/format';
@@ -17,6 +18,8 @@ interface Row {
   status: string;
   featured: boolean;
   pack: Pack;
+  image: string | null;
+  photoCount: number;
   variants: { id: string; sku: string; packSize: string; price: Money; mrp: Money; status: string; available: number; lowStockThreshold: number }[];
 }
 interface VariantForm {
@@ -103,10 +106,16 @@ export function ProductsPage({ permissions }: { permissions: string[] }) {
                 <tr key={p.id} onClick={() => open(p.id)} className="cursor-pointer rule-b hover:bg-paper-2">
                   <td className={td}>
                     <span className="flex items-center gap-3">
-                      <PackShot kind={p.pack.kind} color={p.pack.color} accent={p.pack.accent} label={p.name} className="h-12 w-9" />
+                      {p.image ? (
+                        <img src={p.image} alt="" className="h-12 w-12 rounded-2 object-cover" />
+                      ) : (
+                        <PackShot kind={p.pack.kind} color={p.pack.color} accent={p.pack.accent} label={p.name} className="h-12 w-9" />
+                      )}
                       <span>
                         {p.name} {p.featured && <span className="ml-1 rounded-pill bg-signal/40 px-2 py-0.5 text-xs">Featured</span>}
-                        <span className="block text-xs text-ink-2">{p.category}</span>
+                        <span className="block text-xs text-ink-2">
+                          {p.category} · {p.photoCount ? `${p.photoCount} photo${p.photoCount > 1 ? 's' : ''}` : <span className="text-alert">no photos</span>}
+                        </span>
                       </span>
                     </span>
                   </td>
@@ -131,12 +140,15 @@ export function ProductsPage({ permissions }: { permissions: string[] }) {
       <Drawer open={!!editing} onClose={() => setEditing(null)} title={editing?.id ? `Edit ${editing.nameEn}` : 'New product'} wide>
         {editing && (
           <ProductEditor
+            key={editing.id ?? 'new'}
             initial={editing}
             categories={categories}
             readOnly={!canWrite}
-            onSaved={() => {
-              setEditing(null);
+            onSaved={(id, created) => {
               void load();
+              // A new product stays open so photos can be added straight away.
+              if (created) void open(id);
+              else setEditing(null);
             }}
           />
         )}
@@ -145,7 +157,7 @@ export function ProductsPage({ permissions }: { permissions: string[] }) {
   );
 }
 
-function ProductEditor({ initial, categories, onSaved, readOnly }: { initial: ProductForm; categories: { id: string; nameEn: string }[]; onSaved: () => void; readOnly: boolean }) {
+function ProductEditor({ initial, categories, onSaved, readOnly }: { initial: ProductForm; categories: { id: string; nameEn: string }[]; onSaved: (id: string, created: boolean) => void; readOnly: boolean }) {
   const [f, setF] = useState<ProductForm>(initial);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -157,8 +169,8 @@ function ProductEditor({ initial, categories, onSaved, readOnly }: { initial: Pr
     setError(null);
     const { id, ...body } = f;
     try {
-      await api(id ? `/v1/admin/products/${id}` : '/v1/admin/products', { method: id ? 'PUT' : 'POST', body: JSON.stringify(body) });
-      onSaved();
+      const out = await api<{ id: string }>(id ? `/v1/admin/products/${id}` : '/v1/admin/products', { method: id ? 'PUT' : 'POST', body: JSON.stringify(body) });
+      onSaved(out.id, !id);
     } catch (e) {
       setError(e instanceof ApiError ? (e.problem.errors?.[0] ? `${e.problem.errors[0].field}: ${e.problem.errors[0].message}` : (e.problem.detail ?? e.problem.title)) : 'Could not save');
     } finally {
@@ -205,6 +217,10 @@ function ProductEditor({ initial, categories, onSaved, readOnly }: { initial: Pr
           </div>
         </div>
       </div>
+
+      <Card title="Photos">
+        {f.id ? <PhotoManager productId={f.id} readOnly={readOnly} /> : <p className="text-sm text-ink-2">Save the product first, then add photos.</p>}
+      </Card>
 
       <div className="flex flex-wrap gap-4">
         <Field label="Status">

@@ -66,6 +66,95 @@ export default async function adminOrderRoutes(fastify: FastifyInstance) {
   );
 
   app.get(
+    '/orders/export.csv',
+    {
+      config: { auth: 'staff', permission: 'orders.read' },
+      schema: {
+        tags: ['Admin'],
+        summary: 'Download orders as CSV (opens in Excel / Google Sheets)',
+        querystring: Type.Object({ status: Type.Optional(STATUS), from: Type.Optional(Type.String({ format: 'date' })), to: Type.Optional(Type.String({ format: 'date' })) }),
+      },
+    },
+    async (req, reply) => {
+      const where: SQL[] = [];
+      if (req.query.status) where.push(eq(s.orders.status, req.query.status));
+      if (req.query.from) where.push(sql`(${s.orders.createdAt} at time zone 'Asia/Kolkata')::date >= ${req.query.from}::date`);
+      if (req.query.to) where.push(sql`(${s.orders.createdAt} at time zone 'Asia/Kolkata')::date <= ${req.query.to}::date`);
+      const rows = await db.select().from(s.orders).where(and(...where)).orderBy(desc(s.orders.id)).limit(20_000);
+      const summaries = await orderSummaries(db, rows.map((o) => o.id));
+      const cell = (v: unknown) => {
+        let t = v == null ? '' : String(v);
+        if (/^[=+\-@\t\r]/.test(t)) t = `'${t}`; // stop spreadsheet formula injection
+        return /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t;
+      };
+      const rupees = (p: number) => (p / 100).toFixed(2);
+      const header = ['Order', 'Placed (IST)', 'Status', 'Customer', 'Phone', 'City', 'State', 'Pincode', 'Items', 'Subtotal', 'Shipping', 'Discount', 'Total', 'Courier', 'Tracking'];
+      const lines = rows.map((o) =>
+        [
+          o.number,
+          o.createdAt.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', hour12: false }),
+          o.status,
+          o.shippingAddress.name,
+          o.shippingAddress.phone,
+          o.shippingAddress.city,
+          o.shippingAddress.state,
+          o.shippingAddress.pincode,
+          summaries.get(o.id)?.count ?? 0,
+          rupees(o.subtotalPaise),
+          rupees(o.shippingPaise),
+          rupees(o.discountPaise),
+          rupees(o.totalPaise),
+          o.courier,
+          o.trackingNumber,
+        ]
+          .map(cell)
+          .join(','),
+      );
+      reply.header('content-type', 'text/csv; charset=utf-8').header('content-disposition', `attachment; filename="orders-${new Date().toISOString().slice(0, 10)}.csv"`);
+      return '\uFEFF' + [header.join(','), ...lines].join('\r\n') + '\r\n';
+    },
+  );
+
+  app.post(
+    '/orders/bulk/pack',
+    {
+      config: { auth: 'staff', permission: 'orders.fulfil' },
+      schema: {
+        tags: ['Admin'],
+        summary: 'Mark several confirmed orders packed; returns which succeeded',
+        body: Type.Object({ orderIds: Type.Array(Type.String(), { minItems: 1, maxItems: 100 }) }, { additionalProperties: false }),
+      },
+    },
+    async (req) => {
+      const done: string[] = [];
+      const failed: { id: string; reason: string }[] = [];
+      for (const id of new Set(req.body.orderIds)) {
+        try {
+          await db.transaction((tx) => transition(tx, id, 'pack', actor(req)));
+          await audit(db, req, 'order.pack', 'order', id, null, { bulk: true });
+          done.push(id);
+        } catch (e) {
+          failed.push({ id, reason: e instanceof Error ? e.message : 'failed' });
+        }
+      }
+      return { packed: done, failed };
+    },
+  );
+
+  app.post(
+    '/orders/packing-slips',
+    {
+      config: { auth: 'staff', permission: 'orders.read' },
+      schema: {
+        tags: ['Admin'],
+        summary: 'Full detail for several orders, for printing packing slips',
+        body: Type.Object({ orderIds: Type.Array(Type.String(), { minItems: 1, maxItems: 100 }) }, { additionalProperties: false }),
+      },
+    },
+    async (req) => ({ data: await Promise.all([...new Set(req.body.orderIds)].map((id) => orderView(db, id))) }),
+  );
+
+  app.get(
     '/orders/:orderId',
     { config: { auth: 'staff', permission: 'orders.read' }, schema: { tags: ['Admin'], summary: 'Order detail', params: IdParam('orderId') } },
     async (req) => {

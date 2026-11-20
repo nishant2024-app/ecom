@@ -114,3 +114,46 @@ describe('admin: catalog and inventory', () => {
     expect(off.json().status).toBe('deactivated');
   });
 });
+
+describe('admin tools', () => {
+  it('manages categories and refuses to delete one with products', async () => {
+    const t = await createTestApp();
+    try {
+      const headers = await staffHeaders(t, 'content');
+      const created = await t.app.inject({ method: 'POST', url: '/v1/admin/categories', headers, payload: { slug: 'paneer-dry', nameEn: 'Dry paneer', nameHi: 'पनीर' } });
+      expect(created.statusCode, created.body).toBe(201);
+      const id = created.json().id;
+      const dup = await t.app.inject({ method: 'POST', url: '/v1/admin/categories', headers, payload: { slug: 'paneer-dry', nameEn: 'Another', nameHi: 'X' } });
+      expect(dup.statusCode).toBe(409);
+      const list = (await t.app.inject({ method: 'GET', url: '/v1/admin/categories', headers })).json().data;
+      const ghee = list.find((c: { slug: string }) => c.slug === 'ghee');
+      expect(ghee.productCount).toBeGreaterThan(0);
+      expect((await t.app.inject({ method: 'DELETE', url: `/v1/admin/categories/${ghee.id}`, headers })).statusCode).toBe(409);
+      expect((await t.app.inject({ method: 'DELETE', url: `/v1/admin/categories/${id}`, headers })).statusCode).toBe(204);
+    } finally {
+      await t.close();
+    }
+  });
+
+  it('exports orders as CSV and bulk-packs, reporting failures per order', async () => {
+    const t = await createTestApp();
+    try {
+      const headers = await staffHeaders(t, 'ops_manager');
+      const csv = await t.app.inject({ method: 'GET', url: '/v1/admin/orders/export.csv', headers });
+      expect(csv.statusCode).toBe(200);
+      expect(csv.headers['content-type']).toContain('text/csv');
+      expect(csv.body.split('\r\n')[0]).toContain('Order,Placed (IST),Status');
+      const confirmed = (await t.app.inject({ method: 'GET', url: '/v1/admin/orders?status=confirmed', headers })).json().data;
+      const ids = confirmed.slice(0, 1).map((o: { id: string }) => o.id);
+      const res = (await t.app.inject({ method: 'POST', url: '/v1/admin/orders/bulk/pack', headers, payload: { orderIds: [...ids, 'ord_missing'] } })).json();
+      expect(res.packed).toEqual(ids);
+      expect(res.failed.map((f: { id: string }) => f.id)).toEqual(['ord_missing']);
+      if (ids.length) {
+        const slips = (await t.app.inject({ method: 'POST', url: '/v1/admin/orders/packing-slips', headers, payload: { orderIds: ids } })).json();
+        expect(slips.data[0].status).toBe('packed');
+      }
+    } finally {
+      await t.close();
+    }
+  });
+});

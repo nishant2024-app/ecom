@@ -4,7 +4,9 @@ import { DashboardPage } from './pages/Dashboard';
 import { InventoryPage } from './pages/Inventory';
 import { OrderDetailPage, OrdersPage } from './pages/Orders';
 import { CustomerDetailPage, CustomersPage, SettingsPage } from './pages/People';
+import { CategoriesPage } from './pages/Categories';
 import { ProductsPage } from './pages/Products';
+import { StorefrontPage } from './pages/Storefront';
 import { SignIn } from './pages/SignIn';
 
 export interface StaffMe {
@@ -19,7 +21,9 @@ const NAV = [
   { id: 'dashboard', label: 'Dashboard', key: 'g', permission: 'dashboard.read' },
   { id: 'orders', label: 'Orders', key: 'o', permission: 'orders.read' },
   { id: 'products', label: 'Products', key: 'p', permission: 'catalog.read' },
+  { id: 'categories', label: 'Categories', key: 'k', permission: 'catalog.read' },
   { id: 'inventory', label: 'Inventory', key: 'i', permission: 'catalog.read' },
+  { id: 'storefront', label: 'Storefront', key: 'f', permission: 'catalog.read' },
   { id: 'customers', label: 'Customers', key: 'c', permission: 'customers.read' },
   { id: 'settings', label: 'Settings', key: 's', permission: 'catalog.read' },
 ] as const;
@@ -107,8 +111,10 @@ export function App() {
       </aside>
       <main className="min-w-0">
         {section === 'dashboard' && <DashboardPage />}
-        {section === 'orders' && (route.id ? <OrderDetailPage id={route.id} permissions={perms} /> : <OrdersPage key={route.params.get('status') ?? ''} status={route.params.get('status') ?? ''} />)}
+        {section === 'orders' && (route.id ? <OrderDetailPage id={route.id} permissions={perms} /> : <OrdersPage key={route.params.get('status') ?? ''} status={route.params.get('status') ?? ''} permissions={perms} />)}
         {section === 'products' && <ProductsPage permissions={perms} />}
+        {section === 'categories' && <CategoriesPage permissions={perms} />}
+        {section === 'storefront' && <StorefrontPage permissions={perms} />}
         {section === 'inventory' && <InventoryPage permissions={perms} />}
         {section === 'customers' && (route.id ? <CustomerDetailPage id={route.id} /> : <CustomersPage />)}
         {section === 'settings' && <SettingsPage permissions={perms} meId={me.id} />}

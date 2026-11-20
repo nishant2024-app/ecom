@@ -2,7 +2,7 @@ import { newId, todayIST } from '@dairy/core';
 import { schema as s } from '@dairy/db';
 import type { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { Type } from '@sinclair/typebox';
-import { and, asc, eq, ilike, inArray, ne, notInArray, or, type SQL } from 'drizzle-orm';
+import { and, asc, eq, ilike, inArray, ne, notInArray, or, sql, type SQL } from 'drizzle-orm';
 import type { FastifyInstance } from 'fastify';
 import { audit } from '../../lib/audit';
 import { AppError, forbidden, notFound } from '../../lib/errors';
@@ -65,9 +65,54 @@ export default async function adminCatalogRoutes(fastify: FastifyInstance) {
     return { ...p, variants: variants.map((v) => ({ ...v, available: stock.get(v.id) ?? 0 })) };
   }
 
-  app.get('/categories', { config: { auth: 'staff', permission: 'catalog.read' }, schema: { tags: ['Admin'], summary: 'Categories' } }, async () => ({
-    data: await db.select().from(s.categories).orderBy(asc(s.categories.sort)),
-  }));
+  app.get('/categories', { config: { auth: 'staff', permission: 'catalog.read' }, schema: { tags: ['Admin'], summary: 'Categories with product counts' } }, async () => {
+    const rows = await db.select().from(s.categories).orderBy(asc(s.categories.sort));
+    const counts = await db.select({ id: s.products.categoryId, n: sql<number>`count(*)::int` }).from(s.products).where(ne(s.products.status, 'archived')).groupBy(s.products.categoryId);
+    const byId = new Map(counts.map((c) => [c.id, Number(c.n)]));
+    return { data: rows.map((c) => ({ ...c, productCount: byId.get(c.id) ?? 0 })) };
+  });
+
+  const CategoryInput = Type.Object(
+    {
+      slug: Type.String({ minLength: 2, maxLength: 60, pattern: '^[a-z0-9-]+$' }),
+      nameEn: Type.String({ minLength: 2, maxLength: 60 }),
+      nameHi: Type.String({ minLength: 1, maxLength: 60 }),
+      blurb: Type.Optional(Type.String({ maxLength: 200 })),
+      sort: Type.Optional(Type.Integer({ minimum: 0, maximum: 1000 })),
+    },
+    { additionalProperties: false },
+  );
+
+  async function slugFree(slug: string, id?: string) {
+    const [clash] = await db.select({ id: s.categories.id }).from(s.categories).where(and(eq(s.categories.slug, slug), ...(id ? [ne(s.categories.id, id)] : [])));
+    if (clash) throw new AppError('CONFLICT', 409, `Slug ${slug} is already used`);
+  }
+
+  app.post('/categories', { config: { auth: 'staff', permission: 'catalog.write' }, schema: { tags: ['Admin'], summary: 'Create a category', body: CategoryInput } }, async (req, reply) => {
+    await slugFree(req.body.slug);
+    const [{ top } = { top: 0 }] = await db.select({ top: sql<number>`coalesce(max(${s.categories.sort}), 0)::int` }).from(s.categories);
+    const [row] = await db.insert(s.categories).values({ id: newId('cat'), ...req.body, blurb: req.body.blurb ?? '', sort: req.body.sort ?? Number(top) + 1 }).returning();
+    await audit(db, req, 'category.create', 'category', row!.id, null, row);
+    return reply.status(201).send(row);
+  });
+
+  app.put('/categories/:categoryId', { config: { auth: 'staff', permission: 'catalog.write' }, schema: { tags: ['Admin'], summary: 'Update a category', params: IdParam('categoryId'), body: CategoryInput } }, async (req) => {
+    await slugFree(req.body.slug, req.params.categoryId);
+    const [before] = await db.select().from(s.categories).where(eq(s.categories.id, req.params.categoryId));
+    if (!before) throw notFound('Category');
+    const [row] = await db.update(s.categories).set({ ...req.body, blurb: req.body.blurb ?? before.blurb, sort: req.body.sort ?? before.sort }).where(eq(s.categories.id, before.id)).returning();
+    await audit(db, req, 'category.update', 'category', before.id, before, row);
+    return row;
+  });
+
+  app.delete('/categories/:categoryId', { config: { auth: 'staff', permission: 'catalog.write' }, schema: { tags: ['Admin'], summary: 'Delete an empty category', params: IdParam('categoryId') } }, async (req, reply) => {
+    const [used] = await db.select({ id: s.products.id }).from(s.products).where(eq(s.products.categoryId, req.params.categoryId)).limit(1);
+    if (used) throw new AppError('CONFLICT', 409, 'Move or archive the products in this category first');
+    const [row] = await db.delete(s.categories).where(eq(s.categories.id, req.params.categoryId)).returning();
+    if (!row) throw notFound('Category');
+    await audit(db, req, 'category.delete', 'category', row.id, row, null);
+    return reply.status(204).send(null);
+  });
 
   app.get(
     '/products',
@@ -83,8 +128,15 @@ export default async function adminCatalogRoutes(fastify: FastifyInstance) {
       const rows = await db.select({ p: s.products, c: s.categories }).from(s.products).innerJoin(s.categories, eq(s.categories.id, s.products.categoryId)).where(and(...where)).orderBy(asc(s.categories.sort), asc(s.products.sort));
       const variants = rows.length ? await db.select().from(s.productVariants).where(inArray(s.productVariants.productId, rows.map((r) => r.p.id))).orderBy(asc(s.productVariants.sort)) : [];
       const stock = await availability(db, variants.map((v) => v.id), todayIST(app.deps.now()));
+      const media = rows.length ? await db.select().from(s.productMedia).where(inArray(s.productMedia.productId, rows.map((r) => r.p.id))).orderBy(asc(s.productMedia.sort)) : [];
+      const thumb = (id: string) => {
+        const m = media.filter((x) => x.productId === id);
+        const v = m[0]?.variants[0];
+        return { image: v ? app.deps.storage!.url(v.key) : null, photoCount: m.length };
+      };
       return {
         data: rows.map(({ p, c }) => ({
+          ...thumb(p.id),
           id: p.id,
           slug: p.slug,
           name: p.nameEn,
