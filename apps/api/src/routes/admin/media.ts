@@ -5,7 +5,9 @@ import { Type } from '@sinclair/typebox';
 import { and, asc, desc, eq, max } from 'drizzle-orm';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { audit } from '../../lib/audit';
-import { badRequest, notFound } from '../../lib/errors';
+import { AppError, badRequest, notFound } from '../../lib/errors';
+import { loadContent } from '../../services/content';
+import { defaultSellerId } from '../../services/store';
 import { IdParam } from '../../lib/schemas';
 import { deleteImage, imageOut, storeImage } from '../../services/images';
 
@@ -178,6 +180,10 @@ export default async function adminMediaRoutes(fastify: FastifyInstance) {
     '/site-media/:mediaId',
     { config: write, schema: { tags: ['Admin'], summary: 'Delete a storefront image', params: IdParam('mediaId'), response: { 204: Type.Null() } } },
     async (req, reply) => {
+      const content = await loadContent(db, await defaultSellerId(db));
+      if ([content.hero.imageId, content.story.imageId].includes(req.params.mediaId)) {
+        throw new AppError('CONFLICT', 409, 'This photo is on the storefront. Choose a different photo there first.');
+      }
       const [row] = await db.delete(s.siteMedia).where(and(eq(s.siteMedia.id, req.params.mediaId))).returning();
       if (!row) throw notFound('Image');
       await deleteImage(storage, row.variants);

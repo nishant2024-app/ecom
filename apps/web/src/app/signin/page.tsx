@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import { GoogleSignIn } from '@/components/GoogleSignIn';
 
-export const metadata = { title: 'Sign in' };
+export const metadata = { title: 'Sign in', robots: { index: false, follow: false } };
 
 export default function SignIn() {
   return (

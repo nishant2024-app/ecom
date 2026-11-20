@@ -28,7 +28,7 @@ export function ReelVideo() {
     return () => io.disconnect();
   }, [reduce]);
   return (
-    <div className="relative overflow-hidden rounded-5 bg-forest">
+    <div className="relative overflow-hidden bg-forest">
       <video ref={ref} className="aspect-square w-full" src="/video/pantry-reel.mp4" poster="/video/pantry-reel.jpg" muted loop playsInline preload="none" aria-label="Animated reel: ghee, milk powder, flavoured milk and peda arranged on a farm hill" />
       {!playing && reduce && (
         <button
@@ -37,7 +37,7 @@ export function ReelVideo() {
             void ref.current?.play();
             setPlaying(true);
           }}
-          className="absolute bottom-5 left-5 rounded-pill bg-paper px-5 py-2.5"
+          className="absolute bottom-5 left-5 bg-paper px-5 py-2.5"
         >
           ▶ Play
         </button>

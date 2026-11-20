@@ -15,13 +15,13 @@ const QA = [
 export function Faq() {
   const [open, setOpen] = useState<number | null>(0);
   return (
-    <ul className="divide-y divide-rule rounded-4 border border-rule bg-paper">
+    <ul className="border-t border-ink">
       {QA.map(([q, a], i) => (
-        <li key={q}>
+        <li key={q} className="border-b border-rule">
           <h3>
-            <button type="button" aria-expanded={open === i} onClick={() => setOpen(open === i ? null : i)} className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left text-lg">
+            <button type="button" aria-expanded={open === i} onClick={() => setOpen(open === i ? null : i)} className="flex w-full items-center justify-between gap-6 py-5 text-left font-display text-[21px] leading-snug hover:text-forest">
               {q}
-              <motion.span animate={{ rotate: open === i ? 45 : 0 }} className="grid h-8 w-8 shrink-0 place-items-center rounded-pill bg-paper-2 text-xl" aria-hidden>
+              <motion.span animate={{ rotate: open === i ? 45 : 0 }} className="num shrink-0 text-2xl font-normal text-ink-2" aria-hidden>
                 +
               </motion.span>
             </button>
@@ -29,7 +29,7 @@ export function Faq() {
           <AnimatePresence initial={false}>
             {open === i && (
               <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.3 }} className="overflow-hidden">
-                <p className="max-w-3xl px-5 pb-5 text-base text-ink-2">{a}</p>
+                <p className="max-w-2xl pb-6 text-[17px] leading-relaxed text-ink-2">{a}</p>
               </motion.div>
             )}
           </AnimatePresence>

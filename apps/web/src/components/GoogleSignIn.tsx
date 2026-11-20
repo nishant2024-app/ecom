@@ -60,7 +60,7 @@ export function GoogleSignIn() {
 
   const dev = devSignIn && (
     <form
-      className="mt-6 rounded-4 border border-dashed border-ink-3 p-4"
+      className="mt-6 border border-dashed border-ink-3 p-4"
       onSubmit={async (e) => {
         e.preventDefault();
         const email = String(new FormData(e.currentTarget).get('email'));
@@ -75,8 +75,8 @@ export function GoogleSignIn() {
     >
       <p className="text-sm text-ink-2">Development only: sign in as a test customer.</p>
       <div className="mt-2 flex gap-2">
-        <input name="email" type="email" required defaultValue="test.customer@example.in" aria-label="Test email" className="h-11 flex-1 rounded-pill border border-rule bg-paper px-4" />
-        <button className="h-11 rounded-pill bg-forest px-5 text-on-forest">Continue</button>
+        <input name="email" type="email" required defaultValue="test.customer@example.in" aria-label="Test email" className="h-11 flex-1 border border-rule bg-paper px-4" />
+        <button className="h-11 bg-forest px-5 text-on-forest">Continue</button>
       </div>
     </form>
   );
@@ -84,7 +84,7 @@ export function GoogleSignIn() {
   if (clientId === '') {
     return (
       <div>
-        <p className="rounded-4 border border-rule p-4 text-ink-2">
+        <p className=" border border-rule p-4 text-ink-2">
           Google sign-in isn&rsquo;t configured on this server yet. Set <code className="num">GOOGLE_WEB_CLIENT_ID</code> for the API (see docs/04-authentication.md).
         </p>
         {dev}

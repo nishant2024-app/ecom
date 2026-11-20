@@ -1,77 +1,67 @@
 'use client';
 
-import { Money, PackShot, VegMark } from '@dairy/ui';
+import { Money, VegMark } from '@dairy/ui';
 import { motion } from 'motion/react';
 import Link from 'next/link';
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import { useCart } from '@/lib/cart';
 import { shelfLife } from '@/lib/format';
 import type { ProductSummary } from '@/lib/types';
+import { ProductImage } from './ProductImage';
 
-export function ProductCard({ product, priority = false }: { product: ProductSummary; priority?: boolean }) {
+export function ProductCard({ product, priority = false, sizes = '(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw' }: { product: ProductSummary; priority?: boolean; sizes?: string }) {
   const { add } = useCart();
   const v = product.variants.find((x) => x.inStock) ?? product.variants[0]!;
-  const button = useRef<HTMLButtonElement>(null);
-  const [hover, setHover] = useState(false);
+  const imageRef = useRef<HTMLAnchorElement>(null);
   const off = v.mrp.amount > v.price.amount ? Math.round(((v.mrp.amount - v.price.amount) / v.mrp.amount) * 100) : 0;
 
   return (
-    <motion.article
-      onHoverStart={() => setHover(true)}
-      onHoverEnd={() => setHover(false)}
-      whileHover={{ y: -6 }}
-      transition={{ type: 'spring', stiffness: 300, damping: 24 }}
-      className="group relative flex flex-col rounded-4 bg-paper-2 p-3 shadow-card"
-    >
-      <Link href={`/p/${product.slug}`} className="relative block overflow-hidden rounded-3 bg-paper" aria-label={product.name}>
-        <div className="absolute inset-x-0 bottom-0 h-1/2" style={{ background: `radial-gradient(60% 60% at 50% 100%, ${product.pack.color}55, transparent 70%)` }} />
-        <motion.div animate={{ rotate: hover ? -4 : 0, scale: hover ? 1.06 : 1 }} transition={{ type: 'spring', stiffness: 220, damping: 18 }} className="relative mx-auto aspect-[200/260] w-[70%] py-4">
-          <PackShot kind={product.pack.kind} color={product.pack.color} accent={product.pack.accent} label={product.name} size={v.packSize} className="h-full w-full" />
-        </motion.div>
-        <div className="absolute left-3 top-3 flex flex-col items-start gap-1.5">
-          {off > 0 && <span className="num rounded-pill bg-signal px-2.5 py-0.5 text-xs text-on-signal">−{off}%</span>}
-          {v.lowStock && <span className="rounded-pill bg-paper px-2.5 py-0.5 text-xs text-alert">Few left</span>}
-          {!v.inStock && <span className="rounded-pill bg-ink px-2.5 py-0.5 text-xs text-paper">Out of stock</span>}
+    <article className="group flex h-full flex-col">
+      <Link ref={imageRef} href={`/p/${product.slug}`} className="relative block aspect-[4/5] overflow-hidden bg-paper-2" aria-label={product.name}>
+        <div className="h-full w-full transition-transform duration-[700ms] ease-[var(--ease)] group-hover:scale-[1.035]">
+          <ProductImage image={product.image} pack={product.pack} name={product.name} size={v.packSize} sizes={sizes} priority={priority} />
         </div>
-        <span className="absolute right-3 top-3 rounded-pill bg-paper/90 px-2.5 py-0.5 text-xs text-ink-2">Keeps {shelfLife(v.shelfLifeDays)}</span>
+        <div className="label absolute left-0 top-3 flex flex-col items-start gap-1">
+          {off > 0 && <span className="num bg-ink px-2 py-1 text-paper">{off}% off</span>}
+          {v.lowStock && <span className="bg-paper px-2 py-1 text-alert">Few left</span>}
+          {!v.inStock && <span className="bg-paper px-2 py-1 text-ink-2">Sold out</span>}
+        </div>
       </Link>
-      <div className="flex flex-1 flex-col px-1 pb-1 pt-3">
-        <p className="text-xs uppercase tracking-[0.12em] text-ink-2">{product.category.name}</p>
-        <h3 className="mt-1 flex items-start gap-2 text-lg leading-snug">
-          {product.isVeg && <span className="mt-1.5"><VegMark /></span>}
-          <Link href={`/p/${product.slug}`} className="hover:underline hover:underline-offset-4">
+      <div className="flex flex-1 flex-col pt-4">
+        <p className="label flex items-center justify-between text-ink-3">
+          <span>{product.category.name}</span>
+          <span>Keeps {shelfLife(v.shelfLifeDays)}</span>
+        </p>
+        <h3 className="mt-2 flex items-start gap-2 font-display text-[21px] leading-[1.15]">
+          <Link href={`/p/${product.slug}`} className="decoration-1 underline-offset-4 hover:underline">
             {product.name}
           </Link>
+          {product.isVeg && <span className="mt-1.5 shrink-0"><VegMark /></span>}
         </h3>
-        <p className="mt-0.5 text-sm text-ink-2">{product.tagline}</p>
-        <div className="mt-auto flex items-end justify-between gap-2 pt-4">
-          <div>
-            <Money paise={v.price.amount} className="text-xl" />
+        <p className="mt-1 text-[15px] leading-snug text-ink-2">{product.tagline}</p>
+        <div className="mt-auto flex items-end justify-between gap-3 pt-4">
+          <div className="leading-tight">
+            <Money paise={v.price.amount} className="text-lg" />
             {off > 0 && <Money paise={v.mrp.amount} className="ml-2 text-sm text-ink-3 line-through" />}
-            <p className="text-xs text-ink-2">{product.variants.length > 1 ? `${v.packSize} · ${product.variants.length} sizes` : v.packSize}</p>
+            <p className="text-[13px] text-ink-2">{product.variants.length > 1 ? `${v.packSize} · ${product.variants.length} sizes` : v.packSize}</p>
           </div>
           <motion.button
-            ref={button}
             type="button"
             disabled={!v.inStock}
-            whileTap={{ scale: 0.92 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() =>
               add(
                 { variantId: v.id, quantity: 1, slug: product.slug, name: product.name, packSize: v.packSize, pack: product.pack, pricePaise: v.price.amount },
-                button.current?.closest('article')?.querySelector('svg')?.getBoundingClientRect() ?? button.current?.getBoundingClientRect(),
+                imageRef.current?.getBoundingClientRect(),
               )
             }
-            className="flex h-11 items-center gap-1.5 rounded-pill bg-forest px-4 text-base text-on-forest hover:bg-forest-2 disabled:bg-ink-3"
-            aria-label={`Add ${product.name} ${v.packSize} to cart`}
+            className="h-10 border border-ink px-4 text-[15px] transition-colors hover:bg-ink hover:text-paper disabled:border-rule disabled:text-ink-3 disabled:hover:bg-transparent"
+            aria-label={`Add ${product.name}, ${v.packSize}, to basket`}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden>
-              <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-            </svg>
             Add
           </motion.button>
         </div>
       </div>
-      {priority && <span className="sr-only">Featured</span>}
-    </motion.article>
+    </article>
   );
 }

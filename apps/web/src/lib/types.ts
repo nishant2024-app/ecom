@@ -3,6 +3,23 @@ export interface Money {
   currency: 'INR';
 }
 
+export interface Img {
+  url: string;
+  alt: string;
+  width: number;
+  height: number;
+  srcset: { url: string; width: number }[];
+}
+
+export interface StoreContent {
+  announcement: string;
+  hero: { eyebrow: string; title: string; subtitle: string; ctaLabel: string; imageId: string | null };
+  story: { title: string; paragraphs: string[]; signature: string; imageId: string | null };
+  promises: { title: string; body: string }[];
+  seo: { title: string; description: string };
+  images: { hero: (Img & { id: string }) | null; story: (Img & { id: string }) | null };
+}
+
 export interface Pack {
   kind: string;
   color: string;
@@ -29,7 +46,7 @@ export interface ProductSummary {
   tagline: string;
   category: { slug: string; name: string };
   pack: Pack;
-  image: { url: string; alt: string; width: number; height: number } | null;
+  image: Img | null;
   isVeg: boolean;
   featured: boolean;
   attributes: { animal?: string; fatPercent?: number; a2?: boolean; process?: string; sourceFarm?: string; ingredients?: string };
@@ -43,6 +60,7 @@ export interface ProductDetail extends ProductSummary {
   hsnCode: string;
   fssaiNumber: string | null;
   nutrition: { label: string; per100: string }[];
+  gallery: Img[];
   related: ProductSummary[];
 }
 

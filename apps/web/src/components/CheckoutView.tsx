@@ -93,7 +93,7 @@ export function CheckoutView() {
     return (
       <div className="mx-auto max-w-xl px-4 py-24 text-center">
         <h1 className="font-display text-4xl">Your basket is empty</h1>
-        <Link href="/products" className="mt-6 inline-block rounded-pill bg-forest px-6 py-3 text-on-forest">
+        <Link href="/products" className="mt-6 inline-block bg-forest px-6 py-3 text-on-forest">
           Browse products
         </Link>
       </div>
@@ -105,15 +105,15 @@ export function CheckoutView() {
       <h1 className="font-display text-[clamp(36px,5vw,60px)] leading-none">Checkout</h1>
       <div className="mt-8 grid gap-8 lg:grid-cols-12">
         <section className="space-y-6 lg:col-span-7">
-          <div className="rounded-4 bg-paper-2 p-5 md:p-6">
+          <div className=" bg-paper-2 p-5 md:p-6">
             <h2 className="flex items-center gap-3 text-xl">
-              <span className="num grid h-8 w-8 place-items-center rounded-pill bg-forest text-sm text-on-forest">1</span> Account
+              <span className="num grid h-8 w-8 place-items-center bg-forest text-sm text-on-forest">1</span> Account
             </h2>
             {me === null && <p className="mt-3 text-ink-2">Checking…</p>}
             {me === 'signed-out' && (
               <div className="mt-3">
                 <p className="text-ink-2">Sign in so you can track your order and cancel it if plans change.</p>
-                <Link href="/signin?next=/checkout" className="mt-4 inline-block rounded-pill bg-forest px-6 py-3 text-on-forest">
+                <Link href="/signin?next=/checkout" className="mt-4 inline-block bg-forest px-6 py-3 text-on-forest">
                   Sign in to continue
                 </Link>
               </div>
@@ -121,17 +121,17 @@ export function CheckoutView() {
             {me && me !== 'signed-out' && <p className="mt-2 text-ink-2">Signed in as {me.name}</p>}
           </div>
 
-          <div className={`rounded-4 bg-paper-2 p-5 md:p-6 ${me && me !== 'signed-out' ? '' : 'pointer-events-none opacity-50'}`}>
+          <div className={` bg-paper-2 p-5 md:p-6 ${me && me !== 'signed-out' ? '' : 'pointer-events-none opacity-50'}`}>
             <h2 className="flex items-center gap-3 text-xl">
-              <span className="num grid h-8 w-8 place-items-center rounded-pill bg-forest text-sm text-on-forest">2</span> Delivery address
+              <span className="num grid h-8 w-8 place-items-center bg-forest text-sm text-on-forest">2</span> Delivery address
             </h2>
             <div className="mt-4 space-y-3">
               {addresses.map((a) => (
-                <label key={a.id} className={`flex cursor-pointer gap-3 rounded-3 border bg-paper p-4 ${a.id === addressId ? 'border-forest' : 'border-rule'}`}>
+                <label key={a.id} className={`flex cursor-pointer gap-3 border bg-paper p-4 ${a.id === addressId ? 'border-forest' : 'border-rule'}`}>
                   <input type="radio" name="address" checked={a.id === addressId} onChange={() => setAddressId(a.id)} className="mt-1 accent-[var(--forest)]" />
                   <span>
                     <span className="block">
-                      {a.name} {a.label && <span className="ml-2 rounded-pill bg-paper-2 px-2 py-0.5 text-xs">{a.label}</span>}
+                      {a.name} {a.label && <span className="ml-2 bg-paper-2 px-2 py-0.5 text-xs">{a.label}</span>}
                     </span>
                     <span className="block text-sm text-ink-2">
                       {[a.line1, a.line2, a.landmark, a.city, a.state].filter(Boolean).join(', ')} – <span className="num">{a.pincode}</span>
@@ -141,7 +141,7 @@ export function CheckoutView() {
                 </label>
               ))}
               {adding ? (
-                <div className="rounded-3 bg-paper p-4">
+                <div className=" bg-paper p-4">
                   <AddressForm
                     defaultName={me && me !== 'signed-out' ? me.name : ''}
                     onCancel={addresses.length ? () => setAdding(false) : undefined}
@@ -162,7 +162,7 @@ export function CheckoutView() {
         </section>
 
         <aside className="lg:col-span-5">
-          <div className="sticky top-24 rounded-4 border border-rule bg-paper p-5 md:p-6">
+          <div className="sticky top-24 border border-rule bg-paper p-5 md:p-6">
             <h2 className="text-xl">Order summary</h2>
             <ul className="mt-4 space-y-3">
               {items.map((i) => {
@@ -171,7 +171,7 @@ export function CheckoutView() {
                   <li key={i.variantId} className="flex items-center gap-3">
                     <div className="relative w-12 shrink-0">
                       <PackShot kind={i.pack.kind} color={i.pack.color} accent={i.pack.accent} label={i.name} className="h-16 w-12" />
-                      <span className="num absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-pill bg-forest px-1 text-xs text-on-forest">{i.quantity}</span>
+                      <span className="num absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center bg-forest px-1 text-xs text-on-forest">{i.quantity}</span>
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="truncate">{i.name}</p>
@@ -215,7 +215,7 @@ export function CheckoutView() {
               </div>
             )}
             {error && (
-              <p role="alert" className="mt-4 rounded-3 bg-paper-2 p-3 text-alert">
+              <p role="alert" className="mt-4 bg-paper-2 p-3 text-alert">
                 {error}
               </p>
             )}
@@ -224,7 +224,7 @@ export function CheckoutView() {
               whileTap={{ scale: 0.98 }}
               onClick={placeOrder}
               disabled={busy || !addressId || !quote?.ok || me === 'signed-out'}
-              className="mt-5 h-14 w-full rounded-pill bg-signal text-lg font-medium text-on-signal hover:brightness-95 disabled:opacity-50"
+              className="mt-5 h-14 w-full bg-signal text-lg font-medium text-on-signal hover:brightness-95 disabled:opacity-50"
             >
               {busy ? 'Starting payment…' : quote ? `Pay ₹${(quote.total.amount / 100).toLocaleString('en-IN')}` : 'Pay'}
             </motion.button>

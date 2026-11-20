@@ -1,6 +1,6 @@
 import { DeleteAccount } from '@/components/DeleteAccount';
 
-export const metadata = { title: 'Delete your account' };
+export const metadata = { title: 'Delete your account', robots: { index: false, follow: false } };
 
 /** Public page (Google Play requires a web URL for account deletion). */
 export default function DeletePage() {

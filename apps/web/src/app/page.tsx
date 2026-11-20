@@ -1,98 +1,88 @@
 import Link from 'next/link';
-import { Categories } from '@/components/home/Categories';
 import { Faq } from '@/components/home/Faq';
-import { Hero, type HeroPack } from '@/components/home/Hero';
-import { Marquee } from '@/components/home/Marquee';
-import { Process } from '@/components/home/Process';
-import { ReelVideo } from '@/components/home/ReelVideo';
-import { Stats } from '@/components/home/Stats';
+import { Hero } from '@/components/home/Hero';
+import { Promises } from '@/components/home/Promises';
+import type { ShelfItem } from '@/components/home/Shelf';
+import { Shelves } from '@/components/home/Shelves';
+import { Story } from '@/components/home/Story';
+import { Timeline } from '@/components/home/Timeline';
 import { ProductCard } from '@/components/ProductCard';
 import { Reveal } from '@/components/Reveal';
 import { apiGet } from '@/lib/api-server';
+import { getContent } from '@/lib/content';
+import { SITE_URL } from '@/lib/site';
 import type { Category, ProductSummary } from '@/lib/types';
 
 export const revalidate = 60;
 
-function SectionHead({ eyebrow, title, href, link }: { eyebrow: string; title: string; href?: string; link?: string }) {
-  return (
-    <Reveal className="flex flex-wrap items-end justify-between gap-4">
-      <div>
-        <p className="text-sm uppercase tracking-[0.14em] text-ink-2">{eyebrow}</p>
-        <h2 className="mt-2 font-display text-[clamp(32px,4.4vw,56px)] leading-[1.02]">{title}</h2>
-      </div>
-      {href && (
-        <Link href={href} className="rounded-pill border border-forest px-5 py-2.5 hover:bg-paper-2">
-          {link}
-        </Link>
-      )}
-    </Reveal>
-  );
-}
+const rupees = (paise: number) => `₹${(paise / 100).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
 
 export default async function Home() {
-  const [products, categories] = await Promise.all([
+  const [products, categories, content] = await Promise.all([
     apiGet<{ data: ProductSummary[] }>('/v1/store/products'),
     apiGet<{ data: Category[] }>('/v1/store/categories', { revalidate: 300 }),
+    getContent(),
   ]);
   const all = products?.data ?? [];
-  // Featured first, then the rest, to fill two full rows.
   const featured = [...all.filter((p) => p.featured), ...all.filter((p) => !p.featured)].slice(0, 8);
-  const order = ['a2-gir-cow-ghee', 'whole-milk-powder', 'kesar-badam-milk', 'kandi-peda', 'uht-toned-milk'];
-  const heroPacks: HeroPack[] = order
-    .map((slug) => all.find((p) => p.slug === slug))
-    .filter((p): p is ProductSummary => !!p)
-    .map((p) => ({ slug: p.slug, name: p.name, size: p.variants[0]?.packSize ?? '', pack: p.pack }));
+  // One product per category first, so the shelf shows the range.
+  const byCategory = [...new Map(all.map((p) => [p.category.slug, p])).values()];
+  const shelf: ShelfItem[] = [...byCategory, ...all.filter((p) => !byCategory.includes(p))].slice(0, 6).map((p) => ({
+    slug: p.slug,
+    name: p.name,
+    size: p.variants[0]?.packSize ?? '',
+    price: rupees(p.variants[0]?.price.amount ?? 0),
+    pack: p.pack,
+  }));
+  const itemList = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    itemListElement: featured.map((p, i) => ({ '@type': 'ListItem', position: i + 1, url: `${SITE_URL}/p/${p.slug}`, name: p.name })),
+  };
 
   return (
     <>
-      <Hero packs={heroPacks} />
-      <Marquee />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemList) }} />
+      <Hero content={content} shelf={shelf} />
+      <Promises items={content.promises} />
 
-      <section className="mx-auto max-w-[1240px] px-4 pt-24 md:px-6">
-        <SectionHead eyebrow="Shop by shelf" title="Four kinds of dairy that wait for you" />
-        <div className="mt-10">
-          <Categories categories={categories?.data ?? []} />
+      <section className="mx-auto max-w-[1320px] px-4 pt-24 md:px-8">
+        <div className="flex flex-wrap items-baseline justify-between gap-4 pb-8">
+          <h2 className="font-display text-[clamp(34px,4vw,56px)] leading-none">In the pantry</h2>
+          <Link href="/products" className="text-[17px] underline decoration-1 underline-offset-[6px] hover:decoration-2">
+            All {all.length} products
+          </Link>
         </div>
-      </section>
-
-      <section className="mx-auto max-w-[1240px] px-4 pt-24 md:px-6">
-        <SectionHead eyebrow="Most ordered" title="Pantry favourites" href="/products" link="See all products" />
-        <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-12 md:gap-x-6 lg:grid-cols-4">
           {featured.map((p, i) => (
-            <Reveal key={p.id} delay={i * 0.06}>
-              <ProductCard product={p} />
+            <Reveal key={p.id} delay={(i % 4) * 0.06}>
+              <ProductCard product={p} priority={i < 2} sizes="(min-width: 1024px) 25vw, 50vw" />
             </Reveal>
           ))}
         </div>
       </section>
 
-      <div className="pt-24">
-        <Process />
-      </div>
-
-      <section className="mx-auto grid max-w-[1240px] items-center gap-10 px-4 pt-24 md:grid-cols-12 md:px-6">
-        <Reveal className="md:col-span-5">
-          <ReelVideo />
-        </Reveal>
-        <div className="md:col-span-7">
-          <SectionHead eyebrow="Why shelf-stable" title="Made properly, it simply keeps" />
-          <p className="mt-4 max-w-xl text-lg text-ink-2">
-            Ghee has almost no water left in it, milk powder is dried to under 4% moisture, and UHT cartons are sterile. Nothing needs a preservative or a fridge until you open it.
-          </p>
-          <div className="mt-8">
-            <Stats />
-          </div>
-        </div>
+      <section className="mx-auto max-w-[1320px] px-4 pt-28 md:px-8">
+        <h2 className="sr-only">Shop by kind</h2>
+        <Shelves categories={categories?.data ?? []} />
       </section>
 
-      <section className="mx-auto grid max-w-[1240px] gap-10 px-4 pt-24 md:grid-cols-12 md:px-6">
-        <div className="md:col-span-4">
-          <SectionHead eyebrow="Questions" title="Before you order" />
-          <p className="mt-4 text-lg text-ink-2">Something else? Write to us from the footer and a person replies.</p>
+      <div className="pt-28">
+        <Story content={content} />
+      </div>
+
+      <section className="mx-auto max-w-[1320px] px-4 pt-28 md:px-8">
+        <Timeline />
+      </section>
+
+      <section id="questions" className="mx-auto grid max-w-[1320px] scroll-mt-24 gap-10 px-4 pt-28 md:px-8 lg:grid-cols-12">
+        <div className="lg:col-span-4">
+          <h2 className="font-display text-[clamp(34px,4vw,56px)] leading-[1.02]">Questions people ask</h2>
+          <p className="mt-4 max-w-sm text-[17px] text-ink-2">Anything else, write to us. The address is at the bottom of the page and a person answers.</p>
         </div>
-        <Reveal className="md:col-span-8">
+        <div className="lg:col-span-8">
           <Faq />
-        </Reveal>
+        </div>
       </section>
     </>
   );

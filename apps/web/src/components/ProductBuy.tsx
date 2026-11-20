@@ -1,6 +1,7 @@
 'use client';
 
-import { Money, PackShot } from '@dairy/ui';
+import { Money } from '@dairy/ui';
+import { Gallery } from './Gallery';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { api } from '@/lib/api-client';
@@ -48,48 +49,30 @@ export function ProductBuy({ product, children }: { product: ProductDetail; chil
 
   return (
     <div className="mt-6 grid gap-10 md:grid-cols-12">
-      <div className="md:col-span-6">
-        <div className="relative grid aspect-square place-items-center overflow-hidden rounded-5" style={{ background: `radial-gradient(70% 70% at 50% 60%, ${product.pack.color}66, var(--paper-2) 70%)` }}>
-          <motion.div aria-hidden className="absolute h-[70%] w-[70%] rounded-pill border border-ink/10" animate={reduce ? undefined : { rotate: 360 }} transition={{ duration: 60, repeat: Infinity, ease: 'linear' }} />
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={v.id}
-              ref={shotRef}
-              initial={reduce ? false : { opacity: 0, y: 30, rotate: -6, scale: 0.92 }}
-              animate={{ opacity: 1, y: 0, rotate: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -20, rotate: 6, scale: 0.95 }}
-              transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-              className="relative w-[52%]"
-            >
-              <motion.div animate={reduce ? undefined : { y: [0, -10, 0] }} transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}>
-                <PackShot kind={product.pack.kind} color={product.pack.color} accent={product.pack.accent} label={product.name} size={v.packSize} className="w-full drop-shadow-[0_30px_30px_rgba(20,39,31,0.35)]" />
-              </motion.div>
-            </motion.div>
-          </AnimatePresence>
-          <span className="absolute bottom-5 left-5 rounded-pill bg-paper/90 px-3 py-1 text-sm">Keeps {shelfLife(v.shelfLifeDays)} sealed</span>
-        </div>
+      <div className="md:col-span-7" ref={shotRef}>
+        <Gallery product={product} size={v.packSize} variantKey={v.id} reduce={!!reduce} />
       </div>
 
-      <div className="md:col-span-5 md:col-start-8 md:pt-6">
+      <div className="md:col-span-5 md:pt-2">
         {children}
         <div className="mt-6 flex items-baseline gap-3">
           <Money paise={v.price.amount} className="text-4xl" />
           {off > 0 && (
             <>
               <Money paise={v.mrp.amount} className="text-lg text-ink-3 line-through" />
-              <span className="num rounded-pill bg-signal px-2.5 py-0.5 text-sm text-on-signal">−{off}%</span>
+              <span className="num bg-ink px-2 py-0.5 text-sm text-paper">{off}% off</span>
             </>
           )}
         </div>
         <p className="mt-1 text-sm text-ink-2">Inclusive of GST</p>
 
         <fieldset className="mt-6">
-          <legend className="text-sm uppercase tracking-[0.12em] text-ink-2">Size</legend>
+          <legend className="label text-ink-2">Size</legend>
           <div className="mt-2 flex flex-wrap gap-2">
             {product.variants.map((x) => (
-              <label key={x.id} className={`relative cursor-pointer rounded-pill border px-4 py-2.5 transition-colors ${x.id === variantId ? 'border-forest' : 'border-rule hover:border-ink-3'} ${!x.inStock ? 'opacity-50' : ''}`}>
+              <label key={x.id} className={`relative cursor-pointer border px-4 py-2.5 transition-colors ${x.id === variantId ? 'border-ink' : 'border-rule hover:border-ink-3'} ${!x.inStock ? 'opacity-50' : ''}`}>
                 <input type="radio" name="variant" value={x.id} checked={x.id === variantId} onChange={() => setVariantId(x.id)} className="sr-only" disabled={!x.inStock} />
-                {x.id === variantId && <motion.span layoutId="variant-pill" className="absolute inset-0 rounded-pill bg-paper-2" transition={{ type: 'spring', stiffness: 400, damping: 30 }} />}
+                {x.id === variantId && <motion.span layoutId="variant-pill" className="absolute inset-0 bg-paper-2" transition={{ type: 'spring', stiffness: 400, damping: 30 }} />}
                 <span className="relative">
                   {x.packSize} · <Money paise={x.price.amount} />
                   {!x.inStock && ' · sold out'}
@@ -100,7 +83,7 @@ export function ProductBuy({ product, children }: { product: ProductDetail; chil
         </fieldset>
 
         <div className="mt-6 flex gap-3">
-          <div className="flex h-14 items-center rounded-pill border border-rule bg-paper" role="group" aria-label="Quantity">
+          <div className="flex h-14 items-center border border-ink bg-paper" role="group" aria-label="Quantity">
             <button type="button" aria-label="One less" onClick={() => setQty((q) => Math.max(1, q - 1))} className="h-full w-12 text-xl">
               −
             </button>
@@ -111,7 +94,7 @@ export function ProductBuy({ product, children }: { product: ProductDetail; chil
               +
             </button>
           </div>
-          <motion.button type="button" whileTap={{ scale: 0.97 }} onClick={addToCart} disabled={!v.inStock} className="relative flex h-14 flex-1 items-center justify-center overflow-hidden rounded-pill bg-forest text-lg text-on-forest hover:bg-forest-2 disabled:bg-ink-3">
+          <motion.button type="button" whileTap={{ scale: 0.97 }} onClick={addToCart} disabled={!v.inStock} className="relative flex h-14 flex-1 items-center justify-center overflow-hidden bg-forest text-lg text-on-forest hover:bg-forest-2 disabled:bg-ink-3">
             <AnimatePresence mode="wait" initial={false}>
               <motion.span key={added ? 'added' : 'add'} initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -20, opacity: 0 }} transition={{ duration: 0.2 }}>
                 {!v.inStock ? 'Out of stock' : added ? 'Added to basket ✓' : `Add to basket · ₹${((v.price.amount * qty) / 100).toLocaleString('en-IN')}`}
@@ -121,7 +104,7 @@ export function ProductBuy({ product, children }: { product: ProductDetail; chil
         </div>
         {v.lowStock && <p className="mt-2 text-sm text-alert">Only a few left in this size</p>}
 
-        <div className="mt-6 rounded-4 bg-paper-2 p-4">
+        <div className="mt-6 border-y border-rule py-4">
           <label className="flex flex-wrap items-center gap-3">
             <span className="text-ink-2">Check delivery</span>
             <input
@@ -130,7 +113,7 @@ export function ProductBuy({ product, children }: { product: ProductDetail; chil
               inputMode="numeric"
               placeholder="Pincode"
               aria-label="Delivery pincode"
-              className="num h-10 w-32 rounded-pill border border-rule bg-paper px-4"
+              className="num h-10 w-32 border border-ink/40 bg-paper px-3"
             />
           </label>
           <AnimatePresence mode="wait">
@@ -157,11 +140,14 @@ export function ProductBuy({ product, children }: { product: ProductDetail; chil
             )}
           </AnimatePresence>
         </div>
-        <ul className="mt-6 grid grid-cols-3 gap-2 text-center text-sm text-ink-2">
-          <li className="rounded-3 border border-rule p-3">Batch code &amp; expiry on pack</li>
-          <li className="rounded-3 border border-rule p-3">Cancel free until packed</li>
-          <li className="rounded-3 border border-rule p-3">UPI, cards, net banking</li>
-        </ul>
+        <dl className="mt-6 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-[15px]">
+          <dt className="label pt-0.5 text-ink-3">Keeps</dt>
+          <dd>{shelfLife(v.shelfLifeDays)} sealed · batch code and expiry printed on the pack</dd>
+          <dt className="label pt-0.5 text-ink-3">Cancel</dt>
+          <dd>Free until we pack it, refunded to your payment method</dd>
+          <dt className="label pt-0.5 text-ink-3">Pay</dt>
+          <dd>UPI, cards, net banking through Cashfree</dd>
+        </dl>
       </div>
     </div>
   );

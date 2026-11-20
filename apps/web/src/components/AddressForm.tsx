@@ -5,7 +5,7 @@ import { useState, type FormEvent } from 'react';
 import { api, ApiError } from '@/lib/api-client';
 import type { Address } from '@/lib/types';
 
-const field = 'mt-1 h-12 w-full rounded-3 border border-rule bg-paper px-4 text-base focus:border-forest';
+const field = 'mt-1 h-12 w-full border border-rule bg-paper px-4 text-base focus:border-forest';
 
 export function AddressForm({ defaultName, onSaved, onCancel }: { defaultName?: string; onSaved: (a: Address) => void; onCancel?: () => void }) {
   const [busy, setBusy] = useState(false);

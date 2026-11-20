@@ -21,7 +21,9 @@
   --alert: #b93a2b;
   --veg: #1e8e3e;
 
-  --font-display: 'Tiro Devanagari Hindi', 'Noto Serif', Georgia, serif;
+  /* Young Serif for headings (Latin); Tiro covers Devanagari. Newsreader for editorial text and captions. */
+  --font-display: 'Young Serif', 'Tiro Devanagari Hindi', Georgia, serif;
+  --font-serif: 'Newsreader Variable', 'Tiro Devanagari Hindi', Georgia, serif;
   --font-text: 'Mukta', 'Noto Sans', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
 

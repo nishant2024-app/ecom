@@ -29,6 +29,7 @@
 
   --font-*: initial;
   --font-display: var(--font-display);
+  --font-serif: var(--font-serif);
   --font-text: var(--font-text);
   --font-mono: var(--font-mono);
 
@@ -74,6 +75,26 @@
   body {
     background: var(--paper);
     min-height: 100dvh;
+  }
+  /* Faint paper grain so large cream areas don't look like a flat screen fill. */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    pointer-events: none;
+    opacity: 0.05;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  @media (prefers-color-scheme: dark) {
+    body::before { mix-blend-mode: screen; opacity: 0.035; }
+  }
+  h1, h2, h3 {
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
   }
   :lang(hi) {
     line-height: 1.6;
@@ -121,4 +142,16 @@
   border-bottom: 1px dotted var(--ink-3);
   margin: 0 8px 6px;
   min-width: 16px;
+}
+
+/* Small uppercase label in the batch-code typeface (used for metadata, not section eyebrows). */
+@utility label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 16px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+@utility hairline {
+  border: 1px solid var(--rule);
 }

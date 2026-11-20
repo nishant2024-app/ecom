@@ -16,11 +16,15 @@
   },
   "dependencies": {
     "@dairy/core": "workspace:*",
+    "@fontsource-variable/newsreader": "^5.3.0",
     "@fontsource/jetbrains-mono": "^5.2.6",
     "@fontsource/mukta": "^5.2.6",
-    "@fontsource/tiro-devanagari-hindi": "^5.2.6"
+    "@fontsource/tiro-devanagari-hindi": "^5.2.6",
+    "@fontsource/young-serif": "^5.3.0"
   },
-  "peerDependencies": { "react": "^19.0.0" },
+  "peerDependencies": {
+    "react": "^19.0.0"
+  },
   "devDependencies": {
     "@types/react": "^19.1.8",
     "react": "^19.1.0",

@@ -94,7 +94,7 @@ export function OrderView({ id }: { id: string }) {
 
   return (
     <div className="mx-auto max-w-[1100px] px-4 py-10 md:px-6">
-      <div className="flex flex-col items-start gap-6 rounded-5 bg-forest p-6 text-on-forest md:flex-row md:items-center md:p-10">
+      <div className="flex flex-col items-start gap-6 bg-forest p-6 text-on-forest md:flex-row md:items-center md:p-10">
         {!cancelled && <Parcel done={done} />}
         <div className="flex-1">
           <p className="num text-sm text-on-forest/70">Order {order.number}</p>
@@ -117,12 +117,12 @@ export function OrderView({ id }: { id: string }) {
         </div>
         <div className="flex flex-wrap gap-2">
           {order.status === 'pending_payment' && (
-            <button type="button" onClick={payAgain} disabled={busy} className="rounded-pill bg-signal px-6 py-3 text-on-signal">
+            <button type="button" onClick={payAgain} disabled={busy} className=" bg-signal px-6 py-3 text-on-signal">
               Pay now
             </button>
           )}
           {order.canCancel && (
-            <button type="button" onClick={cancel} disabled={busy} className="rounded-pill border border-on-forest/40 px-5 py-3">
+            <button type="button" onClick={cancel} disabled={busy} className=" border border-on-forest/40 px-5 py-3">
               Cancel order
             </button>
           )}
@@ -135,7 +135,7 @@ export function OrderView({ id }: { id: string }) {
             const at = order.timeline[s.key];
             return (
               <li key={s.key} className="relative">
-                <div className="h-1.5 overflow-hidden rounded-pill bg-paper-3">
+                <div className="h-1.5 overflow-hidden bg-paper-3">
                   <motion.div className="h-full bg-forest" initial={{ width: 0 }} animate={{ width: i < reached ? '100%' : '0%' }} transition={{ delay: 0.15 * i, duration: 0.5 }} />
                 </div>
                 <p className={`mt-2 text-sm ${at ? 'text-ink' : 'text-ink-3'}`}>{s.label}</p>
@@ -149,7 +149,7 @@ export function OrderView({ id }: { id: string }) {
       <div className="mt-10 grid gap-8 md:grid-cols-12">
         <section className="md:col-span-7">
           <h2 className="text-xl">Items</h2>
-          <ul className="mt-3 divide-y divide-rule rounded-4 border border-rule bg-paper">
+          <ul className="mt-3 divide-y divide-rule border border-rule bg-paper">
             {order.items.map((i) => (
               <li key={i.id} className="flex items-center gap-4 p-4">
                 <PackShot kind={i.pack.kind} color={i.pack.color} accent={i.pack.accent} label={i.name} className="h-16 w-12 shrink-0" />
@@ -181,7 +181,7 @@ export function OrderView({ id }: { id: string }) {
           </dl>
         </section>
         <aside className="space-y-4 md:col-span-5">
-          <div className="rounded-4 bg-paper-2 p-5">
+          <div className=" bg-paper-2 p-5">
             <h2 className="text-sm uppercase tracking-[0.12em] text-ink-2">Delivering to</h2>
             <p className="mt-2">{order.shippingAddress.name}</p>
             <p className="text-ink-2">
@@ -189,7 +189,7 @@ export function OrderView({ id }: { id: string }) {
             </p>
           </div>
           {order.delivery.trackingNumber && (
-            <div className="rounded-4 bg-paper-2 p-5">
+            <div className=" bg-paper-2 p-5">
               <h2 className="text-sm uppercase tracking-[0.12em] text-ink-2">Tracking</h2>
               <p className="mt-2">
                 {order.delivery.courier} · <span className="num">{order.delivery.trackingNumber}</span>
@@ -201,7 +201,7 @@ export function OrderView({ id }: { id: string }) {
               )}
             </div>
           )}
-          <div className="rounded-4 bg-paper-2 p-5">
+          <div className=" bg-paper-2 p-5">
             <h2 className="text-sm uppercase tracking-[0.12em] text-ink-2">Payment</h2>
             <p className="mt-2">{order.payment ? `${order.payment.status === 'success' ? 'Paid' : order.payment.status === 'refunded' ? 'Refunded' : 'Not paid yet'}${order.payment.method ? ` · ${order.payment.method.toUpperCase()}` : ''}` : '—'}</p>
             {order.refunds.map((r) => (

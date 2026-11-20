@@ -1,44 +1,55 @@
 import Link from 'next/link';
+import { Logo } from './Header';
 
 export function Footer({ fssai, phone, email }: { fssai?: string; phone?: string; email?: string }) {
+  const year = new Date().getFullYear();
   return (
-    <footer className="mt-24 px-3 pb-3 md:px-6 md:pb-6">
-      <div className="mx-auto max-w-[1240px] overflow-hidden rounded-5 bg-forest text-on-forest">
-        <div className="grid gap-10 px-6 py-12 md:grid-cols-12 md:px-12">
-          <div className="md:col-span-5">
+    <footer className="mt-28 border-t border-ink bg-paper">
+      <div className="mx-auto grid max-w-[1320px] gap-10 px-4 py-14 md:grid-cols-12 md:px-8">
+        <div className="md:col-span-5">
+          <div className="flex items-center gap-3">
+            <Logo size={40} />
             <p className="font-display text-3xl">Mulshi Dairy</p>
-            <p className="mt-3 max-w-sm text-on-forest/80">Ghee, milk powder, UHT milk and mithai from our herd in Mulshi, packed to last and shipped across India.</p>
           </div>
-          <div className="md:col-span-2">
-            <p className="text-sm uppercase tracking-[0.12em] text-on-forest/70">Shop</p>
-            <ul className="mt-3 space-y-1.5">
-              <li><Link href="/products?category=ghee" className="hover:underline">Ghee</Link></li>
-              <li><Link href="/products?category=milk-powder" className="hover:underline">Milk powder</Link></li>
-              <li><Link href="/products?category=uht-flavoured" className="hover:underline">UHT & flavoured</Link></li>
-              <li><Link href="/products?category=condensed-sweets" className="hover:underline">Mithai</Link></li>
-            </ul>
-          </div>
-          <div className="md:col-span-2">
-            <p className="text-sm uppercase tracking-[0.12em] text-on-forest/70">Help</p>
-            <ul className="mt-3 space-y-1.5">
-              <li><Link href="/account" className="hover:underline">Track an order</Link></li>
-              {phone && <li className="num">{phone}</li>}
-              {email && <li>{email}</li>}
-            </ul>
-          </div>
-          <div className="md:col-span-3">
-            <p className="text-sm uppercase tracking-[0.12em] text-on-forest/70">Legal</p>
-            <ul className="mt-3 space-y-1.5">
-              {fssai && <li>FSSAI licence <span className="num">{fssai}</span></li>}
-              <li>Prices include GST</li>
-              <li><Link href="/account/delete" className="hover:underline">Delete my account</Link></li>
-            </ul>
-          </div>
+          <p className="mt-4 max-w-sm font-serif text-lg italic leading-snug text-ink-2">Ghee, milk powder, long-life milk and mithai from our herd in Mulshi, near Pune.</p>
         </div>
-        <p aria-hidden className="select-none whitespace-nowrap px-6 pb-2 font-display text-[clamp(44px,9.4vw,132px)] leading-[0.8] text-on-forest/10 md:px-10">
-          Pasture to pantry
+        <FooterCol title="Shop">
+          <Link href="/products?category=ghee">Ghee</Link>
+          <Link href="/products?category=milk-powder">Milk powder</Link>
+          <Link href="/products?category=uht-flavoured">UHT & flavoured milk</Link>
+          <Link href="/products?category=condensed-sweets">Condensed milk & mithai</Link>
+        </FooterCol>
+        <FooterCol title="Help">
+          <Link href="/account">Track an order</Link>
+          <Link href="/#questions">Shipping & returns</Link>
+          {phone && <a href={`tel:${phone.replace(/\s/g, '')}`} className="num">{phone}</a>}
+          {email && <a href={`mailto:${email}`}>{email}</a>}
+        </FooterCol>
+        <FooterCol title="The fine print">
+          {fssai && (
+            <span>
+              FSSAI licence <span className="num">{fssai}</span>
+            </span>
+          )}
+          <span>All prices include GST</span>
+          <Link href="/account/delete">Delete my account</Link>
+        </FooterCol>
+      </div>
+      <div className="border-t border-rule">
+        <p className="label mx-auto flex max-w-[1320px] flex-wrap justify-between gap-2 px-4 py-4 text-ink-3 md:px-8">
+          <span>© {year} Mulshi Dairy</span>
+          <span>Made in Mulshi, Maharashtra</span>
         </p>
       </div>
     </footer>
+  );
+}
+
+function FooterCol({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="md:col-span-2 md:[&:last-child]:col-span-3">
+      <p className="label text-ink-3">{title}</p>
+      <div className="mt-4 flex flex-col gap-2 text-[15px] [&_a:hover]:underline [&_a]:underline-offset-4">{children}</div>
+    </div>
   );
 }

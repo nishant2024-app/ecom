@@ -2,84 +2,84 @@
 
 import { motion, useMotionValueEvent, useScroll } from 'motion/react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { usePathname, useSearchParams } from 'next/navigation';
+import { Suspense, useState } from 'react';
 import { useCart } from '@/lib/cart';
 
 const nav = [
-  { href: '/products?category=ghee', label: 'Ghee' },
-  { href: '/products?category=milk-powder', label: 'Milk powder' },
-  { href: '/products?category=uht-flavoured', label: 'UHT & flavoured' },
-  { href: '/products?category=condensed-sweets', label: 'Mithai' },
+  { slug: 'ghee', label: 'Ghee' },
+  { slug: 'milk-powder', label: 'Milk powder' },
+  { slug: 'uht-flavoured', label: 'UHT & flavoured' },
+  { slug: 'condensed-sweets', label: 'Mithai' },
 ];
+
+function NavLinks({ className, item }: { className: string; item: string }) {
+  const pathname = usePathname();
+  const params = useSearchParams();
+  return (
+    <nav aria-label="Categories" className={className}>
+      {nav.map((n) => {
+        const active = pathname === '/products' && params.get('category') === n.slug;
+        return (
+          <Link key={n.slug} href={`/products?category=${n.slug}`} aria-current={active ? 'page' : undefined} className={`${item} ${active ? 'text-ink underline decoration-2 underline-offset-[6px]' : 'text-ink-2 hover:text-ink'}`}>
+            {n.label}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
 
 export function Header() {
   const { count, setOpen, bump } = useCart();
   const { scrollY } = useScroll();
   const [scrolled, setScrolled] = useState(false);
-  const pathname = usePathname();
-  useMotionValueEvent(scrollY, 'change', (y) => setScrolled(y > 24));
+  useMotionValueEvent(scrollY, 'change', (y) => setScrolled(y > 40));
 
   return (
-    <header className="sticky top-0 z-40 px-3 pt-3 md:px-6">
-      <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:rounded-2 focus:bg-paper focus:p-2">
+    <header className={`sticky top-0 z-40 bg-paper/95 backdrop-blur-sm transition-[border-color] duration-[var(--dur-2)] ${scrolled ? 'border-b border-rule' : 'border-b border-transparent'}`}>
+      <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:bg-paper focus:p-2">
         Skip to content
       </a>
-      <motion.div
-        animate={{ boxShadow: scrolled ? '0 12px 30px -18px rgba(20,39,31,.45)' : '0 0 0 rgba(0,0,0,0)' }}
-        className={`mx-auto flex max-w-[1240px] items-center justify-between gap-4 rounded-pill border px-4 py-2.5 backdrop-blur transition-colors duration-[var(--dur-2)] md:px-6 ${scrolled ? 'border-rule bg-paper/90' : 'border-transparent bg-paper/60'}`}
-      >
-        <Link href="/" className="flex items-center gap-2" aria-label="Mulshi Dairy home">
+      <div className={`mx-auto grid max-w-[1320px] grid-cols-[1fr_auto] items-center gap-4 px-4 transition-[padding] duration-[var(--dur-2)] md:px-8 lg:grid-cols-[1fr_auto_1fr] ${scrolled ? 'py-2.5' : 'py-4'}`}>
+        <Link href="/" className="flex items-center gap-2.5 justify-self-start" aria-label="Mulshi Dairy home">
           <Logo />
-          <span className="whitespace-nowrap font-display text-lg leading-none tracking-tight sm:text-xl">Mulshi Dairy</span>
+          <span className="font-display text-[22px] leading-none tracking-[-0.01em]">Mulshi Dairy</span>
         </Link>
-        <nav aria-label="Categories" className="hidden items-center gap-1 lg:flex">
-          {nav.map((n) => (
-            <Link key={n.href} href={n.href} className="rounded-pill px-3 py-1.5 text-base hover:bg-paper-2">
-              {n.label}
-            </Link>
-          ))}
-        </nav>
-        <div className="flex items-center gap-1">
-          <Link href="/products" aria-label="Search products" className={`grid h-10 w-10 place-items-center rounded-pill hover:bg-paper-2 ${pathname === '/products' ? 'bg-paper-2' : ''}`}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
-              <circle cx="11" cy="11" r="7" />
-              <path d="m20 20-3.5-3.5" strokeLinecap="round" />
-            </svg>
+        <Suspense fallback={null}>
+          <NavLinks className="hidden items-center gap-7 lg:flex" item="text-[15px]" />
+        </Suspense>
+        <div className="flex items-center gap-1 justify-self-end text-[15px]">
+          <Link href="/products" className="hidden px-2 py-1.5 text-ink-2 hover:text-ink sm:block">
+            Search
           </Link>
-          <Link href="/account" aria-label="My account" className="grid h-10 w-10 place-items-center rounded-pill hover:bg-paper-2">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
-              <circle cx="12" cy="8" r="4" />
-              <path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" strokeLinecap="round" />
-            </svg>
+          <Link href="/account" className="px-2 py-1.5 text-ink-2 hover:text-ink">
+            Account
           </Link>
-          <button
-            type="button"
-            id="cart-button"
-            onClick={() => setOpen(true)}
-            className="relative flex h-10 items-center gap-2 rounded-pill bg-forest px-4 text-on-forest hover:bg-forest-2"
-            aria-label={`Cart, ${count} item${count === 1 ? '' : 's'}`}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
-              <path d="M5 8h14l-1.2 11.2a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.8L5 8Z" />
-              <path d="M9 8V6a3 3 0 0 1 6 0v2" />
-            </svg>
-            <motion.span key={bump} initial={{ scale: bump ? 1.6 : 1 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 500, damping: 14 }} className="num text-sm">
+          <button type="button" id="cart-button" onClick={() => setOpen(true)} className="ml-1 flex items-center gap-2 border border-ink px-3 py-1.5 hover:bg-ink hover:text-paper" aria-label={`Basket, ${count} item${count === 1 ? '' : 's'}`}>
+            Basket
+            <motion.span key={bump} initial={{ y: bump ? -8 : 0, opacity: bump ? 0 : 1 }} animate={{ y: 0, opacity: 1 }} transition={{ type: 'spring', stiffness: 500, damping: 22 }} className="num min-w-[1ch] text-sm">
               {count}
             </motion.span>
           </button>
         </div>
-      </motion.div>
+      </div>
+      <Suspense fallback={null}>
+        <NavLinks className="flex gap-5 overflow-x-auto px-4 pb-2.5 lg:hidden" item="whitespace-nowrap text-sm" />
+      </Suspense>
     </header>
   );
 }
 
+/** Wordmark seal: a churn handle inside a ring. */
 export function Logo({ size = 30 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 40 40" aria-hidden>
-      <circle cx="20" cy="20" r="20" fill="var(--forest)" />
-      <path d="M11 27V14l9 9 9-9v13" fill="none" stroke="var(--signal)" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="20" cy="10" r="2.4" fill="var(--on-forest)" />
+      <circle cx="20" cy="20" r="18.5" fill="none" stroke="var(--forest)" strokeWidth="2" />
+      <circle cx="20" cy="20" r="14" fill="var(--forest)" />
+      <path d="M20 8v17" stroke="var(--signal)" strokeWidth="2.4" strokeLinecap="round" />
+      <path d="M13.5 22.5c2 3.6 11 3.6 13 0" fill="none" stroke="var(--on-forest)" strokeWidth="2.2" strokeLinecap="round" />
+      <path d="M15 17h10" stroke="var(--signal)" strokeWidth="2.4" strokeLinecap="round" />
     </svg>
   );
 }

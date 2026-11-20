@@ -28,8 +28,8 @@ export function MockPay({ paymentId }: { paymentId: string }) {
 
   return (
     <div className="mx-auto max-w-md px-4 py-16">
-      <div className="rounded-5 border border-rule bg-paper p-6 shadow-card">
-        <p className="rounded-pill bg-signal/30 px-3 py-1 text-center text-sm">Test mode: no money moves. Cashfree checkout appears here in production.</p>
+      <div className=" border border-rule bg-paper p-6 shadow-card">
+        <p className=" bg-signal/30 px-3 py-1 text-center text-sm">Test mode: no money moves. Cashfree checkout appears here in production.</p>
         {error && <p className="mt-4 text-alert">{error}</p>}
         {p && (
           <>
@@ -38,10 +38,10 @@ export function MockPay({ paymentId }: { paymentId: string }) {
               <Money paise={p.amount.amount} className="text-5xl" />
             </p>
             <div className="mt-8 grid gap-3">
-              <button type="button" disabled={busy || p.status !== 'created'} onClick={() => finish('success')} className="h-14 rounded-pill bg-forest text-lg text-on-forest disabled:opacity-50">
+              <button type="button" disabled={busy || p.status !== 'created'} onClick={() => finish('success')} className="h-14 bg-forest text-lg text-on-forest disabled:opacity-50">
                 Pay with test UPI
               </button>
-              <button type="button" disabled={busy || p.status !== 'created'} onClick={() => finish('failed')} className="h-12 rounded-pill border border-rule">
+              <button type="button" disabled={busy || p.status !== 'created'} onClick={() => finish('failed')} className="h-12 border border-rule">
                 Simulate a failed payment
               </button>
             </div>

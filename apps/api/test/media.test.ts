@@ -97,5 +97,8 @@ describe('storefront content', () => {
 
     const bad = await t.app.inject({ method: 'PUT', url: '/v1/admin/storefront', headers, payload: { ...content, hero: { ...content.hero, imageId: 'med_nope' } } });
     expect(bad.statusCode).toBe(400);
+
+    const inUse = await t.app.inject({ method: 'DELETE', url: `/v1/admin/site-media/${imageId}`, headers });
+    expect(inUse.statusCode).toBe(409);
   });
 });
