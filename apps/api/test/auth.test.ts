@@ -133,3 +133,9 @@ describe('docs', () => {
     expect(Object.keys(spec.paths)).toContain('/v1/store/orders');
   });
 });
+
+describe('dev sign-in', () => {
+  it('is only available with AUTH_TEST_MODE', async () => {
+    expect((await t.app.inject({ method: 'POST', url: '/v1/dev/sign-in', payload: { email: 'x@example.com' } })).statusCode).toBe(404);
+  });
+});

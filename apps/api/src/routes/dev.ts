@@ -3,6 +3,7 @@ import type { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { Type } from '@sinclair/typebox';
 import { and, eq } from 'drizzle-orm';
 import type { FastifyInstance } from 'fastify';
+import { newId } from '@dairy/core';
 import { notFound } from '../lib/errors';
 import { requireAuth } from '../plugins/auth';
 import { markPaid, markPaymentFailed } from '../services/orders';
@@ -14,6 +15,33 @@ import { markPaid, markPaymentFailed } from '../services/orders';
 export default async function devRoutes(fastify: FastifyInstance) {
   const app = fastify.withTypeProvider<TypeBoxTypeProvider>();
   const { db } = app.deps.db;
+
+  /** Sign in as a test customer without Google (AUTH_TEST_MODE only; never in production). */
+  if (app.deps.config.AUTH_TEST_MODE) {
+    app.post(
+      '/sign-in',
+      {
+        config: { auth: 'public', csrf: false },
+        schema: {
+          tags: ['Dev'],
+          summary: 'Test-customer sign-in',
+          body: Type.Object({ email: Type.String({ format: 'email' }), name: Type.Optional(Type.String({ maxLength: 80 })), client: Type.Optional(Type.Union([Type.Literal('web'), Type.Literal('android')])) }),
+        },
+      },
+      async (req, reply) => {
+        const email = req.body.email.toLowerCase();
+        const subject = `dev:${email}`;
+        let [identity] = await db.select().from(s.authIdentities).where(and(eq(s.authIdentities.provider, 'dev'), eq(s.authIdentities.subject, subject)));
+        if (!identity) {
+          const id = newId('cus');
+          await db.insert(s.customers).values({ id, name: req.body.name ?? email.split('@')[0]!, email });
+          [identity] = await db.insert(s.authIdentities).values({ id: newId('idn'), userType: 'customer', userId: id, provider: 'dev', subject, email }).returning();
+        }
+        const out = await app.deps.issueSession!(req, reply, { type: 'customer', id: identity!.userId }, req.body.client ?? 'web', 'Test sign-in');
+        return { customerId: identity!.userId, ...out };
+      },
+    );
+  }
 
   app.get(
     '/payments/:paymentId',

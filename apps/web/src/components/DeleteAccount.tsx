@@ -33,7 +33,7 @@ export function DeleteAccount() {
     </Button>
   ) : (
     <div className="mt-8 flex gap-3">
-      <Button variant="solid" className="bg-alert" onClick={remove}>
+      <Button variant="solid" className="!bg-alert" onClick={remove}>
         Yes, delete it
       </Button>
       <Button variant="ghost" onClick={() => setState('idle')}>

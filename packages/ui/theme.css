@@ -1,6 +1,6 @@
 /*
  * Tailwind v4 theme built only from tokens. The default palette, radii and fonts are removed,
- * so `bg-purple-500` or `rounded-2xl` simply don't exist in this project.
+ * so `bg-purple-500` or `rounded-2xl` don't exist; use the token names instead.
  * Usage in an app stylesheet:
  *   @import 'tailwindcss';
  *   @import '@dairy/ui/tokens.css';
@@ -15,6 +15,10 @@
   --color-ink-2: var(--ink-2);
   --color-ink-3: var(--ink-3);
   --color-rule: var(--rule);
+  --color-forest: var(--forest);
+  --color-forest-2: var(--forest-2);
+  --color-on-forest: var(--on-forest);
+  --color-meadow: var(--meadow);
   --color-signal: var(--signal);
   --color-on-signal: var(--on-signal);
   --color-tick: var(--tick);
@@ -31,11 +35,15 @@
   --radius-*: initial;
   --radius-0: 0;
   --radius-1: 2px;
-  --radius-2: 4px;
+  --radius-2: 6px;
+  --radius-3: 14px;
+  --radius-4: 24px;
+  --radius-5: 36px;
   --radius-pill: 999px;
 
   --shadow-*: initial;
-  --shadow-float: 0 8px 24px -12px rgb(15 20 36 / 0.35);
+  --shadow-float: 0 18px 40px -18px rgb(20 39 31 / 0.45);
+  --shadow-card: 0 1px 0 rgb(20 39 31 / 0.04), 0 12px 32px -20px rgb(20 39 31 / 0.35);
 
   --text-xs: 12px;
   --text-xs--line-height: 16px;
@@ -90,6 +98,22 @@
 }
 @utility rule-t {
   border-top: 1px solid var(--rule);
+}
+@utility marquee {
+  animation: marquee 38s linear infinite;
+}
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .marquee {
+    animation: none;
+  }
 }
 @utility leaders {
   /* dotted leader between a label and an amount, receipt style */

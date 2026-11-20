@@ -114,6 +114,8 @@ export default async function authRoutes(fastify: FastifyInstance) {
     return { expiresIn: ACCESS_TTL_SECONDS };
   }
 
+  app.deps.issueSession = issue;
+
   app.post(
     '/nonce',
     {

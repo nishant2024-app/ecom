@@ -1,3 +1,4 @@
+import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { DbHandle } from '@dairy/db';
 import type { Config } from './config';
 import type { Permission } from './lib/permissions';
@@ -15,6 +16,14 @@ export interface AppDeps {
   payments: PaymentProvider;
   /** Injectable clock for tests. */
   now: () => Date;
+  /** Set by the auth routes; reused by the dev sign-in route. */
+  issueSession?: (
+    req: FastifyRequest,
+    reply: FastifyReply,
+    user: { type: 'customer' | 'staff'; id: string; role?: string },
+    client: 'web' | 'admin' | 'android',
+    deviceName: string | undefined,
+  ) => Promise<{ expiresIn: number; accessToken?: string; refreshToken?: string }>;
 }
 
 export type AuthMode = 'public' | 'customer' | 'staff' | 'any';

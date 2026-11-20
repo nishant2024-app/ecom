@@ -21,12 +21,16 @@ export function GoogleSignIn() {
   const next = useSearchParams().get('next') ?? '/account';
   const button = useRef<HTMLDivElement>(null);
   const [clientId, setClientId] = useState<string | null>(null);
+  const [devSignIn, setDevSignIn] = useState(false);
   const [scriptReady, setScriptReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    api<{ auth: { googleClientId: string } }>('/v1/app-config')
-      .then((c) => setClientId(c.auth.googleClientId))
+    api<{ auth: { googleClientId: string; devSignIn: boolean } }>('/v1/app-config')
+      .then((c) => {
+        setClientId(c.auth.googleClientId);
+        setDevSignIn(c.auth.devSignIn);
+      })
       .catch(() => setError('Could not reach the store. Check your connection.'));
   }, []);
 
@@ -54,15 +58,43 @@ export function GoogleSignIn() {
     void init();
   }, [init]);
 
+  const dev = devSignIn && (
+    <form
+      className="mt-6 rounded-4 border border-dashed border-ink-3 p-4"
+      onSubmit={async (e) => {
+        e.preventDefault();
+        const email = String(new FormData(e.currentTarget).get('email'));
+        try {
+          await api('/v1/dev/sign-in', { method: 'POST', body: JSON.stringify({ email, client: 'web' }) });
+          router.push(next);
+          router.refresh();
+        } catch (err) {
+          setError(err instanceof ApiError ? (err.problem.detail ?? err.problem.title) : 'Sign-in failed');
+        }
+      }}
+    >
+      <p className="text-sm text-ink-2">Development only: sign in as a test customer.</p>
+      <div className="mt-2 flex gap-2">
+        <input name="email" type="email" required defaultValue="test.customer@example.in" aria-label="Test email" className="h-11 flex-1 rounded-pill border border-rule bg-paper px-4" />
+        <button className="h-11 rounded-pill bg-forest px-5 text-on-forest">Continue</button>
+      </div>
+    </form>
+  );
+
   if (clientId === '') {
     return (
-      <p className="border border-rule p-4 text-ink-2">
-        Google sign-in isn&rsquo;t configured on this server yet. Set <code className="num">GOOGLE_WEB_CLIENT_ID</code> for the API (see docs/04-authentication.md).
-      </p>
+      <div>
+        <p className="rounded-4 border border-rule p-4 text-ink-2">
+          Google sign-in isn&rsquo;t configured on this server yet. Set <code className="num">GOOGLE_WEB_CLIENT_ID</code> for the API (see docs/04-authentication.md).
+        </p>
+        {dev}
+        {error && <p role="alert" className="mt-3 text-alert">{error}</p>}
+      </div>
     );
   }
   return (
     <div>
+      {dev}
       <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" onLoad={() => setScriptReady(true)} />
       <div ref={button} className="min-h-[44px]" />
       {error && (

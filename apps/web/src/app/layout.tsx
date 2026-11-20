@@ -1,18 +1,18 @@
 import type { Metadata, Viewport } from 'next';
 import { Footer } from '@/components/Footer';
-import { Header } from '@/components/Header';
+import { Shell } from '@/components/Shell';
 import { apiGet } from '@/lib/api-server';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: { default: 'Mulshi Dairy · Fresh milk delivered by 7 AM', template: '%s · Mulshi Dairy' },
-  description: 'Milk, curd, paneer and ghee from our Mulshi herd. Daily subscriptions, delivered before 8 AM in Baner, Balewadi and Aundh.',
+  title: { default: 'Mulshi Dairy · Ghee, milk powder and mithai, shipped across India', template: '%s · Mulshi Dairy' },
+  description: 'Bilona A2 ghee, milk powder, UHT and flavoured milk, condensed milk and mithai from our Mulshi farm. Shelf-stable, shipped to your door.',
 };
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#f6f2e7' },
-    { media: '(prefers-color-scheme: dark)', color: '#0f1424' },
+    { media: '(prefers-color-scheme: light)', color: '#fbf7ee' },
+    { media: '(prefers-color-scheme: dark)', color: '#0d1a14' },
   ],
 };
 
@@ -26,9 +26,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en">
       <body>
-        <Header />
-        <main id="main">{children}</main>
-        <Footer fssai={config?.legal.fssai} phone={config?.support.phone} email={config?.support.email} />
+        <Shell>
+          <main id="main">{children}</main>
+          <Footer fssai={config?.legal.fssai} phone={config?.support.phone} email={config?.support.email} />
+        </Shell>
       </body>
     </html>
   );

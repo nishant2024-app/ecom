@@ -12,8 +12,8 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 const variants: Record<Variant, string> = {
   // One primary action per view: marigold fill with ink text.
   primary: 'bg-signal text-on-signal hover:brightness-95 active:brightness-90',
-  solid: 'bg-ink text-paper hover:opacity-90',
-  outline: 'border border-ink text-ink hover:bg-paper-2',
+  solid: 'bg-forest text-on-forest hover:bg-forest-2',
+  outline: 'border border-forest text-ink hover:bg-paper-2',
   ghost: 'text-ink underline-offset-4 hover:underline',
 };
 const sizes: Record<Size, string> = {
@@ -27,7 +27,7 @@ export function Button({ variant = 'solid', size = 'md', className, type = 'butt
     <button
       type={type}
       className={cn(
-        'inline-flex items-center justify-center gap-2 rounded-1 font-medium transition-[filter,opacity,background-color] duration-[var(--dur-1)] ease-std disabled:cursor-not-allowed disabled:opacity-50',
+        'inline-flex items-center justify-center gap-2 rounded-pill font-medium transition-[filter,opacity,background-color] duration-[var(--dur-1)] ease-std disabled:cursor-not-allowed disabled:opacity-50',
         variants[variant],
         sizes[size],
         className,

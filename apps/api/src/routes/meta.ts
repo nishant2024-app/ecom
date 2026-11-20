@@ -3,7 +3,6 @@ import { Type } from '@sinclair/typebox';
 import { sql } from 'drizzle-orm';
 import type { FastifyInstance } from 'fastify';
 import { sendProblem } from '../lib/errors';
-import { money } from '../lib/schemas';
 import { defaultSellerId, settingNumber, settingsMap } from '../services/store';
 
 export default async function metaRoutes(fastify: FastifyInstance) {
@@ -41,8 +40,8 @@ export default async function metaRoutes(fastify: FastifyInstance) {
             features: Type.Record(Type.String(), Type.Boolean()),
             support: Type.Object({ phone: Type.String(), email: Type.String() }),
             legal: Type.Object({ fssai: Type.String(), privacyUrl: Type.String(), termsUrl: Type.String() }),
-            auth: Type.Object({ googleClientId: Type.String() }),
-            wallet: Type.Object({ minTopup: Type.Any(), maxTopup: Type.Any() }),
+            auth: Type.Object({ googleClientId: Type.String(), devSignIn: Type.Boolean() }),
+            payments: Type.Object({ provider: Type.String(), environment: Type.String() }),
           }),
         },
       },
@@ -55,14 +54,12 @@ export default async function metaRoutes(fastify: FastifyInstance) {
       reply.header('cache-control', 'public, max-age=60');
       return {
         minVersions: { android: settingNumber(settings, 'app.minAndroidVersion', 1), web: '1.0.0' },
-        features: { eveningSlot: false, autopay: false, referrals: false },
+        features: { cashOnDelivery: false, guestCheckout: false },
         support: { phone: String(settings['support.phone'] ?? ''), email: String(settings['support.email'] ?? '') },
         legal: { fssai: seller?.fssai_number ?? '', privacyUrl: `${web}/privacy`, termsUrl: `${web}/terms` },
-        auth: { googleClientId: app.deps.config.GOOGLE_WEB_CLIENT_ID },
-        wallet: {
-          minTopup: money(settingNumber(settings, 'wallet.minTopupPaise', 10000)),
-          maxTopup: money(settingNumber(settings, 'wallet.maxTopupPaise', 1000000)),
-        },
+        auth: { googleClientId: app.deps.config.GOOGLE_WEB_CLIENT_ID, devSignIn: app.deps.config.AUTH_TEST_MODE && !app.deps.config.isProduction && app.deps.payments.name === 'mock' },
+        payments: { provider: app.deps.payments.name, environment: app.deps.payments.environment },
+
       };
     },
   );

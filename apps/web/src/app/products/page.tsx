@@ -1,70 +1,76 @@
 import Link from 'next/link';
 import { ProductCard } from '@/components/ProductCard';
+import { Reveal } from '@/components/Reveal';
 import { apiGet } from '@/lib/api-server';
 import type { Category, ProductSummary } from '@/lib/types';
 
-export const metadata = { title: 'All products' };
+export const metadata = { title: 'Shop' };
 
-export default async function Products({ searchParams }: { searchParams: Promise<{ category?: string; q?: string }> }) {
-  const { category, q } = await searchParams;
-  const qs = new URLSearchParams({ ...(category ? { category } : {}), ...(q ? { q } : {}) });
+export default async function Products({ searchParams }: { searchParams: Promise<{ category?: string; q?: string; sort?: string }> }) {
+  const { category, q, sort } = await searchParams;
+  const qs = new URLSearchParams({ ...(category ? { category } : {}), ...(q ? { q } : {}), ...(sort ? { sort } : {}) });
   const [products, categories] = await Promise.all([
-    apiGet<{ data: ProductSummary[] }>(`/v1/store/products?${qs}`),
+    apiGet<{ data: ProductSummary[] }>(`/v1/store/products?${qs}`, { revalidate: 30 }),
     apiGet<{ data: Category[] }>('/v1/store/categories', { revalidate: 300 }),
   ]);
   const list = products?.data ?? [];
   const current = categories?.data.find((c) => c.slug === category);
+  const chip = (active: boolean) => `whitespace-nowrap rounded-pill px-4 py-2 text-base transition-colors ${active ? 'bg-forest text-on-forest' : 'bg-paper-2 hover:bg-paper-3'}`;
 
   return (
-    <div className="mx-auto max-w-[1200px] px-4 py-10 md:px-6">
-      <div className="grid gap-6 rule-b pb-6 md:grid-cols-12 md:items-end">
-        <h1 className="font-display text-2xl md:col-span-6 md:text-[44px] md:leading-tight">{q ? `“${q}”` : (current?.name ?? 'Everything we make')}</h1>
-        <form action="/products" className="flex md:col-span-5 md:col-start-8" role="search">
+    <div className="mx-auto max-w-[1240px] px-4 pb-10 pt-10 md:px-6">
+      <div className="rounded-5 bg-paper-2 p-6 md:p-10">
+        <p className="text-sm uppercase tracking-[0.14em] text-ink-2">{q ? 'Search' : 'Shop'}</p>
+        <h1 className="mt-2 font-display text-[clamp(36px,5vw,64px)] leading-none">{q ? `“${q}”` : (current?.name ?? 'The whole pantry')}</h1>
+        {current && <p className="mt-3 max-w-xl text-lg text-ink-2">{current.blurb}</p>}
+        <form action="/products" role="search" className="mt-6 flex max-w-xl rounded-pill bg-paper p-1.5 shadow-card">
           {category && <input type="hidden" name="category" value={category} />}
           <label htmlFor="q" className="sr-only">
             Search products
           </label>
-          <input
-            id="q"
-            name="q"
-            defaultValue={q}
-            placeholder="Search: doodh, paneer, ghee…"
-            className="h-12 w-full rounded-l-1 border border-r-0 border-ink bg-paper px-4 text-base placeholder:text-ink-3"
-          />
-          <button className="h-12 rounded-r-1 bg-ink px-5 text-base text-paper">Search</button>
+          <input id="q" name="q" defaultValue={q} placeholder="Search: ghee, doodh powder, peda…" className="h-11 w-full rounded-pill bg-transparent px-4 text-base outline-none placeholder:text-ink-3" />
+          <button className="h-11 rounded-pill bg-forest px-6 text-on-forest">Search</button>
         </form>
       </div>
-      <nav aria-label="Categories" className="mt-4 flex gap-2 overflow-x-auto pb-2">
-        <Link
-          href="/products"
-          aria-current={!category ? 'page' : undefined}
-          className={`whitespace-nowrap rounded-pill border px-4 py-1.5 text-sm ${!category ? 'border-ink bg-ink text-paper' : 'border-rule hover:border-ink'}`}
-        >
-          All
-        </Link>
-        {categories?.data.map((c) => (
-          <Link
-            key={c.slug}
-            href={`/products?category=${c.slug}`}
-            aria-current={category === c.slug ? 'page' : undefined}
-            className={`whitespace-nowrap rounded-pill border px-4 py-1.5 text-sm ${category === c.slug ? 'border-ink bg-ink text-paper' : 'border-rule hover:border-ink'}`}
-          >
-            {c.name}
+
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+        <nav aria-label="Categories" className="flex gap-2 overflow-x-auto pb-1">
+          <Link href="/products" aria-current={!category ? 'page' : undefined} className={chip(!category)}>
+            All
           </Link>
-        ))}
-      </nav>
+          {categories?.data.map((c) => (
+            <Link key={c.slug} href={`/products?category=${c.slug}`} aria-current={category === c.slug ? 'page' : undefined} className={chip(category === c.slug)}>
+              {c.name}
+            </Link>
+          ))}
+        </nav>
+        <nav aria-label="Sort" className="flex gap-1 text-sm">
+          {[
+            ['', 'Featured'],
+            ['price_asc', 'Price ↑'],
+            ['price_desc', 'Price ↓'],
+          ].map(([v, l]) => (
+            <Link key={v} href={`/products?${new URLSearchParams({ ...(category ? { category } : {}), ...(q ? { q } : {}), ...(v ? { sort: v } : {}) })}`} className={`rounded-pill px-3 py-1.5 ${(sort ?? '') === v ? 'bg-paper-3' : 'hover:bg-paper-2'}`}>
+              {l}
+            </Link>
+          ))}
+        </nav>
+      </div>
+
       {list.length === 0 ? (
         <p className="mt-16 max-w-md text-lg text-ink-2">
-          Nothing matches that. Try “milk”, “dahi” or “ghee”, or{' '}
+          Nothing matches that. Try “ghee”, “powder” or “peda”, or{' '}
           <Link href="/products" className="text-ink underline underline-offset-4">
             see everything
           </Link>
           .
         </p>
       ) : (
-        <div className="mt-8 grid grid-cols-2 gap-x-4 gap-y-10 md:grid-cols-3 md:gap-x-6 lg:grid-cols-4">
-          {list.map((p) => (
-            <ProductCard key={p.id} product={p} />
+        <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {list.map((p, i) => (
+            <Reveal key={p.id} delay={(i % 4) * 0.05}>
+              <ProductCard product={p} />
+            </Reveal>
           ))}
         </div>
       )}
