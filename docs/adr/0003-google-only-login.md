@@ -9,7 +9,7 @@ Indian commerce apps usually use phone OTP. SMS costs money per message and need
 
 ## Decision
 
-Customers, staff and delivery agents all sign in with **Google**. Clients obtain a Google ID token (Google Identity Services on web, Credential Manager on Android, both using the web client ID as audience) and exchange it at `POST /v1/auth/google` for our own tokens. Nonces prevent replay. Accounts are keyed by Google `sub`, not email. Staff and agents must be invited, are bound to one Google account, and money/settings roles also need TOTP.
+Customers and staff sign in with **Google**. Clients obtain a Google ID token (Google Identity Services on web, Credential Manager on Android, both using the web client ID as audience) and exchange it at `POST /v1/auth/google` for our own tokens. Nonces prevent replay. Accounts are keyed by Google `sub`, not email. Staff must be invited and are bound to one Google account; TOTP for money/settings roles is planned.
 
 ## Alternatives considered
 
@@ -21,5 +21,5 @@ Customers, staff and delivery agents all sign in with **Google**. Clients obtain
 ## Consequences
 
 - ₹0 login cost at any scale; one-tap sign-in on Android.
-- Phone numbers are collected but **unverified**. Acceptable because all orders are prepaid; agents call the number for delivery.
+- Phone numbers are collected with each address but **unverified**. Acceptable because all orders are prepaid; the courier uses the number.
 - Customers without a Google account can't sign up. Very few Android users in India lack one; revisit if support requests show otherwise.

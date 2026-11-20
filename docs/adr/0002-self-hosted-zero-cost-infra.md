@@ -9,7 +9,7 @@ Requirement: zero hosting cost now and later, for 50,000–100,000 users, with a
 
 ## Decision
 
-Run the whole stack as Docker containers on **Oracle Cloud Always Free** ARM VMs (app VM + data VM), with **Cloudflare Free** in front (DNS, CDN, WAF, Tunnel, Pages, Access, R2). PostgreSQL, Valkey, workers and the Remotion renderer are self-hosted. Infrastructure is code (OpenTofu + Ansible + Compose). Backups go to R2 and OCI Object Storage.
+Run the whole stack as Docker containers on **Oracle Cloud Always Free** ARM VMs (app VM + data VM), with **Cloudflare Free** in front (DNS, CDN, WAF, Tunnel, Pages, Access, R2). PostgreSQL, Valkey, the worker and Remotion rendering are self-hosted. Infrastructure is code (OpenTofu + Ansible + Compose). Backups go to R2 and OCI Object Storage.
 
 Size for the smaller reported free allocation (2 OCPU / 12 GB) in case Oracle's 2026 reduction applies. Upgrade the account to Pay-As-You-Go (still ₹0 within free limits) to avoid idle reclamation, with a ₹1 budget alert.
 

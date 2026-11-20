@@ -30,7 +30,7 @@ const STATS = [
 
 export function Stats() {
   return (
-    <div className="grid gap-px overflow-hidden rounded-4 bg-rule sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-px overflow-hidden rounded-4 bg-rule sm:grid-cols-2">
       {STATS.map((s, i) => (
         <motion.div key={s.label} initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }} className="bg-paper p-6">
           <p className="text-[clamp(36px,4vw,52px)] leading-none text-forest">

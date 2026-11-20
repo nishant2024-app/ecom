@@ -10,8 +10,6 @@ Conventions (errors, headers, money, dates): [API guide](README.md). Design: [Au
 | POST | `/v1/auth/logout` | Any | End the current session |
 | GET | `/v1/auth/sessions` | Any | List my sessions (devices) |
 | DELETE | `/v1/auth/sessions/{sessionId}` | Any | Sign out one device |
-| POST | `/v1/auth/totp/setup` | Staff | Start TOTP enrolment |
-| POST | `/v1/auth/totp/verify` | Staff | Verify a TOTP code (enrolment or sign-in) |
 | GET | `/v1/auth/.well-known/jwks.json` | Public | Public keys for our access tokens |
 | GET | `/v1/app-config` | Public | Minimum app versions, feature flags, support info |
 | GET | `/v1/health/live` | Public | Process is up |
@@ -48,10 +46,10 @@ Content-Type: application/json
 | Field | Type | Required | Notes |
 |---|---|---|---|
 | `idToken` | string | yes | From Google Identity Services (web) or Credential Manager (Android) |
-| `client` | `web` · `admin` · `agent` · `android` | yes | Decides which account type to sign into and how tokens are returned |
+| `client` | `web` · `admin` · `android` | yes | Decides which account type to sign into and how tokens are returned |
 | `deviceName` | string ≤ 80 | no | Shown in the sessions list |
 
-**Response (web, admin, agent):** tokens are set as cookies (`access_token`, `refresh_token`, `csrf_token`); the body contains the user.
+**Response (web, admin):** tokens are set as cookies (`access_token`, `refresh_token`, `csrf_token`); the body contains the user.
 
 ```json
 200 OK
@@ -82,9 +80,7 @@ Content-Type: application/json
 }
 ```
 
-For `client: "admin"`, if the staff role requires TOTP, the response is `200` with `"totpRequired": true` and a short-lived pre-auth cookie/token; call `/v1/auth/totp/verify` to finish.
-
-**Errors:** `AUTH_INVALID_GOOGLE_TOKEN`, `AUTH_NONCE_INVALID`, `STAFF_NOT_ALLOWED` (admin/agent), `RATE_LIMITED`.
+**Errors:** `AUTH_INVALID_GOOGLE_TOKEN`, `AUTH_NONCE_INVALID`, `STAFF_NOT_ALLOWED` (admin), `RATE_LIMITED`.
 
 ## POST /v1/auth/refresh
 
@@ -124,23 +120,6 @@ Ends the current session and clears cookies. `204 No Content`.
 
 Signs out that device. `204 No Content`.
 
-## POST /v1/auth/totp/setup
-
-Staff only, while signed in. Returns an `otpauth://` URI (show as QR) and recovery codes (shown once).
-
-```json
-200 OK
-{ "otpauthUri": "otpauth://totp/Dairy:owner%40example.in?secret=…&issuer=Dairy", "recoveryCodes": ["4f9k-2m8q", "…"] }
-```
-
-## POST /v1/auth/totp/verify
-
-```json
-{ "code": "492817" }
-```
-
-`200` with the full session on success. `401 AUTH_TOTP_REQUIRED` with `detail` on a wrong code. Five wrong codes lock TOTP for 15 minutes.
-
 ## GET /v1/app-config
 
 Public, cacheable. Clients call it on start.
@@ -149,11 +128,11 @@ Public, cacheable. Clients call it on start.
 200 OK
 {
   "minVersions": { "android": 1, "web": "1.0.0" },
-  "latestVersions": { "android": 1 },
-  "features": { "eveningSlot": false, "autopay": true, "referrals": true },
-  "support": { "phone": "+911234567890", "email": "support@example.in", "whatsapp": null },
-  "legal": { "fssai": "12345678901234", "privacyUrl": "https://example.in/privacy", "termsUrl": "https://example.in/terms" },
-  "wallet": { "minTopup": { "amount": 10000, "currency": "INR" }, "maxTopup": { "amount": 1000000, "currency": "INR" } }
+  "features": { "cashOnDelivery": false, "guestCheckout": false },
+  "support": { "phone": "+910000000000", "email": "support@example.in" },
+  "legal": { "fssai": "…", "privacyUrl": "https://example.in/privacy", "termsUrl": "https://example.in/terms" },
+  "auth": { "googleClientId": "….apps.googleusercontent.com", "devSignIn": false },
+  "payments": { "provider": "cashfree", "environment": "production" }
 }
 ```
 

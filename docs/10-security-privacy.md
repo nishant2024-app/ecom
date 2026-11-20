@@ -4,10 +4,10 @@
 
 | Asset | Threat | Controls |
 |---|---|---|
-| Customer wallet money | Double charges, replayed requests, forged payment success | Idempotency keys; ledger unique constraints; payments only marked paid by verified webhook or server-side status check; daily reconciliation |
-| Admin panel | Account takeover, unauthorised access | Cloudflare Access allowlist + Google sign-in + staff binding to Google `sub` + TOTP for money/settings roles; short staff sessions (12 h); audit log |
+| Customer payments | Double charges, replayed requests, forged payment success | Idempotency keys on order placement; payments only marked paid by a verified webhook or a server-side status check; late payments auto-refunded |
+| Admin panel | Account takeover, unauthorised access | Cloudflare Access allowlist + Google sign-in + staff binding to Google `sub`; short staff sessions (12 h); permission checks per route; audit log (TOTP planned) |
 | Customer accounts | Session theft | httpOnly Secure cookies, CSRF tokens, refresh token rotation with reuse detection, per-device session list and revoke |
-| Customer personal data | Leak via API or logs | Authorisation on every query (customers only see their own rows); agents see only stops on their run with shortened names; PII redacted from logs; least-privilege DB users |
+| Customer personal data | Leak via API or logs | Authorisation on every query (customers only see their own orders and addresses); PII redacted from logs; least-privilege DB users |
 | Payment webhooks | Forged events | HMAC signature on raw body, timestamp freshness, event dedupe |
 | Server | Intrusion | No open inbound ports (Cloudflare Tunnel); SSH only via Tunnel with keys; unattended security updates; fail2ban; containers run as non-root; read-only root filesystems where possible |
 | Database | Data loss, ransomware | Private network only; continuous WAL archiving + nightly backups to two providers (R2, OCI) with different credentials; monthly restore test; backups encrypted |
@@ -23,16 +23,16 @@
 - **SQL:** Drizzle query builder with parameters; raw SQL only in reviewed `packages/db/sql/` files.
 - **Authorisation:** checked in a route hook from the declared permission, plus ownership checks in queries (`WHERE customer_id = $currentUser`). Row-level security on seller-scoped tables as a second layer.
 - **Headers:** `@fastify/helmet`: HSTS (preload), `X-Content-Type-Options`, `Referrer-Policy: strict-origin-when-cross-origin`, frame-ancestors none. Storefront CSP with nonces; only Cashfree and Google Identity script origins allowed.
-- **CORS:** exact origin allowlist (`example.in`, `admin.example.in`, `agent.example.in`, staging equivalents, localhost in dev) with credentials.
+- **CORS:** exact origin allowlist (`example.in`, `admin.example.in`, staging equivalents, localhost in dev) with credentials.
 - **Rate limits:** see [API guide](api/README.md#rate-limits).
 - **Errors:** no stack traces or SQL in responses; `requestId` links to server logs.
-- **Money:** integer paise only; one conversion helper for Cashfree's rupee decimals, with tests.
+- **Money:** integer paise only; one conversion helper for Cashfree's rupee decimals, with tests. Database checks keep order totals consistent and batch reserved ≤ on hand.
 
 ## Staff security
 
 - Invite-only; bound to one Google account; deactivation revokes sessions instantly.
-- TOTP required for Owner, Admin and Accountant roles.
-- Wallet adjustment limits per role; larger adjustments need Owner/Admin.
+- Require Google 2-step verification for Owner, Admin and Accountant accounts (in-app TOTP planned).
+- Price changes need `pricing.write`; cancellations with refunds need `orders.refund`.
 - All staff actions in `audit_log` with before/after values; audit log is append-only and exportable.
 - Quarterly access review: remove staff who left, check roles.
 
@@ -43,7 +43,7 @@
 | Notice | Privacy policy at `example.in/privacy` in English and Hindi, linked at sign-in |
 | Consent | Sign-in creates an account for the service. Marketing notifications are opt-in and can be withdrawn any time. |
 | Purpose limitation | Data used only to deliver orders, take payments, support and (opt-in) marketing |
-| Data minimisation | Name, email (from Google), phone, address, location pin. No date of birth, no ID documents, no contacts access. |
+| Data minimisation | Name, email (from Google), phone and delivery address. No date of birth, no ID documents, no contacts access. |
 | Access and correction | Customers see and edit their data in the account page |
 | Erasure | Account deletion flow ([Authentication](04-authentication.md#account-deletion)); tax records retained as legally required with anonymised references |
 | Security | This document |
@@ -54,9 +54,8 @@
 
 | Data | Kept for |
 |---|---|
-| Invoices, ledger, payments, settlements | As required by GST and income tax law (plan for at least 8 years), then deleted |
-| Delivery records | 3 years, then aggregated |
-| Proof-of-delivery photos | 90 days |
+| Invoices, payments, refunds, settlements | As required by GST and income tax law (plan for at least 8 years), then deleted |
+| Orders | As long as tax law requires, then anonymised |
 | Sessions | Until expiry + 30 days |
 | Application logs | 30 days (PII redacted) |
 | Audit log | 8 years |

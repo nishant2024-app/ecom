@@ -15,7 +15,7 @@ jobs:
     timeout-minutes: 20
     services:
       postgres:
-        image: postgis/postgis:16-3.4
+        image: postgres:16-alpine
         env:
           POSTGRES_USER: migrator
           POSTGRES_PASSWORD: migrator
@@ -39,17 +39,19 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Create app role and extensions
         run: |
-          PGPASSWORD=migrator psql -h localhost -U migrator -d dairy_test -c "CREATE ROLE app LOGIN PASSWORD 'app'; CREATE EXTENSION IF NOT EXISTS postgis; CREATE EXTENSION IF NOT EXISTS pg_trgm; GRANT ALL ON SCHEMA public TO app;"
+          PGPASSWORD=migrator psql -h localhost -U migrator -d dairy_test -c "CREATE ROLE app LOGIN PASSWORD 'app'; CREATE EXTENSION IF NOT EXISTS pg_trgm; GRANT ALL ON SCHEMA public TO app;"
       - name: Typecheck
-        run: pnpm -r --filter "./packages/*" --filter @dairy/api --filter @dairy/admin --filter @dairy/web typecheck
+        run: pnpm -r --filter "./packages/*" --filter @dairy/api --filter @dairy/admin --filter @dairy/web --filter @dairy/video typecheck
       - name: Core unit tests
         run: pnpm --filter @dairy/core test
       - name: API integration tests
         run: pnpm --filter @dairy/api test
       - name: Design token contrast
         run: pnpm --filter @dairy/ui contrast
-      - name: OpenAPI contract lint
-        run: pnpm exec redocly lint docs/api/openapi.yaml --config docs/api/redocly.yaml
+      - name: OpenAPI spec is up to date
+        run: |
+          pnpm --filter @dairy/api spec ../../docs/api/openapi.json
+          git diff --exit-code docs/api/openapi.json
       - name: Build
         run: |
           pnpm --filter @dairy/api build

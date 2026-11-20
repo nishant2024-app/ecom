@@ -4,6 +4,7 @@ import { Faq } from '@/components/home/Faq';
 import { Hero, type HeroPack } from '@/components/home/Hero';
 import { Marquee } from '@/components/home/Marquee';
 import { Process } from '@/components/home/Process';
+import { ReelVideo } from '@/components/home/ReelVideo';
 import { Stats } from '@/components/home/Stats';
 import { ProductCard } from '@/components/ProductCard';
 import { Reveal } from '@/components/Reveal';
@@ -69,10 +70,18 @@ export default async function Home() {
         <Process />
       </div>
 
-      <section className="mx-auto max-w-[1240px] px-4 pt-24 md:px-6">
-        <SectionHead eyebrow="Why shelf-stable" title="Made properly, it simply keeps" />
-        <div className="mt-10">
-          <Stats />
+      <section className="mx-auto grid max-w-[1240px] items-center gap-10 px-4 pt-24 md:grid-cols-12 md:px-6">
+        <Reveal className="md:col-span-5">
+          <ReelVideo />
+        </Reveal>
+        <div className="md:col-span-7">
+          <SectionHead eyebrow="Why shelf-stable" title="Made properly, it simply keeps" />
+          <p className="mt-4 max-w-xl text-lg text-ink-2">
+            Ghee has almost no water left in it, milk powder is dried to under 4% moisture, and UHT cartons are sterile. Nothing needs a preservative or a fridge until you open it.
+          </p>
+          <div className="mt-8">
+            <Stats />
+          </div>
         </div>
       </section>
 

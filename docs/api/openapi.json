@@ -1,0 +1,4883 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Dairy Store API",
+    "version": "1.0.0",
+    "description": "See docs/api/README.md for conventions."
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      },
+      "cookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "access_token"
+      }
+    },
+    "schemas": {
+      "def-0": {
+        "type": "object",
+        "required": [
+          "amount",
+          "currency"
+        ],
+        "properties": {
+          "amount": {
+            "description": "Paise",
+            "type": "integer"
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "INR"
+            ]
+          }
+        },
+        "title": "Money"
+      },
+      "def-1": {
+        "type": "object",
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code",
+          "requestId",
+          "errors"
+        ],
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer"
+          },
+          "code": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "requestId": {
+            "type": "string"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "field",
+                "code",
+                "message"
+              ],
+              "properties": {
+                "field": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "title": "Problem"
+      }
+    }
+  },
+  "paths": {
+    "/v1/health/live": {
+      "get": {
+        "summary": "Liveness",
+        "tags": [
+          "Meta"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/v1/health/ready": {
+      "get": {
+        "summary": "Readiness",
+        "tags": [
+          "Meta"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/v1/app-config": {
+      "get": {
+        "summary": "Minimum versions, feature flags, support and legal info",
+        "tags": [
+          "Meta"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "minVersions",
+                    "features",
+                    "support",
+                    "legal",
+                    "auth",
+                    "payments"
+                  ],
+                  "properties": {
+                    "minVersions": {
+                      "type": "object",
+                      "required": [
+                        "android",
+                        "web"
+                      ],
+                      "properties": {
+                        "android": {
+                          "type": "integer"
+                        },
+                        "web": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "features": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "boolean"
+                      }
+                    },
+                    "support": {
+                      "type": "object",
+                      "required": [
+                        "phone",
+                        "email"
+                      ],
+                      "properties": {
+                        "phone": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "legal": {
+                      "type": "object",
+                      "required": [
+                        "fssai",
+                        "privacyUrl",
+                        "termsUrl"
+                      ],
+                      "properties": {
+                        "fssai": {
+                          "type": "string"
+                        },
+                        "privacyUrl": {
+                          "type": "string"
+                        },
+                        "termsUrl": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "auth": {
+                      "type": "object",
+                      "required": [
+                        "googleClientId",
+                        "devSignIn"
+                      ],
+                      "properties": {
+                        "googleClientId": {
+                          "type": "string"
+                        },
+                        "devSignIn": {
+                          "type": "boolean"
+                        }
+                      }
+                    },
+                    "payments": {
+                      "type": "object",
+                      "required": [
+                        "provider",
+                        "environment"
+                      ],
+                      "properties": {
+                        "provider": {
+                          "type": "string"
+                        },
+                        "environment": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/nonce": {
+      "post": {
+        "summary": "Get a single-use nonce for Google sign-in",
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "nonce",
+                    "expiresAt"
+                  ],
+                  "properties": {
+                    "nonce": {
+                      "type": "string"
+                    },
+                    "expiresAt": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/google": {
+      "post": {
+        "summary": "Exchange a Google ID token for a session",
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "idToken",
+                  "client"
+                ],
+                "properties": {
+                  "idToken": {
+                    "minLength": 20,
+                    "maxLength": 4096,
+                    "type": "string"
+                  },
+                  "client": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "web"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "admin"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "android"
+                        ]
+                      }
+                    ]
+                  },
+                  "deviceName": {
+                    "maxLength": 80,
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "user",
+                    "expiresIn"
+                  ],
+                  "properties": {
+                    "user": {
+                      "type": "object",
+                      "required": [
+                        "type",
+                        "id",
+                        "name",
+                        "email"
+                      ],
+                      "properties": {
+                        "type": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "customer"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "staff"
+                              ]
+                            }
+                          ]
+                        },
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string"
+                        },
+                        "phone": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "language": {
+                          "type": "string"
+                        },
+                        "role": {
+                          "type": "string"
+                        },
+                        "profileComplete": {
+                          "type": "boolean"
+                        }
+                      }
+                    },
+                    "isNewUser": {
+                      "type": "boolean"
+                    },
+                    "expiresIn": {
+                      "type": "integer"
+                    },
+                    "accessToken": {
+                      "type": "string"
+                    },
+                    "refreshToken": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/refresh": {
+      "post": {
+        "summary": "Rotate access and refresh tokens",
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "refreshToken": {
+                    "maxLength": 200,
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "user",
+                    "expiresIn"
+                  ],
+                  "properties": {
+                    "user": {
+                      "type": "object",
+                      "required": [
+                        "type",
+                        "id",
+                        "name",
+                        "email"
+                      ],
+                      "properties": {
+                        "type": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "customer"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "staff"
+                              ]
+                            }
+                          ]
+                        },
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string"
+                        },
+                        "phone": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "language": {
+                          "type": "string"
+                        },
+                        "role": {
+                          "type": "string"
+                        },
+                        "profileComplete": {
+                          "type": "boolean"
+                        }
+                      }
+                    },
+                    "isNewUser": {
+                      "type": "boolean"
+                    },
+                    "expiresIn": {
+                      "type": "integer"
+                    },
+                    "accessToken": {
+                      "type": "string"
+                    },
+                    "refreshToken": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/logout": {
+      "post": {
+        "summary": "End the current session",
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/v1/auth/sessions": {
+      "get": {
+        "summary": "List my sessions",
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "client",
+                          "deviceName",
+                          "createdAt",
+                          "lastUsedAt",
+                          "current"
+                        ],
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "client": {
+                            "type": "string"
+                          },
+                          "deviceName": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          },
+                          "lastUsedAt": {
+                            "type": "string"
+                          },
+                          "current": {
+                            "type": "boolean"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/sessions/{sessionId}": {
+      "delete": {
+        "summary": "Sign out one device",
+        "tags": [
+          "Auth"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "minLength": 4,
+              "maxLength": 40,
+              "type": "string"
+            },
+            "in": "path",
+            "name": "sessionId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/v1/auth/.well-known/jwks.json": {
+      "get": {
+        "summary": "Public keys for our access tokens",
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/v1/store/categories": {
+      "get": {
+        "summary": "Categories",
+        "tags": [
+          "Catalog"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "slug",
+                          "name",
+                          "blurb",
+                          "productCount",
+                          "packs"
+                        ],
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "slug": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "blurb": {
+                            "type": "string"
+                          },
+                          "productCount": {
+                            "type": "integer"
+                          },
+                          "packs": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "required": [
+                                "kind",
+                                "color",
+                                "accent"
+                              ],
+                              "properties": {
+                                "kind": {
+                                  "type": "string"
+                                },
+                                "color": {
+                                  "type": "string"
+                                },
+                                "accent": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/store/products": {
+      "get": {
+        "summary": "List and search products",
+        "tags": [
+          "Catalog"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "maxLength": 60,
+              "type": "string"
+            },
+            "in": "query",
+            "name": "category",
+            "required": false
+          },
+          {
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
+            },
+            "in": "query",
+            "name": "q",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "boolean"
+            },
+            "in": "query",
+            "name": "featured",
+            "required": false
+          },
+          {
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "featured"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "price_asc"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "price_desc"
+                  ]
+                }
+              ]
+            },
+            "in": "query",
+            "name": "sort",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false
+          },
+          {
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50,
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "page"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "slug",
+                          "name",
+                          "tagline",
+                          "category",
+                          "pack",
+                          "image",
+                          "isVeg",
+                          "featured",
+                          "attributes",
+                          "fromPrice",
+                          "variants"
+                        ],
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "slug": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "tagline": {
+                            "type": "string"
+                          },
+                          "category": {
+                            "type": "object",
+                            "required": [
+                              "slug",
+                              "name"
+                            ],
+                            "properties": {
+                              "slug": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "pack": {
+                            "type": "object",
+                            "required": [
+                              "kind",
+                              "color",
+                              "accent"
+                            ],
+                            "properties": {
+                              "kind": {
+                                "type": "string"
+                              },
+                              "color": {
+                                "type": "string"
+                              },
+                              "accent": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "image": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "required": [
+                                  "url",
+                                  "alt",
+                                  "width",
+                                  "height"
+                                ],
+                                "properties": {
+                                  "url": {
+                                    "type": "string"
+                                  },
+                                  "alt": {
+                                    "type": "string"
+                                  },
+                                  "width": {
+                                    "type": "integer"
+                                  },
+                                  "height": {
+                                    "type": "integer"
+                                  }
+                                }
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "isVeg": {
+                            "type": "boolean"
+                          },
+                          "featured": {
+                            "type": "boolean"
+                          },
+                          "attributes": {
+                            "type": "object",
+                            "additionalProperties": {}
+                          },
+                          "fromPrice": {
+                            "$ref": "#/components/schemas/def-0"
+                          },
+                          "variants": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "required": [
+                                "id",
+                                "sku",
+                                "packSize",
+                                "price",
+                                "mrp",
+                                "weightGrams",
+                                "shelfLifeDays",
+                                "inStock",
+                                "lowStock",
+                                "maxPerOrder"
+                              ],
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "sku": {
+                                  "type": "string"
+                                },
+                                "packSize": {
+                                  "type": "string"
+                                },
+                                "price": {
+                                  "$ref": "#/components/schemas/def-0"
+                                },
+                                "mrp": {
+                                  "$ref": "#/components/schemas/def-0"
+                                },
+                                "weightGrams": {
+                                  "type": "integer"
+                                },
+                                "shelfLifeDays": {
+                                  "type": "integer"
+                                },
+                                "inStock": {
+                                  "type": "boolean"
+                                },
+                                "lowStock": {
+                                  "type": "boolean"
+                                },
+                                "maxPerOrder": {
+                                  "type": "integer"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "page": {
+                      "type": "object",
+                      "required": [
+                        "nextCursor",
+                        "hasMore"
+                      ],
+                      "properties": {
+                        "nextCursor": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "hasMore": {
+                          "type": "boolean"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/store/products/{slug}": {
+      "get": {
+        "summary": "Product detail",
+        "tags": [
+          "Catalog"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "maxLength": 80,
+              "type": "string"
+            },
+            "in": "path",
+            "name": "slug",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "allOf": [
+                    {
+                      "type": "object",
+                      "required": [
+                        "id",
+                        "slug",
+                        "name",
+                        "tagline",
+                        "category",
+                        "pack",
+                        "image",
+                        "isVeg",
+                        "featured",
+                        "attributes",
+                        "fromPrice",
+                        "variants"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "slug": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "tagline": {
+                          "type": "string"
+                        },
+                        "category": {
+                          "type": "object",
+                          "required": [
+                            "slug",
+                            "name"
+                          ],
+                          "properties": {
+                            "slug": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "pack": {
+                          "type": "object",
+                          "required": [
+                            "kind",
+                            "color",
+                            "accent"
+                          ],
+                          "properties": {
+                            "kind": {
+                              "type": "string"
+                            },
+                            "color": {
+                              "type": "string"
+                            },
+                            "accent": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "image": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "required": [
+                                "url",
+                                "alt",
+                                "width",
+                                "height"
+                              ],
+                              "properties": {
+                                "url": {
+                                  "type": "string"
+                                },
+                                "alt": {
+                                  "type": "string"
+                                },
+                                "width": {
+                                  "type": "integer"
+                                },
+                                "height": {
+                                  "type": "integer"
+                                }
+                              }
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "isVeg": {
+                          "type": "boolean"
+                        },
+                        "featured": {
+                          "type": "boolean"
+                        },
+                        "attributes": {
+                          "type": "object",
+                          "additionalProperties": {}
+                        },
+                        "fromPrice": {
+                          "$ref": "#/components/schemas/def-0"
+                        },
+                        "variants": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "id",
+                              "sku",
+                              "packSize",
+                              "price",
+                              "mrp",
+                              "weightGrams",
+                              "shelfLifeDays",
+                              "inStock",
+                              "lowStock",
+                              "maxPerOrder"
+                            ],
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "sku": {
+                                "type": "string"
+                              },
+                              "packSize": {
+                                "type": "string"
+                              },
+                              "price": {
+                                "$ref": "#/components/schemas/def-0"
+                              },
+                              "mrp": {
+                                "$ref": "#/components/schemas/def-0"
+                              },
+                              "weightGrams": {
+                                "type": "integer"
+                              },
+                              "shelfLifeDays": {
+                                "type": "integer"
+                              },
+                              "inStock": {
+                                "type": "boolean"
+                              },
+                              "lowStock": {
+                                "type": "boolean"
+                              },
+                              "maxPerOrder": {
+                                "type": "integer"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "description",
+                        "nutrition",
+                        "storage",
+                        "hsnCode",
+                        "fssaiNumber",
+                        "related"
+                      ],
+                      "properties": {
+                        "description": {
+                          "type": "string"
+                        },
+                        "nutrition": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "label",
+                              "per100"
+                            ],
+                            "properties": {
+                              "label": {
+                                "type": "string"
+                              },
+                              "per100": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        },
+                        "storage": {
+                          "type": "string"
+                        },
+                        "hsnCode": {
+                          "type": "string"
+                        },
+                        "fssaiNumber": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "related": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "id",
+                              "slug",
+                              "name",
+                              "tagline",
+                              "category",
+                              "pack",
+                              "image",
+                              "isVeg",
+                              "featured",
+                              "attributes",
+                              "fromPrice",
+                              "variants"
+                            ],
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "slug": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "tagline": {
+                                "type": "string"
+                              },
+                              "category": {
+                                "type": "object",
+                                "required": [
+                                  "slug",
+                                  "name"
+                                ],
+                                "properties": {
+                                  "slug": {
+                                    "type": "string"
+                                  },
+                                  "name": {
+                                    "type": "string"
+                                  }
+                                }
+                              },
+                              "pack": {
+                                "type": "object",
+                                "required": [
+                                  "kind",
+                                  "color",
+                                  "accent"
+                                ],
+                                "properties": {
+                                  "kind": {
+                                    "type": "string"
+                                  },
+                                  "color": {
+                                    "type": "string"
+                                  },
+                                  "accent": {
+                                    "type": "string"
+                                  }
+                                }
+                              },
+                              "image": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "required": [
+                                      "url",
+                                      "alt",
+                                      "width",
+                                      "height"
+                                    ],
+                                    "properties": {
+                                      "url": {
+                                        "type": "string"
+                                      },
+                                      "alt": {
+                                        "type": "string"
+                                      },
+                                      "width": {
+                                        "type": "integer"
+                                      },
+                                      "height": {
+                                        "type": "integer"
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "isVeg": {
+                                "type": "boolean"
+                              },
+                              "featured": {
+                                "type": "boolean"
+                              },
+                              "attributes": {
+                                "type": "object",
+                                "additionalProperties": {}
+                              },
+                              "fromPrice": {
+                                "$ref": "#/components/schemas/def-0"
+                              },
+                              "variants": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "required": [
+                                    "id",
+                                    "sku",
+                                    "packSize",
+                                    "price",
+                                    "mrp",
+                                    "weightGrams",
+                                    "shelfLifeDays",
+                                    "inStock",
+                                    "lowStock",
+                                    "maxPerOrder"
+                                  ],
+                                  "properties": {
+                                    "id": {
+                                      "type": "string"
+                                    },
+                                    "sku": {
+                                      "type": "string"
+                                    },
+                                    "packSize": {
+                                      "type": "string"
+                                    },
+                                    "price": {
+                                      "$ref": "#/components/schemas/def-0"
+                                    },
+                                    "mrp": {
+                                      "$ref": "#/components/schemas/def-0"
+                                    },
+                                    "weightGrams": {
+                                      "type": "integer"
+                                    },
+                                    "shelfLifeDays": {
+                                      "type": "integer"
+                                    },
+                                    "inStock": {
+                                      "type": "boolean"
+                                    },
+                                    "lowStock": {
+                                      "type": "boolean"
+                                    },
+                                    "maxPerOrder": {
+                                      "type": "integer"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/store/me": {
+      "get": {
+        "summary": "My profile",
+        "tags": [
+          "Profile"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "name",
+                    "email",
+                    "phone",
+                    "language",
+                    "profileComplete",
+                    "defaultAddressId",
+                    "createdAt"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "email": {
+                      "type": "string"
+                    },
+                    "phone": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "language": {
+                      "type": "string"
+                    },
+                    "profileComplete": {
+                      "type": "boolean"
+                    },
+                    "defaultAddressId": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update profile",
+        "tags": [
+          "Profile"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "minProperties": 1,
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "minLength": 1,
+                    "maxLength": 80,
+                    "type": "string"
+                  },
+                  "phone": {
+                    "maxLength": 20,
+                    "type": "string"
+                  },
+                  "language": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "en"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "hi"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "name",
+                    "email",
+                    "phone",
+                    "language",
+                    "profileComplete",
+                    "defaultAddressId",
+                    "createdAt"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "email": {
+                      "type": "string"
+                    },
+                    "phone": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "language": {
+                      "type": "string"
+                    },
+                    "profileComplete": {
+                      "type": "boolean"
+                    },
+                    "defaultAddressId": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Request account deletion",
+        "tags": [
+          "Profile"
+        ],
+        "responses": {
+          "202": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "status",
+                    "erasesOn"
+                  ],
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "erasesOn": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/store/me/addresses": {
+      "get": {
+        "summary": "List addresses",
+        "tags": [
+          "Profile"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "label",
+                          "name",
+                          "phone",
+                          "line1",
+                          "line2",
+                          "landmark",
+                          "city",
+                          "state",
+                          "pincode",
+                          "isDefault"
+                        ],
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "label": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "phone": {
+                            "type": "string"
+                          },
+                          "line1": {
+                            "type": "string"
+                          },
+                          "line2": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "landmark": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "city": {
+                            "type": "string"
+                          },
+                          "state": {
+                            "type": "string"
+                          },
+                          "pincode": {
+                            "type": "string"
+                          },
+                          "isDefault": {
+                            "type": "boolean"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Add address",
+        "tags": [
+          "Profile"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                  "name",
+                  "phone",
+                  "line1",
+                  "city",
+                  "pincode"
+                ],
+                "properties": {
+                  "label": {
+                    "maxLength": 30,
+                    "type": "string"
+                  },
+                  "name": {
+                    "minLength": 2,
+                    "maxLength": 80,
+                    "type": "string"
+                  },
+                  "phone": {
+                    "maxLength": 20,
+                    "type": "string"
+                  },
+                  "line1": {
+                    "minLength": 3,
+                    "maxLength": 120,
+                    "type": "string"
+                  },
+                  "line2": {
+                    "maxLength": 120,
+                    "type": "string"
+                  },
+                  "landmark": {
+                    "maxLength": 120,
+                    "type": "string"
+                  },
+                  "city": {
+                    "minLength": 2,
+                    "maxLength": 60,
+                    "type": "string"
+                  },
+                  "state": {
+                    "minLength": 2,
+                    "maxLength": 60,
+                    "type": "string"
+                  },
+                  "pincode": {
+                    "pattern": "^[1-9][0-9]{5}$",
+                    "type": "string"
+                  },
+                  "isDefault": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "label",
+                    "name",
+                    "phone",
+                    "line1",
+                    "line2",
+                    "landmark",
+                    "city",
+                    "state",
+                    "pincode",
+                    "isDefault"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "label": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "phone": {
+                      "type": "string"
+                    },
+                    "line1": {
+                      "type": "string"
+                    },
+                    "line2": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "landmark": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "city": {
+                      "type": "string"
+                    },
+                    "state": {
+                      "type": "string"
+                    },
+                    "pincode": {
+                      "type": "string"
+                    },
+                    "isDefault": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/store/me/addresses/{addressId}": {
+      "patch": {
+        "summary": "Update address",
+        "tags": [
+          "Profile"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                  "name",
+                  "phone",
+                  "line1",
+                  "city",
+                  "pincode"
+                ],
+                "properties": {
+                  "label": {
+                    "maxLength": 30,
+                    "type": "string"
+                  },
+                  "name": {
+                    "minLength": 2,
+                    "maxLength": 80,
+                    "type": "string"
+                  },
+                  "phone": {
+                    "maxLength": 20,
+                    "type": "string"
+                  },
+                  "line1": {
+                    "minLength": 3,
+                    "maxLength": 120,
+                    "type": "string"
+                  },
+                  "line2": {
+                    "maxLength": 120,
+                    "type": "string"
+                  },
+                  "landmark": {
+                    "maxLength": 120,
+                    "type": "string"
+                  },
+                  "city": {
+                    "minLength": 2,
+                    "maxLength": 60,
+                    "type": "string"
+                  },
+                  "state": {
+                    "minLength": 2,
+                    "maxLength": 60,
+                    "type": "string"
+                  },
+                  "pincode": {
+                    "pattern": "^[1-9][0-9]{5}$",
+                    "type": "string"
+                  },
+                  "isDefault": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "minLength": 4,
+              "maxLength": 40,
+              "type": "string"
+            },
+            "in": "path",
+            "name": "addressId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "label",
+                    "name",
+                    "phone",
+                    "line1",
+                    "line2",
+                    "landmark",
+                    "city",
+                    "state",
+                    "pincode",
+                    "isDefault"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "label": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "phone": {
+                      "type": "string"
+                    },
+                    "line1": {
+                      "type": "string"
+                    },
+                    "line2": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "landmark": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "city": {
+                      "type": "string"
+                    },
+                    "state": {
+                      "type": "string"
+                    },
+                    "pincode": {
+                      "type": "string"
+                    },
+                    "isDefault": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Remove address",
+        "tags": [
+          "Profile"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "minLength": 4,
+              "maxLength": 40,
+              "type": "string"
+            },
+            "in": "path",
+            "name": "addressId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/v1/store/me/devices": {
+      "post": {
+        "summary": "Register a push token",
+        "tags": [
+          "Profile"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "platform",
+                  "pushToken"
+                ],
+                "properties": {
+                  "platform": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "web"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "android"
+                        ]
+                      }
+                    ]
+                  },
+                  "pushToken": {
+                    "minLength": 10,
+                    "maxLength": 4096,
+                    "type": "string"
+                  },
+                  "appVersion": {
+                    "maxLength": 40,
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "id"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/store/me/devices/{deviceId}": {
+      "delete": {
+        "summary": "Remove a push token",
+        "tags": [
+          "Profile"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "minLength": 4,
+              "maxLength": 40,
+              "type": "string"
+            },
+            "in": "path",
+            "name": "deviceId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/v1/store/me/notification-preferences": {
+      "get": {
+        "summary": "Notification preferences",
+        "tags": [
+          "Profile"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "properties": {
+                    "marketingEmail": {
+                      "type": "boolean"
+                    },
+                    "orderUpdates": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Set notification preferences",
+        "tags": [
+          "Profile"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "type": "object",
+                "properties": {
+                  "marketingEmail": {
+                    "type": "boolean"
+                  },
+                  "orderUpdates": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "properties": {
+                    "marketingEmail": {
+                      "type": "boolean"
+                    },
+                    "orderUpdates": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/store/shipping/estimate": {
+      "get": {
+        "summary": "Delivery estimate and fee rule for a pincode",
+        "tags": [
+          "Checkout"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "pattern": "^[1-9][0-9]{5}$",
+              "type": "string"
+            },
+            "in": "query",
+            "name": "pincode",
+            "required": true
+          },
+          {
+            "schema": {
+              "minimum": 0,
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "subtotal",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "serviceable",
+                    "state",
+                    "shipping",
+                    "freeAbove",
+                    "message"
+                  ],
+                  "properties": {
+                    "serviceable": {
+                      "type": "boolean"
+                    },
+                    "state": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "shipping": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "required": [
+                            "zone",
+                            "fee",
+                            "free",
+                            "remainingForFree",
+                            "etaMinDays",
+                            "etaMaxDays",
+                            "earliest",
+                            "latest"
+                          ],
+                          "properties": {
+                            "zone": {
+                              "type": "string"
+                            },
+                            "fee": {
+                              "$ref": "#/components/schemas/def-0"
+                            },
+                            "free": {
+                              "type": "boolean"
+                            },
+                            "remainingForFree": {
+                              "$ref": "#/components/schemas/def-0"
+                            },
+                            "etaMinDays": {
+                              "type": "integer"
+                            },
+                            "etaMaxDays": {
+                              "type": "integer"
+                            },
+                            "earliest": {
+                              "type": "string"
+                            },
+                            "latest": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "freeAbove": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/components/schemas/def-0"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "message": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/store/checkout/quote": {
+      "post": {
+        "summary": "Price a cart with live prices, stock and shipping",
+        "tags": [
+          "Checkout"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                  "lines"
+                ],
+                "properties": {
+                  "lines": {
+                    "minItems": 1,
+                    "maxItems": 30,
+                    "type": "array",
+                    "items": {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "variantId",
+                        "quantity"
+                      ],
+                      "properties": {
+                        "variantId": {
+                          "maxLength": 40,
+                          "type": "string"
+                        },
+                        "quantity": {
+                          "minimum": 1,
+                          "maximum": 50,
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  },
+                  "pincode": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "lines",
+                    "subtotal",
+                    "taxIncluded",
+                    "weightGrams",
+                    "shipping",
+                    "shippingError",
+                    "total",
+                    "ok"
+                  ],
+                  "properties": {
+                    "lines": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "variantId",
+                          "slug",
+                          "name",
+                          "packSize",
+                          "pack",
+                          "quantity",
+                          "unitPrice",
+                          "mrp",
+                          "total",
+                          "maxQuantity",
+                          "problem"
+                        ],
+                        "properties": {
+                          "variantId": {
+                            "type": "string"
+                          },
+                          "slug": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "packSize": {
+                            "type": "string"
+                          },
+                          "pack": {
+                            "type": "object",
+                            "required": [
+                              "kind",
+                              "color",
+                              "accent"
+                            ],
+                            "properties": {
+                              "kind": {
+                                "type": "string"
+                              },
+                              "color": {
+                                "type": "string"
+                              },
+                              "accent": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "quantity": {
+                            "type": "integer"
+                          },
+                          "unitPrice": {
+                            "$ref": "#/components/schemas/def-0"
+                          },
+                          "mrp": {
+                            "$ref": "#/components/schemas/def-0"
+                          },
+                          "total": {
+                            "$ref": "#/components/schemas/def-0"
+                          },
+                          "maxQuantity": {
+                            "type": "integer"
+                          },
+                          "problem": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    },
+                    "subtotal": {
+                      "$ref": "#/components/schemas/def-0"
+                    },
+                    "taxIncluded": {
+                      "$ref": "#/components/schemas/def-0"
+                    },
+                    "weightGrams": {
+                      "type": "integer"
+                    },
+                    "shipping": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "required": [
+                            "zone",
+                            "fee",
+                            "free",
+                            "remainingForFree",
+                            "etaMinDays",
+                            "etaMaxDays",
+                            "earliest",
+                            "latest"
+                          ],
+                          "properties": {
+                            "zone": {
+                              "type": "string"
+                            },
+                            "fee": {
+                              "$ref": "#/components/schemas/def-0"
+                            },
+                            "free": {
+                              "type": "boolean"
+                            },
+                            "remainingForFree": {
+                              "$ref": "#/components/schemas/def-0"
+                            },
+                            "etaMinDays": {
+                              "type": "integer"
+                            },
+                            "etaMaxDays": {
+                              "type": "integer"
+                            },
+                            "earliest": {
+                              "type": "string"
+                            },
+                            "latest": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "shippingError": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "total": {
+                      "$ref": "#/components/schemas/def-0"
+                    },
+                    "ok": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/store/orders": {
+      "post": {
+        "summary": "Place an order and start payment",
+        "tags": [
+          "Orders"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                  "lines",
+                  "addressId"
+                ],
+                "properties": {
+                  "lines": {
+                    "minItems": 1,
+                    "maxItems": 30,
+                    "type": "array",
+                    "items": {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "variantId",
+                        "quantity"
+                      ],
+                      "properties": {
+                        "variantId": {
+                          "maxLength": 40,
+                          "type": "string"
+                        },
+                        "quantity": {
+                          "minimum": 1,
+                          "maximum": 50,
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  },
+                  "addressId": {
+                    "type": "string"
+                  },
+                  "note": {
+                    "maxLength": 300,
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "get": {
+        "summary": "My orders",
+        "tags": [
+          "Orders"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false
+          },
+          {
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "page"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {}
+                    },
+                    "page": {
+                      "type": "object",
+                      "required": [
+                        "nextCursor",
+                        "hasMore"
+                      ],
+                      "properties": {
+                        "nextCursor": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "hasMore": {
+                          "type": "boolean"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/store/orders/{orderId}": {
+      "get": {
+        "summary": "Order detail with timeline",
+        "tags": [
+          "Orders"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "minLength": 4,
+              "maxLength": 40,
+              "type": "string"
+            },
+            "in": "path",
+            "name": "orderId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/v1/store/orders/{orderId}/pay": {
+      "post": {
+        "summary": "Start a new payment attempt for an unpaid order",
+        "tags": [
+          "Orders"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "minLength": 4,
+              "maxLength": 40,
+              "type": "string"
+            },
+            "in": "path",
+            "name": "orderId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/v1/store/orders/{orderId}/cancel": {
+      "post": {
+        "summary": "Cancel before packing (refunds automatically)",
+        "tags": [
+          "Orders"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "type": "object",
+                "properties": {
+                  "reason": {
+                    "maxLength": 200,
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "minLength": 4,
+              "maxLength": 40,
+              "type": "string"
+            },
+            "in": "path",
+            "name": "orderId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/v1/webhooks/cashfree/payments": {
+      "post": {
+        "summary": "Cashfree payment events",
+        "tags": [
+          "Webhooks"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/v1/dev/payments/{paymentId}": {
+      "get": {
+        "summary": "Mock payment details",
+        "tags": [
+          "Dev"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "paymentId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/v1/dev/payments/{paymentId}/simulate": {
+      "post": {
+        "summary": "Complete a mock payment",
+        "tags": [
+          "Dev"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "outcome"
+                ],
+                "properties": {
+                  "outcome": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "success"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "failed"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "user_dropped"
+                        ]
+                      }
+                    ]
+                  },
+                  "method": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "paymentId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/v1/admin/me": {
+      "get": {
+        "summary": "Signed-in staff member and their permissions",
+        "tags": [
+          "Admin"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "name",
+                    "email",
+                    "role",
+                    "permissions"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "email": {
+                      "type": "string"
+                    },
+                    "role": {
+                      "type": "string"
+                    },
+                    "permissions": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/dashboard": {
+      "get": {
+        "summary": "Sales, fulfilment queue, low stock and recent orders",
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "minimum": 1,
+              "maximum": 90,
+              "default": 7,
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "days",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/v1/admin/orders": {
+      "get": {
+        "summary": "Orders with filters",
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false
+          },
+          {
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false
+          },
+          {
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "pending_payment"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "confirmed"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "packed"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "shipped"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "delivered"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "cancelled"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "refunded"
+                  ]
+                }
+              ]
+            },
+            "in": "query",
+            "name": "status",
+            "required": false
+          },
+          {
+            "schema": {
+              "maxLength": 80,
+              "type": "string"
+            },
+            "in": "query",
+            "name": "q",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/v1/admin/orders/{orderId}": {
+      "get": {
+        "summary": "Order detail",
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "minLength": 4,
+              "maxLength": 40,
+              "type": "string"
+            },
+            "in": "path",
+            "name": "orderId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/v1/admin/orders/{orderId}/pack": {
+      "post": {
+        "summary": "Mark packed",
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "minLength": 4,
+              "maxLength": 40,
+              "type": "string"
+            },
+            "in": "path",
+            "name": "orderId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/v1/admin/orders/{orderId}/ship": {
+      "post": {
+        "summary": "Hand over to the courier (stock leaves the warehouse)",
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                  "courier",
+                  "trackingNumber"
+                ],
+                "properties": {
+                  "courier": {
+                    "minLength": 2,
+                    "maxLength": 40,
+                    "type": "string"
+                  },
+                  "trackingNumber": {
+                    "minLength": 4,
+                    "maxLength": 60,
+                    "type": "string"
+                  },
+                  "trackingUrl": {
+                    "format": "uri",
+                    "maxLength": 300,
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "minLength": 4,
+              "maxLength": 40,
+              "type": "string"
+            },
+            "in": "path",
+            "name": "orderId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/v1/admin/orders/{orderId}/deliver": {
+      "post": {
+        "summary": "Mark delivered",
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "minLength": 4,
+              "maxLength": 40,
+              "type": "string"
+            },
+            "in": "path",
+            "name": "orderId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/v1/admin/orders/{orderId}/cancel": {
+      "post": {
+        "summary": "Cancel before shipping; releases stock and refunds the payment",
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                  "reason"
+                ],
+                "properties": {
+                  "reason": {
+                    "minLength": 3,
+                    "maxLength": 200,
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "minLength": 4,
+              "maxLength": 40,
+              "type": "string"
+            },
+            "in": "path",
+            "name": "orderId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/v1/admin/categories": {
+      "get": {
+        "summary": "Categories",
+        "tags": [
+          "Admin"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/v1/admin/products": {
+      "get": {
+        "summary": "Products with variants and stock",
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "q",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "status",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "category",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a product with variants",
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                  "slug",
+                  "categoryId",
+                  "nameEn",
+                  "nameHi",
+                  "variants"
+                ],
+                "properties": {
+                  "slug": {
+                    "minLength": 2,
+                    "maxLength": 80,
+                    "pattern": "^[a-z0-9-]+$",
+                    "type": "string"
+                  },
+                  "categoryId": {
+                    "type": "string"
+                  },
+                  "nameEn": {
+                    "minLength": 2,
+                    "maxLength": 80,
+                    "type": "string"
+                  },
+                  "nameHi": {
+                    "minLength": 1,
+                    "maxLength": 80,
+                    "type": "string"
+                  },
+                  "tagline": {
+                    "maxLength": 120,
+                    "type": "string"
+                  },
+                  "descriptionEn": {
+                    "maxLength": 4000,
+                    "type": "string"
+                  },
+                  "descriptionHi": {
+                    "maxLength": 4000,
+                    "type": "string"
+                  },
+                  "searchTerms": {
+                    "maxLength": 300,
+                    "type": "string"
+                  },
+                  "attributes": {
+                    "type": "object",
+                    "additionalProperties": {}
+                  },
+                  "nutrition": {
+                    "maxItems": 20,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "label",
+                        "per100"
+                      ],
+                      "properties": {
+                        "label": {
+                          "maxLength": 40,
+                          "type": "string"
+                        },
+                        "per100": {
+                          "maxLength": 40,
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "pack": {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "color",
+                      "accent"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "enum": [
+                              "jar"
+                            ]
+                          },
+                          {
+                            "type": "string",
+                            "enum": [
+                              "tin"
+                            ]
+                          },
+                          {
+                            "type": "string",
+                            "enum": [
+                              "tetra"
+                            ]
+                          },
+                          {
+                            "type": "string",
+                            "enum": [
+                              "can"
+                            ]
+                          },
+                          {
+                            "type": "string",
+                            "enum": [
+                              "box"
+                            ]
+                          },
+                          {
+                            "type": "string",
+                            "enum": [
+                              "pouch"
+                            ]
+                          }
+                        ]
+                      },
+                      "color": {
+                        "pattern": "^#[0-9A-Fa-f]{6}$",
+                        "type": "string"
+                      },
+                      "accent": {
+                        "pattern": "^#[0-9A-Fa-f]{6}$",
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "featured": {
+                    "type": "boolean"
+                  },
+                  "status": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "draft"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "active"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "archived"
+                        ]
+                      }
+                    ]
+                  },
+                  "variants": {
+                    "minItems": 1,
+                    "maxItems": 12,
+                    "type": "array",
+                    "items": {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "sku",
+                        "packSize",
+                        "pricePaise",
+                        "mrpPaise",
+                        "weightGrams",
+                        "hsnCode",
+                        "gstRateBps",
+                        "shelfLifeDays"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "sku": {
+                          "minLength": 2,
+                          "maxLength": 40,
+                          "pattern": "^[A-Z0-9-]+$",
+                          "type": "string"
+                        },
+                        "packSize": {
+                          "minLength": 1,
+                          "maxLength": 40,
+                          "type": "string"
+                        },
+                        "pricePaise": {
+                          "minimum": 100,
+                          "type": "integer"
+                        },
+                        "mrpPaise": {
+                          "minimum": 100,
+                          "type": "integer"
+                        },
+                        "weightGrams": {
+                          "minimum": 1,
+                          "maximum": 50000,
+                          "type": "integer"
+                        },
+                        "hsnCode": {
+                          "pattern": "^[0-9]{4,8}$",
+                          "type": "string"
+                        },
+                        "gstRateBps": {
+                          "minimum": 0,
+                          "maximum": 2800,
+                          "type": "integer"
+                        },
+                        "shelfLifeDays": {
+                          "minimum": 1,
+                          "maximum": 1095,
+                          "type": "integer"
+                        },
+                        "storage": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "ambient"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "cool_dry"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "chilled"
+                              ]
+                            }
+                          ]
+                        },
+                        "lowStockThreshold": {
+                          "minimum": 0,
+                          "maximum": 10000,
+                          "type": "integer"
+                        },
+                        "maxPerOrder": {
+                          "minimum": 1,
+                          "maximum": 100,
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/v1/admin/products/{productId}": {
+      "get": {
+        "summary": "Product",
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "minLength": 4,
+              "maxLength": 40,
+              "type": "string"
+            },
+            "in": "path",
+            "name": "productId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "put": {
+        "summary": "Update a product; variants not listed are archived",
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                  "slug",
+                  "categoryId",
+                  "nameEn",
+                  "nameHi",
+                  "variants"
+                ],
+                "properties": {
+                  "slug": {
+                    "minLength": 2,
+                    "maxLength": 80,
+                    "pattern": "^[a-z0-9-]+$",
+                    "type": "string"
+                  },
+                  "categoryId": {
+                    "type": "string"
+                  },
+                  "nameEn": {
+                    "minLength": 2,
+                    "maxLength": 80,
+                    "type": "string"
+                  },
+                  "nameHi": {
+                    "minLength": 1,
+                    "maxLength": 80,
+                    "type": "string"
+                  },
+                  "tagline": {
+                    "maxLength": 120,
+                    "type": "string"
+                  },
+                  "descriptionEn": {
+                    "maxLength": 4000,
+                    "type": "string"
+                  },
+                  "descriptionHi": {
+                    "maxLength": 4000,
+                    "type": "string"
+                  },
+                  "searchTerms": {
+                    "maxLength": 300,
+                    "type": "string"
+                  },
+                  "attributes": {
+                    "type": "object",
+                    "additionalProperties": {}
+                  },
+                  "nutrition": {
+                    "maxItems": 20,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "label",
+                        "per100"
+                      ],
+                      "properties": {
+                        "label": {
+                          "maxLength": 40,
+                          "type": "string"
+                        },
+                        "per100": {
+                          "maxLength": 40,
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "pack": {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "color",
+                      "accent"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "enum": [
+                              "jar"
+                            ]
+                          },
+                          {
+                            "type": "string",
+                            "enum": [
+                              "tin"
+                            ]
+                          },
+                          {
+                            "type": "string",
+                            "enum": [
+                              "tetra"
+                            ]
+                          },
+                          {
+                            "type": "string",
+                            "enum": [
+                              "can"
+                            ]
+                          },
+                          {
+                            "type": "string",
+                            "enum": [
+                              "box"
+                            ]
+                          },
+                          {
+                            "type": "string",
+                            "enum": [
+                              "pouch"
+                            ]
+                          }
+                        ]
+                      },
+                      "color": {
+                        "pattern": "^#[0-9A-Fa-f]{6}$",
+                        "type": "string"
+                      },
+                      "accent": {
+                        "pattern": "^#[0-9A-Fa-f]{6}$",
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "featured": {
+                    "type": "boolean"
+                  },
+                  "status": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "draft"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "active"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "archived"
+                        ]
+                      }
+                    ]
+                  },
+                  "variants": {
+                    "minItems": 1,
+                    "maxItems": 12,
+                    "type": "array",
+                    "items": {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "sku",
+                        "packSize",
+                        "pricePaise",
+                        "mrpPaise",
+                        "weightGrams",
+                        "hsnCode",
+                        "gstRateBps",
+                        "shelfLifeDays"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "sku": {
+                          "minLength": 2,
+                          "maxLength": 40,
+                          "pattern": "^[A-Z0-9-]+$",
+                          "type": "string"
+                        },
+                        "packSize": {
+                          "minLength": 1,
+                          "maxLength": 40,
+                          "type": "string"
+                        },
+                        "pricePaise": {
+                          "minimum": 100,
+                          "type": "integer"
+                        },
+                        "mrpPaise": {
+                          "minimum": 100,
+                          "type": "integer"
+                        },
+                        "weightGrams": {
+                          "minimum": 1,
+                          "maximum": 50000,
+                          "type": "integer"
+                        },
+                        "hsnCode": {
+                          "pattern": "^[0-9]{4,8}$",
+                          "type": "string"
+                        },
+                        "gstRateBps": {
+                          "minimum": 0,
+                          "maximum": 2800,
+                          "type": "integer"
+                        },
+                        "shelfLifeDays": {
+                          "minimum": 1,
+                          "maximum": 1095,
+                          "type": "integer"
+                        },
+                        "storage": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "ambient"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "cool_dry"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "chilled"
+                              ]
+                            }
+                          ]
+                        },
+                        "lowStockThreshold": {
+                          "minimum": 0,
+                          "maximum": 10000,
+                          "type": "integer"
+                        },
+                        "maxPerOrder": {
+                          "minimum": 1,
+                          "maximum": 100,
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "minLength": 4,
+              "maxLength": 40,
+              "type": "string"
+            },
+            "in": "path",
+            "name": "productId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/v1/admin/inventory": {
+      "get": {
+        "summary": "Stock per variant",
+        "tags": [
+          "Admin"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/v1/admin/batches": {
+      "get": {
+        "summary": "Batches for a variant",
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "variantId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "post": {
+        "summary": "Record a production batch",
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                  "variantId",
+                  "code",
+                  "manufacturedOn",
+                  "expiresOn",
+                  "quantity"
+                ],
+                "properties": {
+                  "variantId": {
+                    "type": "string"
+                  },
+                  "code": {
+                    "minLength": 2,
+                    "maxLength": 40,
+                    "type": "string"
+                  },
+                  "manufacturedOn": {
+                    "format": "date",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    "type": "string"
+                  },
+                  "expiresOn": {
+                    "format": "date",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "minimum": 1,
+                    "maximum": 1000000,
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/v1/admin/stock/adjustments": {
+      "post": {
+        "summary": "Adjust a batch (count correction, damage, wastage)",
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                  "batchId",
+                  "delta",
+                  "kind",
+                  "reason"
+                ],
+                "properties": {
+                  "batchId": {
+                    "type": "string"
+                  },
+                  "delta": {
+                    "minimum": -1000000,
+                    "maximum": 1000000,
+                    "type": "integer"
+                  },
+                  "kind": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "adjusted"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "wasted"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "returned"
+                        ]
+                      }
+                    ]
+                  },
+                  "reason": {
+                    "minLength": 3,
+                    "maxLength": 200,
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/v1/admin/customers": {
+      "get": {
+        "summary": "Customers",
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "maxLength": 80,
+              "type": "string"
+            },
+            "in": "query",
+            "name": "q",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/v1/admin/customers/{customerId}": {
+      "get": {
+        "summary": "Customer with addresses and orders",
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "minLength": 4,
+              "maxLength": 40,
+              "type": "string"
+            },
+            "in": "path",
+            "name": "customerId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/v1/admin/shipping-zones": {
+      "get": {
+        "summary": "Shipping zones",
+        "tags": [
+          "Admin"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/v1/admin/shipping-zones/{code}": {
+      "put": {
+        "summary": "Update a shipping zone",
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                  "name",
+                  "pincodePrefixes",
+                  "feePaise",
+                  "freeAbovePaise",
+                  "includedGrams",
+                  "perExtraKgPaise",
+                  "etaMinDays",
+                  "etaMaxDays",
+                  "serviceable"
+                ],
+                "properties": {
+                  "name": {
+                    "minLength": 2,
+                    "maxLength": 60,
+                    "type": "string"
+                  },
+                  "pincodePrefixes": {
+                    "minItems": 1,
+                    "maxItems": 200,
+                    "type": "array",
+                    "items": {
+                      "pattern": "^[0-9]{1,6}$",
+                      "type": "string"
+                    }
+                  },
+                  "feePaise": {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "freeAbovePaise": {
+                    "anyOf": [
+                      {
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "includedGrams": {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "perExtraKgPaise": {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "etaMinDays": {
+                    "minimum": 0,
+                    "maximum": 30,
+                    "type": "integer"
+                  },
+                  "etaMaxDays": {
+                    "minimum": 0,
+                    "maximum": 30,
+                    "type": "integer"
+                  },
+                  "serviceable": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "code",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/v1/admin/staff": {
+      "get": {
+        "summary": "Team members",
+        "tags": [
+          "Admin"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "post": {
+        "summary": "Invite by Google email",
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                  "email",
+                  "name",
+                  "role"
+                ],
+                "properties": {
+                  "email": {
+                    "format": "email",
+                    "type": "string"
+                  },
+                  "name": {
+                    "minLength": 2,
+                    "maxLength": 80,
+                    "type": "string"
+                  },
+                  "role": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "owner"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "admin"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "ops_manager"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "warehouse"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "support"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "content"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "accountant"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/v1/admin/staff/{staffId}": {
+      "patch": {
+        "summary": "Change role or deactivate (revokes sessions)",
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "minProperties": 1,
+                "type": "object",
+                "properties": {
+                  "role": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "owner"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "admin"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "ops_manager"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "warehouse"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "support"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "content"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "accountant"
+                        ]
+                      }
+                    ]
+                  },
+                  "status": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "active"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "deactivated"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "minLength": 4,
+              "maxLength": 40,
+              "type": "string"
+            },
+            "in": "path",
+            "name": "staffId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/v1/admin/audit-log": {
+      "get": {
+        "summary": "Recent staff actions",
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "entityId",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:4000"
+    }
+  ]
+}

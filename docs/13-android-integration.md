@@ -1,112 +1,36 @@
 # 13 · Android integration (later phase)
 
-The Android app is planned after the website launches. The Google Play Console account already exists. **No backend changes are needed** to build it: the API, auth and payments are designed for it now. This guide is for whoever builds the app.
+The Android app uses the same public `/v1` API as the website; no backend changes are needed. The Google Play Console account already exists.
 
-## Technology choice
-
-| Option | Pros | Cons |
-|---|---|---|
-| **React Native (Expo)** — recommended for this team | Same TypeScript as the web team; reuses the generated API client, types and `packages/core` helpers (dates, money); one codebase could later serve iOS | Slightly heavier than native on very low-end phones |
-| Kotlin + Jetpack Compose | Best performance and smallest app on low-end devices; first-class Credential Manager and FCM | Separate language and codebase; client generated from OpenAPI |
-
-Either way, the app talks only to the public `/v1` API.
+**Technology:** React Native (Expo) is recommended for this TypeScript team (shares types and the API client); Kotlin + Jetpack Compose is a fine alternative.
 
 ## Sign in with Google
 
-1. **Google Cloud project:** the same project as the website (see [Authentication → Google Cloud setup](04-authentication.md#google-cloud-setup-one-time)).
-2. **Create an Android OAuth client** with:
-   - Package name, e.g. `in.example.dairy`
-   - SHA-1 of the **Play App Signing** key (Play Console → *Test and release → App integrity → App signing*)
-   - SHA-1 of the upload key and of the debug keystore (for development)
-3. In the app, request a Google ID token with **Credential Manager**:
-   - Kotlin: `GetGoogleIdOption.Builder().setServerClientId(WEB_CLIENT_ID).setNonce(nonce).setFilterByAuthorizedAccounts(false)`; fall back to `GetSignInWithGoogleOption` for the button.
-   - Expo: a maintained Google Sign-In module that returns an ID token for the **web client ID**.
-4. **Use the web client ID as `serverClientId`.** The resulting ID token's audience is the web client ID, which the server already accepts.
-5. Flow:
+1. In the same Google Cloud project as the web client, create an **Android OAuth client** with the package name and the SHA-1 of the Play App Signing key (Play Console → *Test and release → App integrity*), the upload key and the debug key.
+2. `POST /v1/auth/nonce` → nonce.
+3. Credential Manager `GetGoogleIdOption` with **`serverClientId` = the web client ID** and the nonce → Google ID token.
+4. `POST /v1/auth/google {idToken, client: "android", deviceName}` → `{user, accessToken, refreshToken, expiresIn}`.
 
-```mermaid
-sequenceDiagram
-  participant App
-  participant API
-  participant CM as Credential Manager
-  App->>API: POST /v1/auth/nonce
-  API-->>App: nonce
-  App->>CM: getCredential(GoogleIdOption(serverClientId=WEB, nonce))
-  CM-->>App: Google ID token
-  App->>API: POST /v1/auth/google {idToken, client:"android", deviceName}
-  API-->>App: {user, accessToken, refreshToken, expiresIn}
-```
+Keep the access token in memory and send `Authorization: Bearer …` plus `X-Client: android/<version> (<code>)`. Store the refresh token encrypted (Android Keystore). On `401 AUTH_TOKEN_EXPIRED`, call `POST /v1/auth/refresh {refreshToken}` once (serialise concurrent refreshes), save the new refresh token, retry. On `AUTH_REFRESH_INVALID` / `AUTH_REFRESH_REUSED`, sign out.
 
-## Token handling
+## Shopping flow
 
-- Keep the **access token in memory**. Send `Authorization: Bearer <token>` and `X-Client: android/<versionName> (<versionCode>)`.
-- Store the **refresh token encrypted** (Android Keystore-backed encryption, e.g. Tink with DataStore). Never in plain SharedPreferences or logs.
-- On `401 AUTH_TOKEN_EXPIRED`: call `POST /v1/auth/refresh` with the refresh token **once** (serialise concurrent refreshes with a mutex; OkHttp `Authenticator` works well), save the new refresh token, retry the request.
-- On `401 AUTH_REFRESH_INVALID` or `AUTH_REFRESH_REUSED`: clear tokens and show sign-in.
-- Sign out: `POST /v1/auth/logout`, clear tokens, also call Credential Manager `clearCredentialState()`.
-
-## App start sequence
-
-1. `GET /v1/app-config` (with `If-None-Match`).
-2. If `versionCode < minVersions.android` → blocking "Update the app" screen (Play Store link, or the in-app updates API).
-3. If signed in → load profile, wallet and calendar in parallel.
-4. Register or refresh the FCM token: `POST /v1/store/me/devices`.
-
-Any endpoint can return `426 APP_VERSION_UNSUPPORTED`; handle it globally with the same update screen.
-
-## Payments (Cashfree Android SDK)
-
-1. `POST /v1/store/wallet/topups` (or `/orders` with `paymentMethod: online`) with an `Idempotency-Key` → receive `paymentSessionId`.
-2. Launch the Cashfree Android SDK checkout with the `paymentSessionId` and the order ID. Prefer UPI intent flow (opens the customer's UPI app).
-3. When the SDK returns (success, failure or cancel), **don't trust it**: poll `GET /v1/store/wallet/topups/{id}` until `paid`, `failed` or `expired` (every 2 s, up to 60 s), then show the result.
-4. If the app is killed mid-payment, the server still completes the top-up from the webhook; the wallet screen shows the new balance on next open.
-
-## Push notifications
-
-- Firebase project linked to the same Google Cloud project; add the app, download `google-services.json`.
-- On token refresh, `POST /v1/store/me/devices {platform: "android", pushToken, appVersion}`.
-- Notification payloads include `type` and a `link` (e.g. `example://calendar/2026-12-02`); route with deep links.
-- Ask for the Android 13+ notification permission after the first subscription, not at first launch.
-
-## Deep links
-
-Android App Links for `https://example.in/...` paths so links in emails and WhatsApp open the app:
-
-| Path | Screen |
+| Screen | API |
 |---|---|
-| `/calendar/{date}` | Calendar on that date |
-| `/wallet` | Wallet |
-| `/p/{slug}` | Product |
-| `/orders/{id}` | Order |
-| `/statements/{month}` | Statement |
+| Home / shop | `GET /v1/store/categories`, `GET /v1/store/products?featured=true` |
+| Product | `GET /v1/store/products/{slug}`, `GET /v1/store/shipping/estimate?pincode=` |
+| Cart | Local cart; `POST /v1/store/checkout/quote {lines, pincode}` for prices, stock and shipping |
+| Addresses | `GET/POST /v1/store/me/addresses` |
+| Checkout | `POST /v1/store/orders` with `Idempotency-Key` → `payment.paymentSessionId` |
+| Pay | Cashfree Android SDK with `paymentSessionId`; then poll `GET /v1/store/orders/{id}` until not `pending_payment` (never trust the SDK result alone) |
+| Orders | `GET /v1/store/orders`, `GET /v1/store/orders/{id}`, `POST …/cancel`, `POST …/pay` |
 
-`https://example.in/.well-known/assetlinks.json` is served by the storefront with the Play App Signing SHA-256.
+Reuse the same `Idempotency-Key` when retrying a timed-out "place order".
 
-## Offline and slow networks
+## Other
 
-- Cache the catalog with ETags; show the cached calendar and wallet when offline, with a clear "offline" banner.
-- Writes (calendar changes, top-ups) need network; show a retry, and reuse the same `Idempotency-Key` on retry.
-- Keep the APK small: target < 15 MB download; use WebP/AVIF images from the API's sized variants.
-
-## Play Store requirements checklist
-
-- [ ] Account deletion in-app (`DELETE /v1/store/me`) and the public web URL `https://example.in/account/delete`
-- [ ] Privacy policy URL
-- [ ] Data safety form: collects name, email, phone, address, approximate/precise location (address pin), purchase history; shared with payment processor (Cashfree); encrypted in transit; deletion available
-- [ ] Target the current required API level
-- [ ] Content rating questionnaire
-- [ ] Payment: Cashfree for physical goods is allowed (Google Play Billing is only required for digital goods)
-- [ ] Closed testing track with real testers before production (required for new personal developer accounts)
-
-## Generating the API client
-
-```bash
-# Kotlin (Retrofit)
-npx @openapitools/openapi-generator-cli generate \
-  -i docs/api/openapi.yaml -g kotlin --library jvm-retrofit2 \
-  -o android/api-client --additional-properties=serializationLibrary=kotlinx_serialization
-
-# Expo / React Native: use packages/contracts (openapi-typescript + openapi-fetch)
-```
-
-Regenerate whenever `docs/api/openapi.yaml` changes. The API never breaks `/v1`, so older app versions keep working.
+- **Push:** register FCM tokens with `POST /v1/store/me/devices` (order shipped / delivered notifications are a next step on the server).
+- **App config:** `GET /v1/app-config` on start; if `versionCode < minVersions.android`, show a blocking update screen. Any endpoint may return `426 APP_VERSION_UNSUPPORTED`.
+- **Deep links:** App Links for `/p/{slug}`, `/orders/{id}`; `assetlinks.json` served by the storefront.
+- **Play requirements:** in-app account deletion (`DELETE /v1/store/me`) and the web URL `https://example.in/account/delete`; privacy policy; Data safety form (name, email, phone, address, purchase history; shared with Cashfree and the courier); physical goods may use Cashfree (Play Billing applies to digital goods only).
+- **Client generation:** `openapi-generator-cli generate -g kotlin -i docs/api/openapi.json` (Kotlin) or `openapi-typescript` (Expo).

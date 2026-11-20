@@ -5,11 +5,11 @@
 
 ## Context
 
-We need a relational database with transactions (wallet ledger, stock), geospatial queries (delivery zones) and full-text search. Supabase's free tier pauses after 7 days without activity and has small storage limits; paid plans cost money monthly.
+We need a relational database with transactions (orders, payments, stock), row locks for stock reservation, and full-text search. Supabase's free tier pauses after 7 days without activity and has small storage limits; paid plans cost money monthly.
 
 ## Decision
 
-Run **PostgreSQL 17 with PostGIS and pg_trgm** in Docker on the data VM. Drizzle ORM and SQL migrations in the repo. pgBackRest for continuous WAL archiving and nightly backups to two providers. Separate database roles for app, migrator, read-only and backup.
+Run **PostgreSQL 17 with pg_trgm** in Docker on the data VM. Drizzle ORM and SQL migrations in the repo. pgBackRest for continuous WAL archiving and nightly backups to two providers. Separate database roles for app, migrator, read-only and backup.
 
 ## Consequences
 

@@ -1,6 +1,6 @@
 # 04 · Authentication and authorisation
 
-**Everyone signs in with Google.** Customers, staff and delivery agents. There is no SMS OTP and no password. Decision: [ADR 0003](adr/0003-google-only-login.md).
+**Everyone signs in with Google**, customers and staff. There is no SMS OTP and no password. Decision: [ADR 0003](adr/0003-google-only-login.md).
 
 ## Why Google only
 
@@ -9,14 +9,14 @@
 - No passwords to store, reset or leak.
 - The same flow works on the website now and the Android app later.
 
-**Trade-off:** we don't get a verified phone number. Customers enter their mobile number during onboarding; it's validated for format and used by delivery agents to call, but not verified by OTP. This is acceptable because every order is prepaid from the wallet, so a wrong number can't create unpaid deliveries.
+**Trade-off:** we don't get a verified phone number. Customers enter a mobile number with each delivery address; it's validated for format and passed to the courier, but not verified by OTP. Every order is prepaid, so a wrong number can't create unpaid orders.
 
 ## Google Cloud setup (one-time)
 
 1. Create a Google Cloud project (free), e.g. `dairy-prod`. Use the same Google account that owns the Play Console, so the Android client can be added later in the same project.
 2. **OAuth consent screen** → *External*. App name, logo, support email (`support@example.in`), links to privacy policy and terms on `example.in`, authorised domain `example.in`. Scopes: `openid`, `email`, `profile` only. These are non-sensitive scopes, so no security review is needed.
 3. **Credentials → OAuth client ID → Web application** ("web"):
-   - Authorised JavaScript origins: `https://example.in`, `https://admin.example.in`, `https://agent.example.in`, `https://staging.example.in`, `http://localhost:3000`, `http://localhost:5173`, `http://localhost:5174`
+   - Authorised JavaScript origins: `https://example.in`, `https://admin.example.in`, `https://staging.example.in`, `http://localhost:3000`, `http://localhost:5173`
    - Note the client ID → `GOOGLE_WEB_CLIENT_ID`
 4. **Later, for Android:** add an *Android* OAuth client with the package name and the SHA-1 fingerprints of (a) the Play App Signing key from Play Console → *Test and release → App integrity*, (b) the upload key, (c) the debug key. The Android app passes the **web** client ID as `serverClientId`, so ID tokens it receives have the web client ID as audience and the server needs no change. See [Android integration](13-android-integration.md).
 
@@ -69,8 +69,8 @@ All must pass, otherwise `401 AUTH_INVALID_GOOGLE_TOKEN`:
 
 | Token | Format | Lifetime | Stored |
 |---|---|---|---|
-| Access token | JWT signed with Ed25519 (`EdDSA`). Claims: `sub` (user id), `sid` (session id), `aud` (`store`, `admin` or `agent`), `role`, `iat`, `exp` | 15 minutes | Not stored server-side |
-| Refresh token | 256-bit random, opaque | 30 days customers, 12 hours staff, 7 days agents; sliding | SHA-256 hash in `sessions` table |
+| Access token | JWT signed with Ed25519 (`EdDSA`). Claims: `sub` (user id), `sid` (session id), `aud` (`store` or `admin`), `typ`, `role`, `client`, `iat`, `exp` | 15 minutes | Not stored server-side |
+| Refresh token | 256-bit random, opaque | 30 days customers, 12 hours staff; sliding | SHA-256 hash in `sessions` table |
 
 **Rotation:** every refresh returns a new refresh token and invalidates the old one. If an old (already used) refresh token is presented, it means it was stolen or replayed: the whole session is revoked and the user must sign in again (`401 AUTH_REFRESH_REUSED`).
 
@@ -81,60 +81,52 @@ All must pass, otherwise `401 AUTH_INVALID_GOOGLE_TOKEN`:
 | Client | Access token | Refresh token | CSRF protection |
 |---|---|---|---|
 | Storefront (Next.js) | `httpOnly; Secure; SameSite=Lax` cookie, same origin via `/api` proxy | `httpOnly; Secure; SameSite=Strict` cookie, path `/api/v1/auth` | `SameSite` + `X-CSRF-Token` header (double-submit) on unsafe methods |
-| Admin, agent (separate subdomains) | `httpOnly; Secure; SameSite=Lax` cookie on `.example.in` | Same, path `/v1/auth` | Same, plus CORS allowlist with credentials |
+| Admin (separate subdomain) | `httpOnly; Secure; SameSite=Lax` cookie on `.example.in` | Same, path `/v1/auth` | Same, plus CORS allowlist with credentials |
 | Android (later) | Memory, sent as `Authorization: Bearer …` | Encrypted on device (Android Keystore) | Not needed (no cookies) |
 
 The API accepts either cookies or a bearer header. If both are present, the bearer header wins.
 
-## Staff and agent sign-in
-
-Staff and agents also use Google, with extra controls:
+## Staff sign-in
 
 ```mermaid
 flowchart LR
   A[Open admin.example.in] --> B{Cloudflare Access:<br/>Google login,<br/>email on allowlist?}
   B -- no --> X[Blocked at Cloudflare]
-  B -- yes --> C[Admin SPA: Sign in with Google]
+  B -- yes --> C[Admin: Sign in with Google]
   C --> D[POST /v1/auth/google client=admin]
-  D --> E{staff record active<br/>with this Google sub/email?}
+  D --> E{active staff record<br/>with this Google sub/email?}
   E -- no --> Y[403 STAFF_NOT_ALLOWED]
-  E -- yes --> F{role requires TOTP?<br/>owner, admin, accountant}
-  F -- yes --> G[POST /v1/auth/totp/verify]
-  F -- no --> H[Session issued]
-  G --> H
+  E -- yes --> H[Session issued, 12 h]
 ```
 
-- **Staff must be invited.** An owner adds a staff member's Google email and role in admin. The first successful Google sign-in binds the staff record to that Google `sub`. After that, only that `sub` can use the record.
-- **Second factor:** roles that can move money or change settings (Owner, Admin, Accountant) must also enter a 6-digit code from an authenticator app (TOTP, free). Recovery codes are shown once at setup.
-- **Cloudflare Access** in front of `admin.example.in` uses Google as identity provider with the same allowlist. Even a bug in our app can't expose the admin to the public.
-- **Agents** are added by Dispatch/Admin with their Google email, same binding rule. Agent sessions are limited to `/v1/agent/*`.
-- **Deactivating** a staff member or agent revokes all their sessions immediately.
+- **Invite only.** An owner invites a Google email with a role (Admin → Settings → Team). The first successful sign-in binds the record to that Google `sub`; after that only that account can use it.
+- **Cloudflare Access** in front of `admin.example.in` uses Google with the same allowlist, so even an app bug can't expose the admin.
+- **Deactivating** a member or changing their role revokes all their sessions immediately.
+- **Second factor:** TOTP for Owner, Admin and Accountant is planned. Until then, require 2-step verification on those Google accounts.
+
+## Local development without Google
+
+With `AUTH_TEST_MODE=true` and no Cashfree keys (never in production; the API refuses to start that way), `POST /v1/dev/sign-in {email}` signs in a test customer and the storefront's sign-in page shows a "test customer" form. Staff sign-in always needs Google.
 
 ## Roles and permissions
 
-Permissions are checked on the server for every request. The admin UI hides what a role can't do, but the server is the authority.
+Checked on the server for every request (`apps/api/src/lib/permissions.ts`); the admin hides what a role can't do.
 
-| Permission | Owner | Admin | Ops manager | Dispatch | Support | Content | Accountant | Agent |
-|---|---|---|---|---|---|---|---|---|
-| `catalog.read` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | |
-| `catalog.write` | ✓ | ✓ | ✓ | | | ✓ | | |
-| `pricing.write` | ✓ | ✓ | | | | | | |
-| `inventory.write` | ✓ | ✓ | ✓ | ✓ | | | | |
-| `dispatch.manage` | ✓ | ✓ | ✓ | ✓ | | | | |
-| `customers.read` | ✓ | ✓ | ✓ | ✓ | ✓ | | ✓ | |
-| `customers.write` | ✓ | ✓ | ✓ | | ✓ | | | |
-| `wallet.adjust` (≤ ₹500) | ✓ | ✓ | ✓ | | ✓ | | | |
-| `wallet.adjust.unlimited` | ✓ | ✓ | | | | | | |
-| `orders.refund` | ✓ | ✓ | ✓ | | | | | |
-| `content.write` | ✓ | ✓ | | | | ✓ | | |
-| `marketing.send` | ✓ | ✓ | | | | ✓ | | |
-| `reports.finance` | ✓ | ✓ | | | | | ✓ | |
-| `settings.write` | ✓ | ✓ | | | | | | |
-| `staff.manage` | ✓ | | | | | | | |
-| `audit.read` | ✓ | ✓ | | | | | ✓ | |
-| `agent.deliver` | | | | | | | | ✓ |
-
-Roles map to permission sets in `packages/auth/permissions.ts`. A route declares the permission it needs: `{ config: { permission: 'orders.refund' } }`.
+| Permission | Owner | Admin | Ops manager | Warehouse | Support | Content | Accountant |
+|---|---|---|---|---|---|---|---|
+| `dashboard.read` | ✓ | ✓ | ✓ | ✓ | ✓ | | ✓ |
+| `orders.read` | ✓ | ✓ | ✓ | ✓ | ✓ | | ✓ |
+| `orders.fulfil` (pack, ship, deliver) | ✓ | ✓ | ✓ | ✓ | | | |
+| `orders.refund` (cancel + refund) | ✓ | ✓ | ✓ | | ✓ | | |
+| `catalog.read` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `catalog.write` | ✓ | ✓ | ✓ | | | ✓ | |
+| `pricing.write` | ✓ | ✓ | | | | | |
+| `inventory.write` | ✓ | ✓ | ✓ | ✓ | | | |
+| `customers.read` | ✓ | ✓ | ✓ | | ✓ | | ✓ |
+| `reports.finance` | ✓ | ✓ | | | | | ✓ |
+| `settings.write` (shipping zones) | ✓ | ✓ | | | | | |
+| `staff.manage` | ✓ | | | | | | |
+| `audit.read` | ✓ | ✓ | | | | | ✓ |
 
 ## Sessions and devices
 
@@ -146,7 +138,6 @@ Roles map to permission sets in `packages/auth/permissions.ts`. A route declares
 
 Required by Google Play for apps with accounts, and by India's DPDP Act. Available in the storefront account page and at `example.in/account/delete` (a public URL Play Console asks for).
 
-1. `DELETE /v1/store/me` → account is marked `deletion_requested`, all sessions revoked, subscriptions cancelled.
-2. Any remaining wallet balance is refunded to the original payment method (or the customer is contacted if that's not possible).
-3. After a 30-day grace period (sign in again to cancel), personal data is erased or anonymised: name, email, phone, addresses, device tokens.
-4. Invoices and tax records are **kept** for the period GST law requires, with the customer reference anonymised.
+1. `DELETE /v1/store/me` → account is marked `deletion_requested` and all sessions are revoked. Orders already shipped are still delivered.
+2. After a 30-day grace period (sign in again to cancel), personal data is erased or anonymised: name, email, phone, addresses, device tokens.
+3. Invoices and tax records are **kept** for the period GST law requires, with the customer reference anonymised.

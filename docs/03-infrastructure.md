@@ -32,12 +32,11 @@ Buy one domain (about ₹700–1,200 per year). Point its nameservers to Cloudfl
 | `example.in`, `www.example.in` | Storefront | Next.js on VM-APP via Tunnel |
 | `api.example.in` | Public API | Fastify on VM-APP via Tunnel |
 | `admin.example.in` | Admin SPA | Cloudflare Pages, behind Cloudflare Access |
-| `agent.example.in` | Agent PWA | Cloudflare Pages |
 | `media.example.in` | Images and videos | Cloudflare R2 public bucket (custom domain) |
 | `staging.example.in`, `api.staging.example.in` | Staging | Same VMs, separate containers and database |
 
 **Email on the domain, free:**
-- **Receiving:** Cloudflare Email Routing forwards `support@example.in`, `orders@example.in` to the team's Gmail. Or use Zoho Mail's free plan for real mailboxes.
+- **Receiving:** Cloudflare Email Routing forwards `support@example.in` and `orders@example.in` to the team's Gmail. Or use Zoho Mail's free plan for real mailboxes.
 - **Sending transactional mail:** Brevo free (300/day) and Resend free (100/day), with SPF, DKIM and DMARC records set in Cloudflare DNS.
 
 ## Servers
@@ -48,11 +47,10 @@ flowchart TB
     cfd[cloudflared]
     web[web · Next.js]
     api1[api · Fastify ×2]
-    wrk[worker · BullMQ]
-    vid[video · Remotion]
+    wrk[worker]
   end
   subgraph DATA["VM-DATA · Ampere A1 · 1–2 OCPU · 6–12 GB"]
-    pg[(postgres 17 + PostGIS)]
+    pg[(postgres 17)]
     vk[(valkey)]
     bk[pgbackrest]
     mon[prometheus · grafana · loki]
@@ -78,8 +76,7 @@ flowchart TB
 | `web` | built from `apps/web` | APP | 1 GB |
 | `api` (×2) | built from `apps/api` | APP | 768 MB each |
 | `worker` | built from `apps/api` | APP | 768 MB |
-| `video` | built from `apps/video` (Chromium) | APP | 2 GB, CPU-limited, low priority |
-| `postgres` | postgis/postgis:17 | DATA | 3 GB (`shared_buffers` 1.5 GB) |
+| `postgres` | postgres:17 | DATA | 3 GB (`shared_buffers` 1.5 GB) |
 | `valkey` | valkey/valkey:8 | DATA | 512 MB, `maxmemory-policy noeviction` for queues |
 | `pgbackrest` | pgbackrest | DATA | 256 MB |
 | `prometheus`, `grafana`, `loki`, `promtail` | official | DATA | 1 GB total |
@@ -90,7 +87,7 @@ flowchart TB
 |---|---|---|
 | CDN, DNS, SSL, WAF, DDoS | Cloudflare | Unlimited CDN bandwidth |
 | Ingress without open ports | Cloudflare Tunnel | Free |
-| Admin / agent hosting | Cloudflare Pages | Free, commercial use allowed |
+| Admin hosting | Cloudflare Pages | Free, commercial use allowed |
 | Staff gate | Cloudflare Access (Zero Trust) | 50 users |
 | Object storage | Cloudflare R2 | 10 GB, no egress fees |
 | Second backup location | OCI Object Storage | 20 GB |
@@ -129,8 +126,8 @@ Deploy steps (run by GitHub Actions over Cloudflare Tunnel SSH):
 2. `docker compose build` (ARM images build natively on the VM; no paid registry needed).
 3. Run database migrations (`pnpm db:migrate`). Migrations must be backward-compatible with the running version: expand first, contract in a later release.
 4. Rolling restart: `api` containers one at a time, waiting for `/v1/health/ready`.
-5. Restart `worker` after in-flight jobs finish (graceful shutdown drains BullMQ).
-6. Deploy admin and agent SPAs to Cloudflare Pages.
+5. Restart `worker` (it finishes the current tick before exiting).
+6. Deploy the admin SPA to Cloudflare Pages.
 7. Purge Cloudflare cache for changed static assets if needed.
 8. If health checks fail within 5 minutes: roll back to the previous image tag automatically.
 
@@ -159,8 +156,7 @@ Sizing for 100,000 registered users; detailed reasoning in [PLAN.md §3.4](../PL
 |---|---|---|
 | Daily active users | ~15,000 | — |
 | API requests/day | ~450,000 | — |
-| Peak requests/second (evening before cutoff) | 75–100 | >1,000 (Fastify + Valkey cache) |
-| Active subscriptions processed at cutoff | ~30,000 | Seconds (set-based SQL) |
+| Peak requests/second (sales, festival days) | 75–100 | >1,000 (Fastify + Valkey cache) |
 | Database size after 2 years | ~5–10 GB | 50+ GB volume |
 | Media in R2 | 2–4 GB | 10 GB free |
 
@@ -176,3 +172,4 @@ Verified by the k6 load test in Phase 8: 500 req/s sustained, p95 under 200 ms, 
 | Google Play | Already paid (account exists) | — |
 | Remotion | ₹0 while the company has 3 people or fewer | Re-check if team grows |
 | Login | ₹0 (Google Sign-In; no SMS) | — |
+| Courier | Per parcel (Shiprocket/Delhivery rates) | Per order shipped |

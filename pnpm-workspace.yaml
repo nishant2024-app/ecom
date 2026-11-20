@@ -2,5 +2,6 @@ packages:
   - apps/*
   - packages/*
 onlyBuiltDependencies:
+  - '@remotion/compositor-linux-x64-gnu'
   - esbuild
   - sharp

@@ -10,7 +10,7 @@ Cloudflare and serves these public hostnames, configured in the Cloudflare dashb
 | `api.example.in` | `http://api:4000` |
 | `ssh.example.in` | `ssh://host.docker.internal:22` (behind Cloudflare Access; admins only) |
 
-The admin (`admin.example.in`) and agent (`agent.example.in`) apps are static builds on
+The admin (`admin.example.in`) is a static build on
 Cloudflare Pages, so they don't go through the tunnel.
 
 Cache rules (Cloudflare → Caching → Cache Rules):

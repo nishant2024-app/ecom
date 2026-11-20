@@ -1,55 +1,34 @@
 # Webhooks (inbound)
 
-Cashfree calls these endpoints to tell us about payments, refunds and mandates. Design and verification details: [Payments](../07-payments-cashfree.md).
-
-| Method | Path | Cashfree events |
+| Method | Path | Events |
 |---|---|---|
-| POST | `/v1/webhooks/cashfree/payments` | `PAYMENT_SUCCESS_WEBHOOK`, `PAYMENT_FAILED_WEBHOOK`, `PAYMENT_USER_DROPPED_WEBHOOK`, `REFUND_STATUS_WEBHOOK` |
-| POST | `/v1/webhooks/cashfree/subscriptions` | Subscription/mandate status changes and charge results for UPI Autopay |
-| POST | `/v1/webhooks/cashfree/vendors` | (Later) Easy Split vendor settlement and status events |
+| POST | `/v1/webhooks/cashfree/payments` | `PAYMENT_SUCCESS_WEBHOOK`, `PAYMENT_FAILED_WEBHOOK`, `PAYMENT_USER_DROPPED_WEBHOOK` |
 
-Configure the URLs in the Cashfree dashboard for each environment (sandbox → staging URL, production → production URL).
+Configure this URL in the Cashfree dashboard for each environment (sandbox → staging, production → production). Our Cashfree `order_id` is our payment ID (`pay_…`), which is how events find the payment.
 
 ## Security
 
-| Check | Rule |
-|---|---|
-| Transport | HTTPS only (Cloudflare) |
-| Signature | `x-webhook-signature` = base64 HMAC-SHA256 of `x-webhook-timestamp` + raw body, keyed with the Cashfree secret key. Constant-time compare. |
-| Freshness | Reject timestamps older than 5 minutes |
-| Raw body | The route reads the body as a raw buffer; signature is checked before JSON parsing |
-| Replay | Event stored in `webhook_events` with a unique key; duplicates are acknowledged and ignored |
-| Not authenticated otherwise | These routes skip cookie/bearer auth and CSRF; the signature is the authentication |
-| WAF | Cloudflare rule allows these paths only via `POST` with `application/json` |
+- `x-webhook-signature` must equal `base64(HMAC-SHA256(secret, x-webhook-timestamp + rawBody))`, compared in constant time; the raw body is captured before JSON parsing.
+- `x-webhook-timestamp` must be within 5 minutes.
+- No cookie/bearer auth or CSRF on this route; the signature is the authentication.
+- Each event is stored once in `webhook_events` (unique key from type, order, payment ID and status) before processing.
 
 ## Responses
 
-| We return | When | Cashfree does |
-|---|---|---|
-| `200` | Processed, or duplicate | Stops |
-| `400` | Signature invalid or malformed | Stops (logged and alerted: may indicate misconfiguration or an attack) |
-| `500` | Our failure after storing the event | Retries with backoff; our worker also retries from `webhook_events` |
-
-Processing must finish within a few seconds. Follow-up work (notifications, invoice PDFs) is queued.
-
-## Processing rules
-
-| Event | Effect (one transaction) |
+| We return | When |
 |---|---|
-| Payment success, purpose `topup` | `payments → success`, `topups → paid`, ledger credit, wallet balance += amount, queue "top-up successful" push |
-| Payment success, purpose `order` | `payments → success`, order `pending_payment → confirmed` |
-| Payment success for an already final payment | No-op (logged) |
-| Payment success after our order expired | Mark payment `success`, credit the amount to the **wallet** (never lose money), notify customer |
-| Payment failed / user dropped | `payments → failed` / `user_dropped`; top-up `failed`; order stays `pending_payment` until expiry |
-| Refund status | Update `refunds.status`; on failure alert finance |
-| Mandate activated / cancelled / paused | Update `autopay_mandates.status` |
-| Autopay charge success | Same as top-up success with `source = autopay` |
-| Autopay charge failed | Notify customer; after 2 consecutive failures, pause autopay and tell the customer |
+| `200 {"status":"processed"}` | Applied |
+| `200 {"status":"duplicate"}` | Already received |
+| `400` | Invalid or stale signature (logged as a warning) |
+| `500` | Processing failed; the error is saved on the event and Cashfree retries |
 
-## Testing locally
+## Effects
 
-1. Run the API locally.
-2. Expose it with `cloudflared tunnel --url http://localhost:4000` (free, temporary URL).
-3. Set that URL in the Cashfree **sandbox** dashboard as the webhook endpoint.
-4. Use Cashfree sandbox test payment methods.
-5. Captured payloads go in `apps/api/test/fixtures/cashfree/` for unit tests.
+| Event | Effect |
+|---|---|
+| Payment success | Payment `success` (with Cashfree payment ID and method); order `pending_payment → confirmed`. If the order was already closed, the money is refunded automatically. Repeat events are no-ops. |
+| Payment failed / user dropped | Payment marked `failed` / `user_dropped`; the order stays open until its payment window ends so the customer can retry. |
+
+## Local testing
+
+Expose the local API with `cloudflared tunnel --url http://localhost:4000`, set that URL in the Cashfree sandbox, and pay with Cashfree test UPI IDs or cards. Without Cashfree keys, the mock provider and the storefront's test payment page exercise the same order logic.

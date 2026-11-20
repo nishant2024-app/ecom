@@ -1,15 +1,15 @@
 # Documentation
 
-Documentation for the dairy e-commerce platform: storefront, admin panel, delivery agent app, public API and the infrastructure it runs on.
+Documentation for the Mulshi Dairy shop: storefront, admin panel, public API, video and the infrastructure they run on.
 
-> **Status:** design documentation, written before implementation. Where a document describes behaviour, that behaviour is the contract the code must meet. When code and docs disagree, fix one of them in the same pull request.
+> These docs describe the code as built. When code and docs disagree, fix one of them in the same pull request. The API reference is generated from the code.
 
 ## Start here
 
 | If you are… | Read |
 |---|---|
 | New to the project | [Overview](01-overview.md) → [Architecture](02-architecture.md) → [Development guide](12-development.md) |
-| Building the Android app | [Android integration](13-android-integration.md) → [API guide](api/README.md) → [OpenAPI spec](api/openapi.yaml) |
+| Building the Android app | [Android integration](13-android-integration.md) → [API guide](api/README.md) → [OpenAPI spec](api/openapi.json) |
 | Building a UI | [Design system](08-design-system.md) |
 | Running the servers | [Infrastructure](03-infrastructure.md) → [Operations & runbooks](11-operations.md) |
 | Reviewing security | [Authentication](04-authentication.md) → [Security & privacy](10-security-privacy.md) |
@@ -18,15 +18,15 @@ Documentation for the dairy e-commerce platform: storefront, admin panel, delive
 
 | # | Document | What it covers |
 |---|---|---|
-| 01 | [Overview](01-overview.md) | Product scope, users, glossary of dairy and business terms |
+| 01 | [Overview](01-overview.md) | Product scope, users, glossary |
 | 02 | [Architecture](02-architecture.md) | Components, request flows, sequence diagrams |
 | 03 | [Infrastructure](03-infrastructure.md) | Hosting, domains, environments, deploy pipeline, costs, hosting options compared |
-| 04 | [Authentication](04-authentication.md) | Google Sign-In for customers, staff and agents; tokens, sessions, roles |
+| 04 | [Authentication](04-authentication.md) | Google Sign-In for customers and staff; tokens, sessions, roles |
 | 05 | [Data model](05-data-model.md) | Tables, relationships, conventions |
-| 06 | [Business rules](06-business-rules.md) | Subscriptions, cutoff job, wallet, deliveries, GST, stock, bottles, refunds |
-| 07 | [Payments (Cashfree)](07-payments-cashfree.md) | Orders, top-ups, UPI Autopay, webhooks, refunds, reconciliation |
-| 08 | [Design system](08-design-system.md) | "Milk Card" direction, tokens, type, components, motion, voice, anti-slop checklist |
-| 09 | [Video (Remotion)](09-video.md) | Video templates, rendering pipeline, licensing |
+| 06 | [Business rules](06-business-rules.md) | Stock and batches, shipping zones, quotes, order lifecycle, cancellations, GST |
+| 07 | [Payments (Cashfree)](07-payments-cashfree.md) | Order payments, mock provider, webhooks, missed-webhook recovery, refunds |
+| 08 | [Design system](08-design-system.md) | "Pasture & Pantry": tokens, PackShot illustrations, animated components, motion rules, checklist |
+| 09 | [Video (Remotion)](09-video.md) | Pantry and product reels, local rendering, licensing |
 | 10 | [Security & privacy](10-security-privacy.md) | Threat model, controls, DPDP Act, data retention |
 | 11 | [Operations & runbooks](11-operations.md) | Monitoring, alerts, backups, deploys, incident runbooks |
 | 12 | [Development guide](12-development.md) | Local setup, repo layout, environment variables, standards, testing, git workflow |
@@ -38,11 +38,10 @@ Documentation for the dairy e-commerce platform: storefront, admin panel, delive
 |---|---|
 | [API guide](api/README.md) | Conventions: versioning, auth, errors, pagination, idempotency, rate limits, money and dates |
 | [Auth & meta endpoints](api/auth.md) | Sign-in, refresh, sessions, app config, health |
-| [Store endpoints](api/store.md) | Customer-facing: catalog, cart, orders, subscriptions, wallet, deliveries |
-| [Agent endpoints](api/agent.md) | Delivery agent app: runs, stops, offline sync |
-| [Admin endpoints](api/admin.md) | Staff panel: catalog, dispatch, inventory, customers, reports, settings |
+| [Store endpoints](api/store.md) | Customer-facing: catalog, shipping estimate, quote, addresses, orders |
+| [Admin endpoints](api/admin.md) | Dashboard, orders fulfilment, products, inventory, customers, shipping zones, staff, audit |
 | [Webhooks](api/webhooks.md) | Inbound Cashfree webhooks |
-| [OpenAPI 3.1 spec](api/openapi.yaml) | Machine-readable contract; generate clients from it |
+| [OpenAPI 3.1 spec](api/openapi.json) | Generated from the Fastify routes (`pnpm --filter @dairy/api spec`); generate clients from it |
 | [Rendered API reference](api/reference.html) | The OpenAPI spec as a browsable page (open locally in a browser) |
 
 ### Decision records
@@ -55,6 +54,7 @@ Documentation for the dairy e-commerce platform: storefront, admin panel, delive
 | [0004](adr/0004-hostinger-single-plan.md) | Do not use Hostinger Single shared hosting |
 | [0005](adr/0005-postgres-self-hosted.md) | PostgreSQL self-hosted instead of Supabase |
 | [0006](adr/0006-multi-vendor-ready-schema.md) | Multi-vendor-ready schema from day one |
+| [0007](adr/0007-shelf-stable-shipped-commerce.md) | Shelf-stable products shipped by courier (replaces daily delivery) |
 
 Roadmap and phases: [PLAN.md](../PLAN.md).
 

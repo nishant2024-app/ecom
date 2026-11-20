@@ -3,7 +3,7 @@
 name: dairy-data
 services:
   postgres:
-    image: postgis/postgis:17-3.5
+    image: postgres:17-alpine
     restart: unless-stopped
     env_file: /opt/dairy/.env.data
     command: >

@@ -14,7 +14,7 @@
     "db:generate": "pnpm --filter @dairy/db generate",
     "db:migrate": "pnpm --filter @dairy/db migrate",
     "db:seed": "pnpm --filter @dairy/db seed",
-    "docs:api": "redocly lint docs/api/openapi.yaml --config docs/api/redocly.yaml && redocly build-docs docs/api/openapi.yaml --config docs/api/redocly.yaml -o docs/api/reference.html",
+    "docs:api": "redocly build-docs docs/api/openapi.json -o docs/api/reference.html",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

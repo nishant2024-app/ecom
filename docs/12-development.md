@@ -17,16 +17,17 @@ git clone https://github.com/nishant2024-app/ecom.git
 cd ecom
 corepack enable
 pnpm install
-cp .env.example .env            # fill in Google client ID and Cashfree sandbox keys
-docker compose -f infra/compose/dev.yml up -d   # postgres + postgis, valkey, mailpit
+cp .env.example .env            # set AUTH_TEST_MODE=true to try without Google; add keys when you have them
+docker compose -f infra/compose/dev.yml up -d   # postgres, valkey, mailpit
 pnpm db:migrate
-pnpm db:seed                    # zones, slots, ~40 products, demo customers, staff
-pnpm dev                        # api :4000, web :3000, admin :5173, agent :5174
+pnpm db:seed                    # 12 products with batches, shipping zones, a demo customer and sample orders
+pnpm dev                        # api :4000, web :3000, admin :5173
 ```
 
 - API docs (Scalar): http://localhost:4000/docs
 - Emails are caught by Mailpit: http://localhost:8025
-- Seed staff: sign in with a Google account listed in `SEED_OWNER_EMAIL`.
+- Seed staff: sign in to the admin with the Google account in `SEED_OWNER_EMAIL`.
+- Customers without Google: `AUTH_TEST_MODE=true` shows a test sign-in on `/signin`; with no Cashfree keys a test payment page stands in for Cashfree.
 
 ## Repository layout
 
@@ -34,22 +35,18 @@ pnpm dev                        # api :4000, web :3000, admin :5173, agent :5174
 apps/
   api/        Fastify API + workers
     src/
-      routes/{auth,store,agent,admin,webhooks}/   one file per resource
+      routes/{auth,store,admin}/, webhooks.ts, dev.ts
       services/        orchestration (DB + core + external)
-      payments/        PaymentProvider + cashfree adapter
-      jobs/            BullMQ processors
       plugins/         auth, permissions, idempotency, rate limit, errors
       config.ts        env schema (fails fast)
     test/
   web/        Next.js storefront
   admin/      Vite React admin
-  agent/      Vite React agent PWA
-  video/      Remotion compositions + renderer adapter
+  video/      Remotion compositions + render script
 packages/
   core/       pure domain logic (no I/O)
   db/         Drizzle schema, migrations, seed
-  contracts/  TypeBox schemas, generated OpenAPI + TS client
-  ui/         tokens, fonts, primitives, calendar
+  ui/         tokens, fonts, PackShot, primitives
   emails/     React Email templates
   config/     tsconfig, eslint, tailwind preset
 infra/        tofu, ansible, compose, runbooks scripts
@@ -70,11 +67,11 @@ docs/         this documentation
 | `pnpm db:generate` | Create a migration from schema changes |
 | `pnpm db:migrate` | Apply migrations |
 | `pnpm db:seed` | Seed local data |
-| `pnpm api:spec` | Generate OpenAPI from routes into `packages/contracts/openapi.json` |
-| `pnpm api:diff` | Compare generated spec with `docs/api/openapi.yaml`; fails on breaking changes |
-| `pnpm docs:api` | Lint `docs/api/openapi.yaml` and rebuild `docs/api/reference.html` |
+| `pnpm --filter @dairy/api spec ../../docs/api/openapi.json` | Regenerate the OpenAPI spec from the routes |
+| `pnpm docs:api` | Rebuild `docs/api/reference.html` from the spec |
 | `pnpm ui:contrast` | Check token colour contrast |
-| `pnpm --filter api job:cutoff --date YYYY-MM-DD --slot morning` | Run the cutoff job manually |
+| `pnpm --filter @dairy/api worker` | Run the order-expiry worker |
+| `pnpm --filter @dairy/video render` | Render the Remotion pantry reel into the storefront |
 
 ## Environment variables
 
@@ -86,13 +83,14 @@ All variables are validated at start-up (`apps/api/src/config.ts`); the process 
 | `APP_ENV` | `local` · `staging` · `production` | all |
 | `API_PORT` | `4000` | api |
 | `PUBLIC_WEB_URL` | `http://localhost:3000` | api, web |
-| `PUBLIC_API_URL` | `http://localhost:4000` | web, admin, agent |
+| `PUBLIC_API_URL` | `http://localhost:4000` | web, admin |
 | `CORS_ORIGINS` | `http://localhost:3000,http://localhost:5173,http://localhost:5174` | api |
 | `COOKIE_DOMAIN` | `localhost` / `.example.in` | api |
 | `DATABASE_URL` | `postgres://app:app@localhost:5432/dairy` | api, worker |
 | `DATABASE_MIGRATOR_URL` | `postgres://migrator:…@localhost:5432/dairy` | migrations |
 | `VALKEY_URL` | `redis://localhost:6379/0` | api, worker |
-| `GOOGLE_WEB_CLIENT_ID` | `1234-abc.apps.googleusercontent.com` | api, web, admin, agent |
+| `GOOGLE_WEB_CLIENT_ID` | `1234-abc.apps.googleusercontent.com` | api, web, admin |
+| `AUTH_TEST_MODE` | `true` locally only | api |
 | `JWT_PRIVATE_KEYS` | JSON array of `{kid, pem}` Ed25519 keys; first signs | api |
 | `CASHFREE_ENV` | `sandbox` · `production` | api |
 | `CASHFREE_APP_ID` | — | api |
@@ -111,11 +109,11 @@ All variables are validated at start-up (`apps/api/src/config.ts`); the process 
 - **TypeScript strict** everywhere. No `any` without a comment explaining why.
 - **Business rules go in `packages/core`** as pure functions with unit tests. Route handlers stay short.
 - **Money:** integer paise, `Money` type from `packages/core/money.ts`; no arithmetic on floats; one helper converts to Cashfree's rupee decimals.
-- **Dates:** use `packages/core/time.ts` (`today()`, `cutoffFor(date, slot)`, all in IST). Never call `new Date()` for business dates in feature code.
+- **Dates:** use `packages/core/time.ts` (`todayIST()`, `addDays()`, all in IST). Never derive business dates from `toISOString()`.
 - **IDs:** `newId('cus')` from `packages/core/id.ts`.
 - **Errors:** throw `AppError(code, status, detail)`; the error plugin turns it into problem+json. Add new codes to the table in `docs/api/README.md`.
 - **Validation:** every route declares TypeBox schemas for params, query, body and each response.
-- **Database:** transactions for anything touching wallet, stock or orders; lock rows with `FOR UPDATE`; no N+1 queries in lists (use joins or batch loads).
+- **Database:** transactions for anything touching payments, stock or orders; lock rows with `FOR UPDATE`; no N+1 queries in lists (use joins or batch loads).
 - **Logging:** Pino structured logs; never log tokens, full phone numbers, addresses or payment payloads (redaction list in `plugins/logger.ts`).
 - **Formatting:** Prettier; ESLint with `typescript-eslint` strict; imports sorted.
 - **UI:** only design tokens; follow the [design system](08-design-system.md) and its checklist.
@@ -124,29 +122,29 @@ All variables are validated at start-up (`apps/api/src/config.ts`); the process 
 
 | Layer | Tool | Scope | Runs |
 |---|---|---|---|
-| Unit | Vitest + fast-check | `packages/core`: subscription expansion, cutoff times, ledger, GST, FEFO, pricing | Every PR (target 90%+ coverage on core) |
-| Integration | Vitest + Docker Postgres/Valkey | API routes end-to-end inside the API: auth, permissions, idempotency, webhooks with fixtures | Every PR |
-| Contract | `pnpm api:diff` | Generated OpenAPI vs `docs/api/openapi.yaml` | Every PR |
-| End-to-end | Playwright | Storefront: sign in (Google mocked in test env), subscribe, top up (Cashfree mock), calendar edit; admin: dispatch; agent: offline sync | Every PR (smoke), nightly (full) |
+| Unit | Vitest + fast-check | `packages/core`: shipping zones, order states, GST, FEFO, pricing, money, dates | Every PR |
+| Integration | Vitest + Postgres | Auth, permissions, catalog, quotes, orders, stock reservation, mock and Cashfree payments (stubbed HTTP), webhooks, expiry, admin fulfilment and catalog | Every PR |
+| Contract | spec regeneration | Generated OpenAPI must match `docs/api/openapi.json` | Every PR |
+| End-to-end | Playwright | Storefront: test sign-in, add to basket, checkout, test payment, order page; admin: pack and ship | Before release (scripted today; CI job next) |
 | Accessibility | axe-core in Playwright | Every page, light and dark | Every PR |
 | Visual | Playwright screenshots | Key components and pages, en + hi, light + dark | Every PR |
 | Performance | Lighthouse CI | Budgets in [design system](08-design-system.md#performance-design-constraints) | Every PR to `main` |
 | Load | k6 | 500 req/s mix on staging | Before launch, then monthly |
 
-Google sign-in in tests: the test environment accepts ID tokens signed by a local test key (`AUTH_TEST_MODE=true`, never enabled in staging or production; the config refuses to start if `APP_ENV=production` and test mode is on).
+Google sign-in in tests: the test app verifies ID tokens against a locally generated key set with exactly the same checks as production (issuer, audience, expiry, nonce, email verified).
 
 ## Git workflow
 
 - `main` is always deployable; protected; requires passing CI and one review.
-- Branch per change: `feat/subscription-pauses`, `fix/cutoff-timezone`, `docs/api-wallet`.
-- **Conventional Commits:** `feat(api): add wallet autopay endpoints`, `fix(web): calendar focus order`.
+- Branch per change: `feat/courier-awb`, `fix/quote-weight`, `docs/api-orders`.
+- **Conventional Commits:** `feat(api): add Shiprocket AWB creation`, `fix(web): cart drawer focus order`.
 - Small pull requests (< 400 changed lines where possible). Include tests and docs updates in the same PR.
 - Release: tag `vYYYY.MM.DD-N` on `main` → production deploy.
 
 ## Pull request checklist
 
 - [ ] Tests added or updated; `pnpm test` and `pnpm test:integration` pass
-- [ ] API changes reflected in `docs/api/*.md` and `openapi.yaml`; no breaking change to `/v1`
+- [ ] API changes reflected in `docs/api/*.md` and the regenerated `openapi.json`; no breaking change to `/v1`
 - [ ] Migrations are backward compatible (expand/contract)
 - [ ] No secrets, tokens or personal data in code, logs or fixtures
 - [ ] UI changes pass the [anti-slop checklist](08-design-system.md#anti-slop-checklist-every-ui-pull-request)

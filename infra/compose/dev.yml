@@ -2,7 +2,7 @@
 name: dairy-dev
 services:
   postgres:
-    image: postgis/postgis:17-3.5
+    image: postgres:17-alpine
     environment:
       POSTGRES_USER: migrator
       POSTGRES_PASSWORD: migrator
