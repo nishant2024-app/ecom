@@ -7,7 +7,7 @@ export function Page({ title, subtitle, actions, children }: { title: string; su
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }} className="p-6">
       <header className="flex flex-wrap items-end justify-between gap-4 pb-5">
         <div>
-          <h1 className="font-display text-3xl">{title}</h1>
+          <h1 className="text-3xl font-extrabold tracking-[-0.03em]">{title}</h1>
           {subtitle && <p className="mt-1 text-ink-2">{subtitle}</p>}
         </div>
         {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
@@ -19,7 +19,7 @@ export function Page({ title, subtitle, actions, children }: { title: string; su
 
 export function Card({ title, action, children, className = '' }: { title?: string; action?: ReactNode; children: ReactNode; className?: string }) {
   return (
-    <section className={`rounded-4 border border-rule bg-paper p-4 ${className}`}>
+    <section className={`rounded-4 border border-rule bg-paper p-4 shadow-card ${className}`}>
       {(title || action) && (
         <div className="mb-3 flex items-center justify-between">
           {title && <h2 className="text-xs uppercase tracking-[0.12em] text-ink-2">{title}</h2>}
@@ -32,13 +32,13 @@ export function Card({ title, action, children, className = '' }: { title?: stri
 }
 
 const tone: Record<string, string> = {
-  pending_payment: 'bg-signal/30 text-ink',
-  confirmed: 'bg-signal text-on-signal',
-  packed: 'bg-meadow text-ink',
-  shipped: 'bg-forest-2 text-on-forest',
+  pending_payment: 'bg-paper-3 text-ink-2',
+  confirmed: 'bg-[#fdecc8] text-[#7a4b00] font-semibold', // to pack: needs action
+  packed: 'bg-[#fdecc8] text-[#7a4b00]', // to ship: needs action
+  shipped: 'bg-meadow text-forest',
   delivered: 'bg-forest text-on-forest',
-  cancelled: 'bg-paper-3 text-ink-2',
-  refunded: 'bg-paper-3 text-ink-2',
+  cancelled: 'bg-paper-3 text-ink-3',
+  refunded: 'bg-paper-3 text-ink-3',
 };
 export function StatusBadge({ status }: { status: string }) {
   return <span className={`inline-flex whitespace-nowrap rounded-pill px-2.5 py-0.5 text-xs ${tone[status] ?? 'bg-paper-2'}`}>{STATUS[status] ?? status}</span>;
@@ -46,8 +46,8 @@ export function StatusBadge({ status }: { status: string }) {
 
 export function Btn({ variant = 'solid', className = '', ...p }: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'solid' | 'primary' | 'outline' | 'danger' | 'ghost' }) {
   const v = {
-    solid: 'bg-forest text-on-forest hover:bg-forest-2',
-    primary: 'bg-signal text-on-signal hover:brightness-95',
+    solid: 'bg-ink text-paper hover:bg-ink/85',
+    primary: 'bg-forest text-on-forest hover:bg-forest-2',
     outline: 'border border-rule hover:bg-paper-2',
     danger: 'border border-alert text-alert hover:bg-alert hover:text-paper',
     ghost: 'hover:bg-paper-2',
@@ -90,7 +90,7 @@ export function Drawer({ open, onClose, title, children, wide = false }: { open:
             className={`absolute right-0 top-0 flex h-full w-full flex-col bg-paper shadow-float ${wide ? 'max-w-3xl' : 'max-w-xl'}`}
           >
             <div className="flex items-center justify-between px-5 py-3 rule-b">
-              <h2 className="font-display text-xl">{title}</h2>
+              <h2 className="text-xl font-bold">{title}</h2>
               <Btn variant="ghost" onClick={onClose} aria-label="Close">
                 ✕
               </Btn>

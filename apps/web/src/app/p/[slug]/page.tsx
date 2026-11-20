@@ -79,48 +79,48 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   };
 
   return (
-    <div className="mx-auto max-w-[1320px] px-4 pb-10 pt-6 md:px-8">
+    <div className="mx-auto max-w-[1280px] px-4 pb-10 pt-5 md:px-6">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <nav aria-label="Breadcrumb" className="label text-ink-2">
-        <Link href="/products" className="hover:text-ink">Shop</Link>
-        <span aria-hidden className="mx-2">/</span>
-        <Link href={`/products?category=${product.category.slug}`} className="hover:text-ink">{product.category.name}</Link>
+      <nav aria-label="Breadcrumb" className="text-[13px] text-ink-3">
+        <Link href="/" className="hover:text-forest">Home</Link> /{' '}
+        <Link href={`/products?category=${product.category.slug}`} className="hover:text-forest">{product.category.name}</Link> / <span className="text-ink-2">{product.name}</span>
       </nav>
 
       <ProductBuy product={product}>
-        <h1 className="font-display text-[clamp(36px,4.2vw,58px)] leading-[1.02] tracking-[-0.01em]">{product.name}</h1>
-        <p className="mt-3 flex items-center gap-2 font-serif text-xl italic text-ink-2">
+        <p className="text-[13px] font-semibold text-forest">{product.category.name}</p>
+        <h1 className="mt-1 text-[28px] font-extrabold leading-tight tracking-[-0.03em] md:text-[36px]">{product.name}</h1>
+        <p className="mt-2 flex items-center gap-2 text-[16px] text-ink-2">
           {product.isVeg && <VegMark />}
           {product.tagline}
         </p>
       </ProductBuy>
 
-      <div className="mt-24 grid gap-12 lg:grid-cols-12">
-        <Reveal className="lg:col-span-6">
-          <h2 className="font-display text-[34px] leading-tight">About it</h2>
-          <p className="mt-5 font-serif text-[20px] leading-[1.6] text-ink-2">{product.description}</p>
+      <div className="mt-12 grid gap-6 lg:grid-cols-12 md:mt-16">
+        <Reveal className="rounded-5 bg-paper-2 p-6 lg:col-span-7 md:p-8">
+          <h2 className="text-[22px] font-extrabold tracking-[-0.02em]">About this product</h2>
+          <p className="mt-3 text-[16px] leading-relaxed text-ink-2">{product.description}</p>
         </Reveal>
         {/* Styled like the back-of-pack label: what's in it, how to keep it, the legal numbers. */}
-        <Reveal className="lg:col-span-5 lg:col-start-8" delay={0.08}>
-          <section aria-labelledby="label-h" className="border-2 border-ink bg-paper p-5">
-            <h2 id="label-h" className="font-display text-2xl">On the label</h2>
-            <dl className="mt-3 border-t-[6px] border-ink">
+        <Reveal className="lg:col-span-5" delay={0.08}>
+          <section aria-labelledby="label-h" className="rounded-5 border border-rule bg-paper p-6">
+            <h2 id="label-h" className="text-[22px] font-extrabold tracking-[-0.02em]">Product details</h2>
+            <dl className="mt-3">
               {label.map(([k, v]) => (
-                <div key={k} className="grid grid-cols-[9rem_1fr] gap-4 border-b border-ink/30 py-2 text-[15px]">
-                  <dt className="font-medium">{k}</dt>
-                  <dd className="text-ink-2">{v}</dd>
+                <div key={k} className="grid grid-cols-[9rem_1fr] gap-4 border-b border-rule py-2.5 text-[14px]">
+                  <dt className="text-ink-3">{k}</dt>
+                  <dd className="font-medium">{v}</dd>
                 </div>
               ))}
             </dl>
             {product.nutrition.length > 0 && (
               <>
-                <p className="mt-5 flex justify-between border-b-[3px] border-ink pb-1 font-medium">
+                <p className="mt-5 flex justify-between pb-1 font-bold">
                   <span>Nutrition</span>
-                  <span className="label self-end">per 100 g</span>
+                  <span className="self-end text-[12px] font-normal text-ink-3">per 100 g</span>
                 </p>
                 <dl>
                   {product.nutrition.map((n) => (
-                    <div key={n.label} className="flex justify-between border-b border-ink/30 py-1.5 text-[15px]">
+                    <div key={n.label} className="flex justify-between border-b border-rule py-2 text-[14px]">
                       <dt>{n.label}</dt>
                       <dd className="num">{n.per100}</dd>
                     </div>
@@ -128,7 +128,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 </dl>
               </>
             )}
-            <p className="label mt-4 text-ink-2">
+            <p className="mt-4 text-[12px] text-ink-3">
               HSN <span className="num">{product.hsnCode}</span>
               {product.fssaiNumber && (
                 <>
@@ -142,15 +142,15 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       </div>
 
       {product.related.length > 0 && (
-        <section className="mt-28">
-          <div className="flex items-baseline justify-between border-b border-ink pb-4">
-            <h2 className="font-display text-[34px] leading-tight">More {product.category.name.toLowerCase()}</h2>
-            <Link href={`/products?category=${product.category.slug}`} className="underline underline-offset-4">See all</Link>
+        <section className="mt-14">
+          <div className="mb-4 flex items-end justify-between">
+            <h2 className="text-[22px] font-extrabold tracking-[-0.025em] md:text-[28px]">You may also like</h2>
+            <Link href={`/products?category=${product.category.slug}`} className="text-[14px] font-semibold text-forest hover:underline">See all →</Link>
           </div>
-          <div className="mt-8 grid grid-cols-2 gap-x-4 gap-y-12 md:gap-x-6 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
             {product.related.map((p, i) => (
               <Reveal key={p.id} delay={i * 0.06}>
-                <ProductCard product={p} sizes="(min-width: 1024px) 25vw, 50vw" />
+                <ProductCard product={p} />
               </Reveal>
             ))}
           </div>

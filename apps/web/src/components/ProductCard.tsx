@@ -1,65 +1,77 @@
 'use client';
 
-import { Money, VegMark } from '@dairy/ui';
-import { motion } from 'motion/react';
+import { VegMark } from '@dairy/ui';
+import { AnimatePresence, motion } from 'motion/react';
 import Link from 'next/link';
 import { useRef } from 'react';
 import { useCart } from '@/lib/cart';
 import { shelfLife } from '@/lib/format';
 import type { ProductSummary } from '@/lib/types';
+import { CheckIcon, MinusIcon, PlusIcon } from './icons';
 import { ProductImage } from './ProductImage';
 
-export function ProductCard({ product, priority = false, sizes = '(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw' }: { product: ProductSummary; priority?: boolean; sizes?: string }) {
-  const { add } = useCart();
+const rupees = (p: number) => `₹${(p / 100).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
+
+export function ProductCard({ product, priority = false, sizes = '(min-width: 1024px) 22vw, 50vw' }: { product: ProductSummary; priority?: boolean; sizes?: string }) {
+  const { add, items, setQuantity } = useCart();
   const v = product.variants.find((x) => x.inStock) ?? product.variants[0]!;
   const imageRef = useRef<HTMLAnchorElement>(null);
-  const off = v.mrp.amount > v.price.amount ? Math.round(((v.mrp.amount - v.price.amount) / v.mrp.amount) * 100) : 0;
+  const inCart = items.find((i) => i.variantId === v.id)?.quantity ?? 0;
+  const save = v.mrp.amount - v.price.amount;
 
   return (
-    <article className="group flex h-full flex-col">
-      <Link ref={imageRef} href={`/p/${product.slug}`} className="relative block aspect-[4/5] overflow-hidden bg-paper-2" aria-label={product.name}>
-        <div className="h-full w-full transition-transform duration-[700ms] ease-[var(--ease)] group-hover:scale-[1.035]">
+    <article className="group flex h-full flex-col overflow-hidden rounded-4 border border-rule bg-paper transition-shadow duration-[var(--dur-2)] hover:shadow-card">
+      <Link ref={imageRef} href={`/p/${product.slug}`} className="relative block aspect-square overflow-hidden bg-paper-2" aria-label={product.name}>
+        <div className="h-full w-full transition-transform duration-500 ease-[var(--ease)] group-hover:scale-[1.04]">
           <ProductImage image={product.image} pack={product.pack} name={product.name} size={v.packSize} sizes={sizes} priority={priority} />
         </div>
-        <div className="label absolute left-0 top-3 flex flex-col items-start gap-1">
-          {off > 0 && <span className="num bg-ink px-2 py-1 text-paper">{off}% off</span>}
-          {v.lowStock && <span className="bg-paper px-2 py-1 text-alert">Few left</span>}
-          {!v.inStock && <span className="bg-paper px-2 py-1 text-ink-2">Sold out</span>}
-        </div>
+        <span className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-pill bg-meadow px-2 py-1 text-[11px] font-semibold text-forest">
+          <CheckIcon size={12} /> Keeps {shelfLife(v.shelfLifeDays)}
+        </span>
+        {v.lowStock && <span className="absolute left-2 top-2 rounded-pill bg-paper px-2 py-1 text-[11px] font-semibold text-alert">Only few left</span>}
       </Link>
-      <div className="flex flex-1 flex-col pt-4">
-        <p className="label flex items-center justify-between text-ink-3">
-          <span>{product.category.name}</span>
-          <span>Keeps {shelfLife(v.shelfLifeDays)}</span>
-        </p>
-        <h3 className="mt-2 flex items-start gap-2 font-display text-[21px] leading-[1.15]">
-          <Link href={`/p/${product.slug}`} className="decoration-1 underline-offset-4 hover:underline">
-            {product.name}
-          </Link>
-          {product.isVeg && <span className="mt-1.5 shrink-0"><VegMark /></span>}
+      <div className="flex flex-1 flex-col p-3 md:p-4">
+        <p className="text-[12px] text-ink-3">{product.category.name}</p>
+        <h3 className="mt-0.5 flex items-start gap-1.5 text-[15px] font-bold leading-snug md:text-base">
+          <Link href={`/p/${product.slug}`} className="line-clamp-2 hover:text-forest">{product.name}</Link>
+          {product.isVeg && <span className="mt-1 shrink-0"><VegMark /></span>}
         </h3>
-        <p className="mt-1 text-[15px] leading-snug text-ink-2">{product.tagline}</p>
-        <div className="mt-auto flex items-end justify-between gap-3 pt-4">
-          <div className="leading-tight">
-            <Money paise={v.price.amount} className="text-lg" />
-            {off > 0 && <Money paise={v.mrp.amount} className="ml-2 text-sm text-ink-3 line-through" />}
-            <p className="text-[13px] text-ink-2">{product.variants.length > 1 ? `${v.packSize} · ${product.variants.length} sizes` : v.packSize}</p>
+        <p className="mt-0.5 text-[13px] text-ink-2">{product.variants.length > 1 ? `${v.packSize} · ${product.variants.length} sizes` : v.packSize}</p>
+        {save > 0 ? <p className="num mt-1 text-[13px] font-bold text-forest">{rupees(save)} OFF</p> : <p className="mt-1 h-[18px]" aria-hidden />}
+        <div className="mt-auto pt-3">
+          <div className="flex h-12 items-center justify-between gap-2 rounded-pill bg-paper-2 pl-4 pr-1">
+            <p className="num leading-none">
+              <span className="text-[17px] font-bold">{rupees(v.price.amount)}</span>
+              {save > 0 && <span className="ml-1.5 text-[12px] text-ink-3 line-through">{rupees(v.mrp.amount)}</span>}
+            </p>
+            {!v.inStock ? (
+              <span className="pr-3 text-[13px] font-semibold text-ink-3">Sold out</span>
+            ) : (
+              <AnimatePresence mode="popLayout" initial={false}>
+                {inCart === 0 ? (
+                  <motion.button
+                    key="add"
+                    initial={{ scale: 0.6, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.6, opacity: 0 }}
+                    whileTap={{ scale: 0.9 }}
+                    type="button"
+                    onClick={() => add({ variantId: v.id, quantity: 1, slug: product.slug, name: product.name, packSize: v.packSize, pack: product.pack, pricePaise: v.price.amount }, imageRef.current?.getBoundingClientRect())}
+                    className="grid h-10 w-10 place-items-center rounded-pill bg-forest text-on-forest hover:bg-forest-2"
+                    aria-label={`Add ${product.name}, ${v.packSize}, to cart`}
+                  >
+                    <PlusIcon />
+                  </motion.button>
+                ) : (
+                  <motion.div key="step" initial={{ width: 40, opacity: 0 }} animate={{ width: 104, opacity: 1 }} exit={{ opacity: 0 }} className="flex h-10 items-center justify-between overflow-hidden rounded-pill bg-forest text-on-forest">
+                    <button type="button" onClick={() => setQuantity(v.id, inCart - 1)} className="grid h-10 w-9 place-items-center" aria-label={`One less ${product.name}`}><MinusIcon size={16} /></button>
+                    <span className="num text-[15px] font-bold" aria-live="polite">{inCart}</span>
+                    <button type="button" disabled={inCart >= v.maxPerOrder} onClick={() => setQuantity(v.id, inCart + 1)} className="grid h-10 w-9 place-items-center disabled:opacity-40" aria-label={`One more ${product.name}`}><PlusIcon size={16} /></button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            )}
           </div>
-          <motion.button
-            type="button"
-            disabled={!v.inStock}
-            whileTap={{ scale: 0.95 }}
-            onClick={() =>
-              add(
-                { variantId: v.id, quantity: 1, slug: product.slug, name: product.name, packSize: v.packSize, pack: product.pack, pricePaise: v.price.amount },
-                imageRef.current?.getBoundingClientRect(),
-              )
-            }
-            className="h-10 border border-ink px-4 text-[15px] transition-colors hover:bg-ink hover:text-paper disabled:border-rule disabled:text-ink-3 disabled:hover:bg-transparent"
-            aria-label={`Add ${product.name}, ${v.packSize}, to basket`}
-          >
-            Add
-          </motion.button>
         </div>
       </div>
     </article>

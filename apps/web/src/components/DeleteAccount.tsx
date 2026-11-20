@@ -17,7 +17,7 @@ export function DeleteAccount() {
       if (e instanceof ApiError && e.problem.status === 401) setState('signed-out');
     }
   }
-  if (state === 'done') return <p className="mt-8 border-l-4 border-tick bg-paper-2 px-4 py-3">Done. Your personal data will be erased on {erasesOn}.</p>;
+  if (state === 'done') return <p className="mt-8 border-l-4 border-tick bg-paper-2 px-4 py-3 rounded-4">Done. Your personal data will be erased on {erasesOn}.</p>;
   if (state === 'signed-out')
     return (
       <p className="mt-8">

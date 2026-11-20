@@ -132,7 +132,7 @@ export function StorefrontPage({ permissions }: { permissions: string[] }) {
           <div className="grid gap-4 md:grid-cols-[1fr_auto]">
             <div className="space-y-3">
               <Field label="Small line above the headline"><input value={c.hero.eyebrow} onChange={(e) => patch({ hero: { ...c.hero, eyebrow: e.target.value } })} className={input} /></Field>
-              <Field label="Headline"><textarea rows={2} value={c.hero.title} onChange={(e) => patch({ hero: { ...c.hero, title: e.target.value } })} className={`${area} font-display text-xl`} /></Field>
+              <Field label="Headline"><textarea rows={2} value={c.hero.title} onChange={(e) => patch({ hero: { ...c.hero, title: e.target.value } })} className={`${area} text-xl font-bold`} /></Field>
               <Field label="Sentence under the headline"><textarea rows={2} value={c.hero.subtitle} onChange={(e) => patch({ hero: { ...c.hero, subtitle: e.target.value } })} className={area} /></Field>
               <Field label="Button text"><input value={c.hero.ctaLabel} onChange={(e) => patch({ hero: { ...c.hero, ctaLabel: e.target.value } })} className={`${input} max-w-xs`} /></Field>
             </div>

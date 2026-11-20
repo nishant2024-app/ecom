@@ -125,7 +125,7 @@ export function DashboardPage() {
                         <span>
                           {l.name} <span className="text-ink-2">{l.packSize}</span>
                         </span>
-                        <span className={`num rounded-pill px-2 py-0.5 text-xs ${l.available === 0 ? 'bg-alert text-paper' : 'bg-signal/30'}`}>
+                        <span className={`num rounded-pill px-2 py-0.5 text-xs ${l.available === 0 ? 'bg-alert text-paper' : 'bg-[#fdecc8] text-[#7a4b00]'}`}>
                           {l.available} left · reorder at {l.threshold}
                         </span>
                       </li>

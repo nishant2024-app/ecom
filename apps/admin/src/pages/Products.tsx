@@ -112,7 +112,7 @@ export function ProductsPage({ permissions }: { permissions: string[] }) {
                         <PackShot kind={p.pack.kind} color={p.pack.color} accent={p.pack.accent} label={p.name} className="h-12 w-9" />
                       )}
                       <span>
-                        {p.name} {p.featured && <span className="ml-1 rounded-pill bg-signal/40 px-2 py-0.5 text-xs">Featured</span>}
+                        {p.name} {p.featured && <span className="ml-1 rounded-pill bg-meadow text-forest px-2 py-0.5 text-xs">Featured</span>}
                         <span className="block text-xs text-ink-2">
                           {p.category} · {p.photoCount ? `${p.photoCount} photo${p.photoCount > 1 ? 's' : ''}` : <span className="text-alert">no photos</span>}
                         </span>

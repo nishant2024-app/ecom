@@ -99,7 +99,7 @@ export function CartDrawer() {
             className="absolute right-0 top-0 flex h-full w-full max-w-[440px] flex-col bg-paper shadow-float md:right-3 md:top-3 md:h-[calc(100%-24px)] md:"
           >
             <div className="flex items-center justify-between px-5 py-4 rule-b">
-              <h2 id="cart-title" className="font-display text-2xl">
+              <h2 id="cart-title" className="font-extrabold tracking-[-0.02em] text-2xl">
                 Your basket
               </h2>
               <button ref={closeRef} type="button" onClick={() => setOpen(false)} aria-label="Close cart" className="grid h-10 w-10 place-items-center hover:bg-paper-2">
@@ -116,9 +116,9 @@ export function CartDrawer() {
                   <PackShot kind="tin" color="#F2EBDD" accent="#14432F" label="Powder" className="h-32 w-28" />
                   <PackShot kind="tetra" color="#F1A43C" accent="#7A2E12" label="Kesar" className="h-28 w-24 rotate-6" />
                 </div>
-                <p className="mt-6 font-display text-xl">Nothing here yet</p>
+                <p className="mt-6 font-extrabold tracking-[-0.02em] text-xl">Nothing here yet</p>
                 <p className="mt-1 text-ink-2">Ghee, milk powder and mithai keep for months. Stock the pantry.</p>
-                <Link href="/products" onClick={() => setOpen(false)} className="mt-6 bg-forest px-6 py-3 text-on-forest">
+                <Link href="/products" onClick={() => setOpen(false)} className="mt-6 bg-forest px-6 py-3 text-on-forest rounded-pill">
                   Browse products
                 </Link>
               </div>
@@ -130,7 +130,7 @@ export function CartDrawer() {
                       const line = quote?.lines.find((l) => l.variantId === item.variantId);
                       const max = Math.max(1, line?.maxQuantity ?? 10);
                       return (
-                        <motion.li key={item.variantId} layout initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30, height: 0 }} className="flex gap-3 bg-paper-2 p-3">
+                        <motion.li key={item.variantId} layout initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30, height: 0 }} className="flex gap-3 bg-paper-2 p-3 rounded-4">
                           <Link href={`/p/${item.slug}`} onClick={() => setOpen(false)} className="w-16 shrink-0">
                             <PackShot kind={item.pack.kind} color={item.pack.color} accent={item.pack.accent} label={item.name} size={item.packSize} className="h-20 w-16" />
                           </Link>
@@ -144,7 +144,7 @@ export function CartDrawer() {
                             </div>
                             {line?.problem && <p className="mt-1 text-sm text-alert">{line.problem === 'out_of_stock' ? 'Out of stock' : line.problem === 'unavailable' ? 'No longer sold' : `Only ${line.maxQuantity} available`}</p>}
                             <div className="mt-auto flex items-center justify-between pt-2">
-                              <div className="flex items-center border border-rule bg-paper">
+                              <div className="flex items-center rounded-pill bg-paper">
                                 <button type="button" aria-label={`One less ${item.name}`} onClick={() => setQuantity(item.variantId, item.quantity - 1)} className="h-8 w-8 text-lg">
                                   −
                                 </button>
@@ -174,7 +174,7 @@ export function CartDrawer() {
                       inputMode="numeric"
                       placeholder="Pincode"
                       aria-label="Delivery pincode"
-                      className="num h-9 w-28 border border-rule bg-paper px-3 text-ink"
+                      className="num h-9 w-28 border border-rule bg-paper px-3 text-ink rounded-3"
                     />
                     {quote?.shipping && <span>arrives {etaText(quote.shipping.earliest, quote.shipping.latest)}</span>}
                     {quote?.shippingError && <span className="text-alert">{quote.shippingError}</span>}
@@ -199,7 +199,7 @@ export function CartDrawer() {
                     href="/checkout"
                     onClick={() => setOpen(false)}
                     aria-disabled={quote ? quote.lines.some((l) => l.problem) : false}
-                    className="flex h-13 w-full items-center justify-center bg-signal py-3.5 text-lg font-medium text-on-signal hover:brightness-95 aria-disabled:pointer-events-none aria-disabled:opacity-50"
+                    className="flex h-13 w-full items-center justify-center bg-signal py-3.5 text-lg font-medium text-on-signal hover:brightness-95 aria-disabled:pointer-events-none aria-disabled:opacity-50 rounded-pill"
                   >
                     Checkout
                   </Link>

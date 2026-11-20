@@ -43,7 +43,7 @@ export function SignIn({ onSignedIn }: { onSignedIn: () => void }) {
 
   return (
     <div className="mx-auto max-w-sm px-6 py-24">
-      <p className="font-display text-2xl">Mulshi Dairy admin</p>
+      <p className="text-2xl font-extrabold tracking-[-0.03em]">Mulshi Dairy admin</p>
       <p className="mt-2 text-ink-2">Team members only. Ask the owner to invite your Google account.</p>
       <div className="mt-6" ref={ref} />
       {clientId === '' && <p className="mt-4 text-ink-2">Set GOOGLE_WEB_CLIENT_ID on the API to enable sign-in.</p>}

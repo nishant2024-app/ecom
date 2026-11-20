@@ -1,30 +1,30 @@
 /*
- * "Pasture & Pantry" design tokens: cream paper, forest green, ghee gold.
+ * "Fresh Dairy" design tokens: white, dairy green, soft grey.
  * Single source of truth for colour, type, radius and motion. Spec: docs/08-design-system.md.
  */
 :root {
   color-scheme: light;
-  --paper: #fbf7ee;
-  --paper-2: #f3ecdc;
-  --paper-3: #e9dfc8;
-  --ink: #14271f;
-  --ink-2: #4b5c53;
-  --ink-3: #7e8b83;
-  --rule: #e1d8c3;
-  --forest: #14432f;
-  --forest-2: #1d5a40;
-  --on-forest: #f6f1e4;
-  --meadow: #d8e8c2;
-  --signal: #e9b44c; /* ghee gold: fills and highlights, never small text on paper */
-  --on-signal: #14271f;
-  --tick: #2f7a4b;
-  --alert: #b93a2b;
-  --veg: #1e8e3e;
+  --paper: #ffffff;
+  --paper-2: #f4f7f4;
+  --paper-3: #e7ede8;
+  --ink: #101a14;
+  --ink-2: #56635b;
+  --ink-3: #85918a;
+  --rule: #e4e9e5;
+  --forest: #17803d;
+  --forest-2: #126a32;
+  --on-forest: #ffffff;
+  --meadow: #e7f5ea;
+  --signal: #17803d; /* main action: dairy green */
+  --on-signal: #ffffff;
+  --tick: #17803d;
+  --alert: #c2410c;
+  --veg: #16a34a;
 
-  /* Young Serif for headings (Latin); Tiro covers Devanagari. Newsreader for editorial text and captions. */
-  --font-display: 'Young Serif', 'Tiro Devanagari Hindi', Georgia, serif;
-  --font-serif: 'Newsreader Variable', 'Tiro Devanagari Hindi', Georgia, serif;
-  --font-text: 'Mukta', 'Noto Sans', system-ui, sans-serif;
+  /* Figtree for Latin UI and headings; Mukta covers Devanagari (Hindi) in the same stack. */
+  --font-display: 'Figtree Variable', 'Mukta', system-ui, sans-serif;
+  --font-serif: 'Figtree Variable', 'Mukta', system-ui, sans-serif;
+  --font-text: 'Figtree Variable', 'Mukta', 'Noto Sans', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
 
   --dur-1: 140ms;
@@ -39,41 +39,41 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
     color-scheme: dark;
-    --paper: #0d1a14;
-    --paper-2: #13241c;
-    --paper-3: #1a3026;
-    --ink: #efe9da;
-    --ink-2: #b2bdb5;
-    --ink-3: #7f8d85;
-    --rule: #24392e;
-    --forest: #1a4b35;
-    --forest-2: #22603f;
-    --on-forest: #f6f1e4;
-    --meadow: #2a4a33;
-    --signal: #f0c062;
-    --on-signal: #0d1a14;
-    --tick: #6cc48f;
-    --alert: #e5634f;
+    --paper: #0e1511;
+    --paper-2: #151f19;
+    --paper-3: #1d2a22;
+    --ink: #eef3ef;
+    --ink-2: #a9b6ae;
+    --ink-3: #7c8a82;
+    --rule: #25332a;
+    --forest: #22a04f;
+    --forest-2: #2bb05a;
+    --on-forest: #06110a;
+    --meadow: #17301f;
+    --signal: #22a04f;
+    --on-signal: #06110a;
+    --tick: #4cc173;
+    --alert: #f08a5d;
     --veg: #3dba5e;
   }
 }
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --paper: #0d1a14;
-  --paper-2: #13241c;
-  --paper-3: #1a3026;
-  --ink: #efe9da;
-  --ink-2: #b2bdb5;
-  --ink-3: #7f8d85;
-  --rule: #24392e;
-  --forest: #1a4b35;
-  --forest-2: #22603f;
-  --on-forest: #f6f1e4;
-  --meadow: #2a4a33;
-  --signal: #f0c062;
-  --on-signal: #0d1a14;
-  --tick: #6cc48f;
-  --alert: #e5634f;
+  --paper: #0e1511;
+  --paper-2: #151f19;
+  --paper-3: #1d2a22;
+  --ink: #eef3ef;
+  --ink-2: #a9b6ae;
+  --ink-3: #7c8a82;
+  --rule: #25332a;
+  --forest: #22a04f;
+  --forest-2: #2bb05a;
+  --on-forest: #06110a;
+  --meadow: #17301f;
+  --signal: #22a04f;
+  --on-signal: #06110a;
+  --tick: #4cc173;
+  --alert: #f08a5d;
   --veg: #3dba5e;
 }
 

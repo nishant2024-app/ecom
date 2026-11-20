@@ -69,16 +69,16 @@ export function App() {
   const perms = me.permissions;
 
   return (
-    <div className="grid min-h-dvh grid-cols-[220px_1fr] bg-paper">
-      <aside className="sticky top-0 flex h-dvh flex-col bg-forest text-on-forest">
+    <div className="grid min-h-dvh grid-cols-[220px_1fr] bg-paper-2">
+      <aside className="sticky top-0 flex h-dvh flex-col border-r border-rule bg-paper">
         <div className="flex items-center gap-2 px-5 py-5">
           <svg width="28" height="28" viewBox="0 0 40 40" aria-hidden>
-            <circle cx="20" cy="20" r="20" fill="var(--on-forest)" />
-            <path d="M11 27V14l9 9 9-9v13" fill="none" stroke="var(--forest)" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />
+            <rect width="40" height="40" rx="12" fill="var(--forest)" />
+            <path d="M20 8c4.5 6 8 10.3 8 14.5a8 8 0 0 1-16 0C12 18.3 15.5 14 20 8Z" fill="#fff" />
           </svg>
           <div>
-            <p className="font-display text-lg leading-none">Mulshi Dairy</p>
-            <p className="mt-1 text-xs uppercase tracking-[0.14em] text-on-forest/70">Admin</p>
+            <p className="text-lg font-extrabold leading-none tracking-[-0.03em]">Mulshi Dairy</p>
+            <p className="mt-1 text-xs uppercase tracking-[0.14em] text-ink-3">Admin</p>
           </div>
         </div>
         <nav aria-label="Admin" className="flex-1 space-y-0.5 px-3">
@@ -87,16 +87,16 @@ export function App() {
               key={n.id}
               href={`#/${n.id}`}
               aria-current={section === n.id ? 'page' : undefined}
-              className={`flex items-center justify-between rounded-pill px-3 py-2 transition-colors ${section === n.id ? 'bg-on-forest text-ink' : 'text-on-forest/80 hover:bg-on-forest/10 hover:text-on-forest'}`}
+              className={`flex items-center justify-between rounded-pill px-3 py-2 transition-colors ${section === n.id ? 'bg-meadow font-semibold text-forest' : 'text-ink-2 hover:bg-paper-2 hover:text-ink'}`}
             >
               {n.label}
-              <kbd className={`num rounded-1 px-1 text-xs ${section === n.id ? 'text-ink-3' : 'text-on-forest/50'}`}>{n.key}</kbd>
+              <kbd className={`num rounded-1 px-1 text-xs ${section === n.id ? 'text-forest/60' : 'text-ink-3'}`}>{n.key}</kbd>
             </a>
           ))}
         </nav>
-        <div className="mx-3 mb-3 rounded-3 bg-on-forest/10 p-3 text-xs">
-          <p className="text-on-forest">{me.name}</p>
-          <p className="capitalize text-on-forest/70">{me.role.replace('_', ' ')}</p>
+        <div className="mx-3 mb-3 rounded-3 bg-paper-2 p-3 text-xs">
+          <p className="font-semibold">{me.name}</p>
+          <p className="capitalize text-ink-2">{me.role.replace('_', ' ')}</p>
           <button
             type="button"
             className="mt-2 underline underline-offset-2"

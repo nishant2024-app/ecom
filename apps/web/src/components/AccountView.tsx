@@ -53,9 +53,9 @@ export function AccountView() {
   if (me === 'signed-out')
     return (
       <div className="mx-auto max-w-xl px-4 py-24 text-center">
-        <h1 className="font-display text-4xl">Your orders live here</h1>
+        <h1 className="font-extrabold tracking-[-0.02em] text-4xl">Your orders live here</h1>
         <p className="mt-3 text-lg text-ink-2">Sign in to track deliveries, cancel before packing and manage addresses.</p>
-        <Link href="/signin?next=/account" className="mt-6 inline-block bg-forest px-6 py-3 text-on-forest">
+        <Link href="/signin?next=/account" className="mt-6 inline-block bg-forest px-6 py-3 text-on-forest rounded-pill">
           Sign in
         </Link>
       </div>
@@ -66,7 +66,7 @@ export function AccountView() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-sm uppercase tracking-[0.14em] text-ink-2">Account</p>
-          <h1 className="font-display text-[clamp(36px,5vw,56px)] leading-none">Namaste, {me.name.split(' ')[0]}</h1>
+          <h1 className="font-extrabold tracking-[-0.02em] text-[clamp(36px,5vw,56px)] leading-none">Namaste, {me.name.split(' ')[0]}</h1>
           <p className="mt-2 text-ink-2">{me.email}</p>
         </div>
         <button
@@ -76,14 +76,14 @@ export function AccountView() {
             router.push('/');
             router.refresh();
           }}
-          className=" border border-rule px-5 py-2.5 hover:bg-paper-2"
+          className="border border-rule px-5 py-2.5 hover:bg-paper-2 rounded-pill"
         >
           Sign out
         </button>
       </div>
 
       <section className="mt-10">
-        <h2 className="text-xl">Orders</h2>
+        <h2 className="text-xl font-bold">Orders</h2>
         {orders.length === 0 ? (
           <p className="mt-3 text-ink-2">
             No orders yet. <Link href="/products" className="underline">Start with a jar of ghee</Link>.
@@ -92,7 +92,7 @@ export function AccountView() {
           <ul className="mt-4 space-y-3">
             {orders.map((o, i) => (
               <motion.li key={o.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
-                <Link href={`/orders/${o.id}`} className="flex items-center gap-4 bg-paper-2 p-4 transition-colors hover:bg-paper-3">
+                <Link href={`/orders/${o.id}`} className="flex items-center gap-4 bg-paper-2 p-4 transition-colors hover:bg-paper-3 rounded-4">
                   <div className="flex -space-x-5">
                     {o.packs.map((p, j) => (
                       <PackShot key={j} kind={p.kind} color={p.color} accent={p.accent} label="" className="h-14 w-10" />
@@ -107,7 +107,7 @@ export function AccountView() {
                       {o.number} · {shortDate(o.placedAt)}
                     </p>
                   </div>
-                  <span className={`hidden px-3 py-1 text-sm sm:inline ${tone[o.status] ?? ''}`}>{STATUS_LABEL[o.status]}</span>
+                  <span className={`hidden rounded-pill px-3 py-1 text-sm font-semibold sm:inline ${tone[o.status] ?? ''}`}>{STATUS_LABEL[o.status]}</span>
                   <Money paise={o.total.amount} />
                 </Link>
               </motion.li>
@@ -118,7 +118,7 @@ export function AccountView() {
 
       <section className="mt-12">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl">Addresses</h2>
+          <h2 className="text-xl font-bold">Addresses</h2>
           {!adding && (
             <button type="button" onClick={() => setAdding(true)} className="text-forest underline underline-offset-4">
               + Add address
@@ -127,9 +127,9 @@ export function AccountView() {
         </div>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           {addresses.map((a) => (
-            <div key={a.id} className=" border border-rule bg-paper p-4">
+            <div key={a.id} className="border border-rule bg-paper p-4 rounded-4">
               <p>
-                {a.name} {a.isDefault && <span className="ml-2 bg-meadow px-2 py-0.5 text-xs">Default</span>}
+                {a.name} {a.isDefault && <span className="ml-2 bg-meadow px-2 py-0.5 text-xs rounded-4">Default</span>}
               </p>
               <p className="text-sm text-ink-2">{[a.line1, a.line2, a.city, a.state].filter(Boolean).join(', ')} – <span className="num">{a.pincode}</span></p>
               <p className="num text-sm text-ink-2">{a.phone}</p>
@@ -137,7 +137,7 @@ export function AccountView() {
           ))}
         </div>
         {adding && (
-          <div className="mt-4 bg-paper-2 p-5">
+          <div className="mt-4 bg-paper-2 p-5 rounded-4">
             <AddressForm defaultName={me.name} onCancel={() => setAdding(false)} onSaved={(a) => { setAddresses((l) => [...l.map((x) => ({ ...x, isDefault: false })), a]); setAdding(false); }} />
           </div>
         )}

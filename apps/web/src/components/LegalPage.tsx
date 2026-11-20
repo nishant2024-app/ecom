@@ -29,20 +29,20 @@ export async function LegalPage({ slug }: { slug: string }) {
   const d = await docFor(slug);
   const links = [['privacy', 'Privacy'], ['terms', 'Terms'], ['refunds', 'Refunds'], ['shipping-policy', 'Shipping'], ['contact', 'Contact']];
   return (
-    <div className="mx-auto grid max-w-[1320px] gap-10 px-4 pt-12 md:px-8 lg:grid-cols-12">
-      <nav aria-label="Policies" className="label flex gap-4 overflow-x-auto lg:col-span-3 lg:flex-col lg:gap-3">
+    <div className="mx-auto grid max-w-[1280px] gap-8 px-4 pt-8 md:px-6 lg:grid-cols-12">
+      <nav aria-label="Policies" className="flex gap-2 overflow-x-auto text-[14px] font-semibold lg:col-span-3 lg:flex-col lg:gap-1">
         {links.map(([s, l]) => (
-          <Link key={s} href={`/${s}`} aria-current={s === slug ? 'page' : undefined} className={s === slug ? 'text-ink underline underline-offset-4' : 'text-ink-2 hover:text-ink'}>
+          <Link key={s} href={`/${s}`} aria-current={s === slug ? 'page' : undefined} className={`whitespace-nowrap rounded-pill px-4 py-2 ${s === slug ? 'bg-meadow text-forest' : 'text-ink-2 hover:bg-paper-2'}`}>
             {l}
           </Link>
         ))}
       </nav>
       <article className="max-w-2xl lg:col-span-8">
-        <h1 className="font-display text-[clamp(36px,4.6vw,60px)] leading-[1.02]">{d.title}</h1>
-        <p className="mt-4 font-serif text-xl italic text-ink-2">{d.description}</p>
+        <h1 className="font-extrabold tracking-[-0.02em] text-[clamp(36px,4.6vw,60px)] leading-[1.02]">{d.title}</h1>
+        <p className="mt-4  text-xl text-ink-2">{d.description}</p>
         {d.sections.map((s) => (
-          <section key={s.h} className="mt-10 border-t border-rule pt-6">
-            <h2 className="font-display text-2xl">{s.h}</h2>
+          <section key={s.h} className="mt-8">
+            <h2 className="font-extrabold tracking-[-0.02em] text-2xl">{s.h}</h2>
             {s.p.map((p, i) => (
               <p key={i} className="mt-3 text-[17px] leading-relaxed text-ink-2">{p}</p>
             ))}

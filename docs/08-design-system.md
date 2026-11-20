@@ -1,21 +1,18 @@
-# 08 · Design system: "Pasture & Pantry"
+# 08 · Design system: "Fresh Dairy"
 
-## Direction
+## Di## Direction
 
-Version 2 (November 2026). The first version was rounded, glowing and floaty, and the owner said it looked AI-generated. We checked it against published lists of "AI look" tells (sources below) and found most of them: pill shapes everywhere, a rounded hero card with a blurred sun, floating products, a marquee, animated counters, three-step icon process, and a repeated small-caps eyebrow above every serif heading. Version 2 removes all of them.
+Version 3 (November 2026). The owner asked for **white and green, like a direct-to-consumer dairy store** (reference: milko.in), and found the cream/serif editorial look of version 2 too "designed". Version 3 is a clean shopping app:
 
-The direction now is **a printed shop label, not a startup landing page**:
+- **White pages, dairy green (`#17803d`) for every action**, soft grey (`#f4f7f4`) panels, a pale green tint for highlights. Amber is used only in the admin, for orders that need action.
+- **One typeface: Figtree** (bold, tight headings; Mukta covers Hindi). Tabular figures for prices.
+- **Shop-first layout:** big search in the header, "Deliver to" pincode, cart button with item count and total; rounded banner; trust tiles; round category tiles; product grid; tabbed "Shop all"; why-us block; FAQ.
+- **Product card:** square image on grey, shelf-life badge, bold name, size, "₹X OFF" in green, a grey price pill with a round green **+** that becomes a − 1 + stepper once the item is in the cart.
+- **Mobile:** sticky header with search underneath, bottom tab bar (Home, Shop, Orders, Cart) and a floating "View cart" bar.
+- **No pop-up on page load.** The pincode check is a header button and an inline strip; Google treats load-time interstitials on mobile as intrusive.
+- Photos uploaded in the admin replace the drawn packs everywhere; nothing uses stock or AI-generated images.
 
-- **Square corners and printed rules.** Hairlines, 1–2 px black borders, and the back-of-pack label as a layout device (the product page's "On the label" panel). Corners are square except tiny UI controls.
-- **Photography first.** Every image slot (hero, story, product cards, product gallery) shows the owner's real photos uploaded in the admin. Until a photo exists the slot falls back to drawn packaging (`PackShot`) on wooden shelves with kirana-style price tags, so the site never shows stock or AI-generated images.
-- **Type with character.** Young Serif for headings, Newsreader (italic) for editorial text and captions, Mukta for UI text (Latin + Devanagari), JetBrains Mono for prices, dates, batch codes and labels.
-- **Specific, checkable content.** The delivery timeline uses today's real dates ("Fri 20 Nov → packed Sat → arrives Sun–Mon in Pune"); the batch-label graphic shows the real batch-code format. No testimonials, counters or badges we can't back up.
-- **Motion that explains.** Headline words rise once, products drop onto the shelf, the hero photo unwraps, packs fly into the basket. Nothing floats or loops forever.
-- **Forest green, cream and ghee gold** stay as the palette. Cream areas carry a faint paper grain.
-
-Sources used for the review: [21st.dev: why your website looks AI-generated](https://21st.dev/blog/website-not-look-ai-generated), [UX skill wiki: detecting AI slop in design](https://github.com/Laith0003/ux-skill/wiki/How-to-detect-AI-slop-in-your-design), [Utsubo: trust signals for AI-built sites](https://www.utsubo.com/blog/built-with-ai-trust-signals-2026), [DEV: fixing the AI-generated look in your frontend](https://dev.to/alanwest/how-to-fix-the-ai-generated-look-in-your-frontend-1ahh), [Creative Bloq: everything looks the same now](https://www.creativebloq.com/ai/everything-looks-the-same-now-what), [Search Engine Journal: common AI website mistakes](https://searchenginejournal.com/7-common-ai-website-mistakes-that-are-easy-to-avoid/574196/).
-
-## Tokens
+kens
 
 `packages/ui/tokens.css`, exposed through Tailwind v4 in `packages/ui/theme.css`. The default Tailwind palette, radii and shadows are removed, so only these names exist.
 
@@ -32,7 +29,7 @@ Sources used for the review: [21st.dev: why your website looks AI-generated](htt
 
 `pnpm --filter @dairy/ui contrast` checks every text pair against WCAG AA in both themes (all pass).
 
-**Type:** Young Serif (headings; Tiro Devanagari Hindi covers Hindi), Newsreader (editorial text, captions), Mukta (UI text, Latin + Devanagari), JetBrains Mono (prices, SKUs, dates, `label` utility). Self-hosted via `@fontsource`; no font CDN.
+**Type:** Figtree for everything (Mukta for Devanagari), JetBrains Mono only for codes such as SKUs. Self-hosted via `@fontsource`; no font CDN.
 
 ## Components
 

@@ -86,7 +86,7 @@ export function InventoryPage({ permissions }: { permissions: string[] }) {
                 <td className={`${td} num text-right`}>{r.onHand}</td>
                 <td className={`${td} num text-right text-ink-2`}>{r.reserved}</td>
                 <td className={`${td} num text-right`}>
-                  <span className={r.low ? 'rounded-pill bg-signal/40 px-2 py-0.5' : ''}>{r.available}</span>
+                  <span className={r.low ? 'rounded-pill bg-[#fdecc8] text-[#7a4b00] px-2 py-0.5' : ''}>{r.available}</span>
                 </td>
                 <td className={`${td} num`}>{r.nextExpiry ? day(r.nextExpiry) : '—'}</td>
                 <td className={`${td} num text-right`}>{r.batches}</td>

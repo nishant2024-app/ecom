@@ -12,7 +12,7 @@ export function Gallery({ product, size, variantKey, reduce }: { product: Produc
   const [index, setIndex] = useState(0);
   if (!photos.length) {
     return (
-      <div className="relative grid aspect-[5/6] place-items-center overflow-hidden bg-paper-2 md:aspect-[6/5]">
+      <div className="relative grid aspect-square place-items-center overflow-hidden rounded-5 bg-paper-2">
         <AnimatePresence mode="wait">
           <motion.div
             key={variantKey}
@@ -25,21 +25,20 @@ export function Gallery({ product, size, variantKey, reduce }: { product: Produc
             <PackShot kind={product.pack.kind} color={product.pack.color} accent={product.pack.accent} label={product.name} size={size} className="h-full w-auto drop-shadow-[0_24px_24px_rgba(20,39,31,0.25)]" />
           </motion.div>
         </AnimatePresence>
-        <div className="absolute inset-x-0 bottom-0 h-[14%] border-t border-rule bg-paper-3/60" aria-hidden />
       </div>
     );
   }
   const current = photos[Math.min(index, photos.length - 1)]!;
   return (
     <div className="grid gap-3 md:grid-cols-[72px_1fr]">
-      <div className="relative order-1 aspect-square overflow-hidden bg-paper-2 md:order-2">
+      <div className="relative order-1 aspect-square overflow-hidden rounded-5 bg-paper-2 md:order-2">
         <AnimatePresence initial={false} mode="popLayout">
           <motion.div key={current.url} initial={reduce ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.35 }} className="absolute inset-0">
             <Photo img={current} sizes="(min-width: 768px) 55vw, 100vw" priority={index === 0} className="h-full w-full object-cover" />
           </motion.div>
         </AnimatePresence>
         {photos.length > 1 && (
-          <p className="label num absolute bottom-3 right-3 bg-paper px-2 py-1">
+          <p className="num absolute bottom-3 right-3 rounded-pill bg-paper px-2.5 py-1 text-[12px] font-semibold">
             {index + 1} / {photos.length}
           </p>
         )}
@@ -48,7 +47,7 @@ export function Gallery({ product, size, variantKey, reduce }: { product: Produc
         <ul className="order-2 flex gap-2 overflow-x-auto md:order-1 md:flex-col" aria-label="More photos">
           {photos.map((p, i) => (
             <li key={p.url} className="shrink-0">
-              <button type="button" onClick={() => setIndex(i)} aria-label={`Photo ${i + 1}: ${p.alt}`} aria-current={i === index} className={`block h-[72px] w-[72px] overflow-hidden border-2 ${i === index ? 'border-ink' : 'border-transparent opacity-70 hover:opacity-100'}`}>
+              <button type="button" onClick={() => setIndex(i)} aria-label={`Photo ${i + 1}: ${p.alt}`} aria-current={i === index} className={`block h-[72px] w-[72px] overflow-hidden rounded-3 border-2 ${i === index ? 'border-forest' : 'border-transparent opacity-70 hover:opacity-100'}`}>
                 <Photo img={p} sizes="72px" className="h-full w-full object-cover" />
               </button>
             </li>
