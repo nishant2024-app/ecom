@@ -87,6 +87,9 @@ describe('cutoff job', () => {
     const board = (await t.app.inject({ url: `/v1/admin/dispatch?date=${date}&slotId=${ids.slotId}`, headers })).json();
     expect(board.cutoff.status).toBe('completed');
     expect(board.runs.length).toBeGreaterThan(0);
+    const me = (await t.app.inject({ url: '/v1/admin/me', headers })).json();
+    expect(me).toMatchObject({ role: 'ops_manager', permissions: expect.arrayContaining(['dispatch.manage']) });
+    expect((await t.app.inject({ url: '/v1/admin/slots', headers })).json().data[0].code).toBe('morning');
     const plan = (await t.app.inject({ url: `/v1/admin/production-plan?date=${date}&slotId=${ids.slotId}`, headers })).json();
     expect(plan.lines[0].name).toBeTruthy();
   });

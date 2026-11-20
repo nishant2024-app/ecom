@@ -14,6 +14,7 @@ import { MoneySchema, Problem } from './lib/schemas';
 import authPlugin from './plugins/auth';
 import idempotencyPlugin from './plugins/idempotency';
 import dispatchRoutes from './routes/admin/dispatch';
+import adminMeRoutes from './routes/admin/me';
 import authRoutes from './routes/auth';
 import metaRoutes from './routes/meta';
 import catalogRoutes from './routes/store/catalog';
@@ -93,6 +94,7 @@ export async function buildApp(deps: AppDeps, opts: { logger?: boolean | object 
       await v1.register(meRoutes, { prefix: '/store' });
       await v1.register(subscriptionRoutes, { prefix: '/store' });
       await v1.register(walletRoutes, { prefix: '/store' });
+      await v1.register(adminMeRoutes, { prefix: '/admin' });
       await v1.register(dispatchRoutes, { prefix: '/admin' });
     },
     { prefix: '/v1' },

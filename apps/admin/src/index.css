@@ -1,0 +1,11 @@
+@import 'tailwindcss';
+@import '@dairy/ui/fonts.css';
+@import '@dairy/ui/tokens.css';
+@import '@dairy/ui/theme.css';
+
+@source '../../../packages/ui/src';
+
+/* Admin is dense: 14px base. */
+html {
+  font-size: 14px;
+}
