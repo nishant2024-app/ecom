@@ -1,8 +1,12 @@
-# Dairy E-commerce Platform: Build Plan (v2)
+# Dairy E-commerce Platform: Build Plan (v3)
 
 A single-brand dairy store for India with daily milk subscriptions, one-time orders, a prepaid wallet, Cashfree payments in INR, and a full admin and delivery operations panel. A public Fastify API serves the website, the admin panel and a future Android app. Everything runs on free tiers, built to handle 50,000 to 100,000 users, and the code is structured so multi-vendor can be switched on later without a rewrite.
 
 **What changed from v1:** dairy-specific domain (subscriptions, delivery slots, batches, wallet), Cashfree instead of Stripe, Fastify API-first backend, self-hosted zero-cost infrastructure instead of Vercel and Supabase, Android-ready API, a multi-vendor-ready schema, and a new design direction.
+
+**What changed in v3:** Google Sign-In is the only login (no SMS OTP). The Android app is a later phase (the Play Console account already exists). Hostinger Single shared hosting was evaluated and rejected ([ADR 0004](docs/adr/0004-hostinger-single-plan.md)). Full documentation now lives in [`docs/`](docs/README.md), including the [API guide](docs/api/README.md) and an [OpenAPI 3.1 contract](docs/api/openapi.yaml).
+
+> This file is the roadmap. The detailed reference (architecture, API, data model, business rules, operations) is in [`docs/`](docs/README.md); where they differ, `docs/` is the newer source.
 
 ---
 
@@ -15,6 +19,8 @@ A single-brand dairy store for India with daily milk subscriptions, one-time ord
 | 3 | Vendors | Single brand now, multi-vendor later | A `seller_id` on every product, stock and order line from day one. One seller is seeded. |
 | 4 | Hosting | Not Vercel or Supabase. Fastify for APIs. | Self-hosted Docker stack on Oracle Cloud Always Free behind Cloudflare's free tier (section 3) |
 | 5 | Budget | Zero hosting cost, now and later, for 50k to 100k users. APIs reusable by Android. | Free-tier architecture with honest limits (section 3.5). Versioned, OpenAPI-documented REST API (section 6). |
+| 6 | Login | Google only, no SMS. Android app later; Play Console account exists. | Google ID token exchange for customers, staff and agents ([docs/04-authentication.md](docs/04-authentication.md)) |
+| 7 | Hostinger Single plan? | Evaluated | Not suitable: no Node.js, PostgreSQL, workers or Docker on that plan ([ADR 0004](docs/adr/0004-hostinger-single-plan.md)). A Hostinger KVM VPS is the paid alternative if ever wanted. |
 
 ### 0.1 Why moving off Vercel and Supabase is right (with the precise reasons)
 
@@ -189,8 +195,8 @@ Back-of-envelope for 100,000 registered users:
 |---|---|---|
 | Domain name (`.in` or `.com`) | ~₹700–1,200 per year | Needed for a professional store and for Cloudflare |
 | Cashfree transaction fees | A percentage per payment, deducted from settlements | No fixed hosting-style fee. UPI usually costs far less than cards; check Cashfree's current pricing. |
-| SMS OTP (if used) | ~₹0.15–0.25 per SMS with DLT registration | Launch with Google sign-in and email OTP (free). Add phone OTP when revenue covers it, or evaluate the Truecaller SDK and Firebase Auth free quotas. |
-| Google Play developer account | $25 one time | Only when the Android app ships |
+| Login | ₹0 | Google Sign-In only. No SMS, so no per-message cost. |
+| Google Play developer account | Already paid | Account exists; used when the Android app ships |
 | Remotion | Free if the company has 3 people or fewer | From 4 people, a paid Company License is needed. If that happens, we switch to **Revideo** (MIT license, free at any size). Video templates are kept behind an interface so the switch is contained. |
 | FSSAI license, GST registration | Government fees | Legal requirements, not technology, but the site must show the FSSAI number |
 
@@ -205,7 +211,7 @@ Back-of-envelope for 100,000 registered users:
 | API plugins | `@fastify/swagger` + Scalar docs, `@fastify/jwt`, `@fastify/cookie`, `@fastify/rate-limit` (Valkey store), `@fastify/helmet`, `@fastify/cors`, `@fastify/multipart`, `@fastify/under-pressure` | Security, docs, load shedding |
 | Database | PostgreSQL 17 + PostGIS + `pg_trgm`, Drizzle ORM, SQL migrations | Typed, portable, no vendor lock-in |
 | Jobs | BullMQ on Valkey | Subscription generation, wallet debits, notifications, renders, reconciliation |
-| Auth | Better Auth on Fastify (or a small in-house JWT module) | Cookie sessions for web, bearer tokens for Android, staff 2FA |
+| Auth | Google Sign-In (ID token exchange) + our own Ed25519 JWT access tokens and rotating refresh tokens | Cookies for web, bearer tokens for Android, staff invite-only with TOTP for money/settings roles. See docs/04-authentication.md. |
 | Payments | Cashfree PG (Orders API + JS / Android SDKs), Cashfree Subscriptions (UPI Autopay), Easy Split later for vendors | |
 | Storefront | **Next.js**, self-hosted in standalone mode, ISR for catalog pages, PWA | SEO, fast first load, installable, web push |
 | Admin | **Vite + React SPA**: TanStack Router, Query and Table, `cmdk` | No SSR needed. Free static hosting on Cloudflare Pages. |
@@ -406,7 +412,7 @@ Estimates assume one experienced full-stack developer working with AI assistance
 - **Unit tests** for everything in `packages/core`: subscription date generation (month ends, leap years, pauses overlapping overrides), cutoff times in IST, wallet ledger balancing, GST, FEFO. Property-based tests (fast-check) for subscriptions and the ledger.
 - **Integration tests** for the Fastify API against a real Postgres in Docker. The OpenAPI spec is checked for breaking changes on every pull request.
 - **End-to-end (Playwright)** for top-up → subscribe → cutoff job → agent delivers → statement is correct.
-- **Security:** Cloudflare WAF + Access in front of admin, staff 2FA, no open server ports, SSH only via tunnel with keys, fail2ban, automatic security updates, secrets in an encrypted `.env` (SOPS + age) never committed, least-privilege database users, verified webhooks, rate limits, upload validation.
+- **Security:** Cloudflare WAF + Access in front of admin, staff TOTP, no open server ports, SSH only via tunnel with keys, fail2ban, automatic security updates, secrets in an encrypted `.env` (SOPS + age) never committed, least-privilege database users, verified webhooks, rate limits, upload validation.
 - **Data protection:** follows India's DPDP Act basics: consent for marketing, data export and deletion on request, minimal data collection.
 - **Backups:** continuous WAL archiving for point-in-time recovery, nightly full backups to two providers, a monthly automated restore test on the micro VM.
 - **Runbooks:** deploy, rollback, restore, rotate secrets, move to a new host, Cashfree outage, server down at 5 AM.
@@ -415,12 +421,13 @@ Estimates assume one experienced full-stack developer working with AI assistance
 
 ## 13. Next steps
 
-1. Register the domain and add it to Cloudflare (the only upfront cost).
-2. Create the Oracle Cloud account, choose the home region (Mumbai or Hyderabad, a permanent choice), and confirm which free ARM allocation the account actually gets.
-3. Create a Cashfree merchant account and get sandbox keys.
-4. Collect real farm and product photos, or schedule a shoot, so design isn't blocked on placeholders.
-5. Confirm team size for the Remotion license (3 or fewer people stays free).
-6. Start Phase 0 on this branch.
+1. Register the domain (not through Hostinger Single) and add it to Cloudflare (the only upfront cost).
+2. Create a Google Cloud project with the same Google account as the Play Console, configure the OAuth consent screen and a web OAuth client ([steps](docs/04-authentication.md#google-cloud-setup-one-time)).
+3. Create the Oracle Cloud account, choose the home region (Mumbai or Hyderabad, a permanent choice), and confirm which free ARM allocation the account actually gets.
+4. Create a Cashfree merchant account and get sandbox keys.
+5. Collect real farm and product photos, or schedule a shoot, so design isn't blocked on placeholders.
+6. Confirm team size for the Remotion license (3 or fewer people stays free).
+7. Start Phase 0 on this branch.
 
 ---
 

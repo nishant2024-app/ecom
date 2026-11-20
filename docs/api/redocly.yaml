@@ -1,0 +1,10 @@
+# Redocly CLI config for linting and rendering the API contract.
+# Run from repo root: npx @redocly/cli lint docs/api/openapi.yaml --config docs/api/redocly.yaml
+extends:
+  - recommended
+rules:
+  # Common error responses (401, 429, 500, 503) apply to every operation and are
+  # documented once in docs/api/README.md#errors, not repeated per operation.
+  operation-4xx-response: off
+  # PDF downloads answer with a 302 redirect to a signed URL.
+  operation-2xx-response: warn
