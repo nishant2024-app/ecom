@@ -5,6 +5,7 @@ import type { Permission } from './lib/permissions';
 import type { GoogleVerifier } from './services/google';
 import type { Kv } from './services/kv';
 import type { PaymentProvider } from './services/payments';
+import type { Storage } from './services/storage';
 import type { AccessClaims, TokenService } from './services/tokens';
 
 export interface AppDeps {
@@ -14,6 +15,8 @@ export interface AppDeps {
   tokens: TokenService;
   google: GoogleVerifier;
   payments: PaymentProvider;
+  /** Image storage; defaults to R2 or local disk from config. */
+  storage?: Storage;
   /** Injectable clock for tests. */
   now: () => Date;
   /** Set by the auth routes; reused by the dev sign-in route. */

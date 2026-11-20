@@ -14,6 +14,8 @@ export default defineConfig({
       GOOGLE_WEB_CLIENT_ID: 'test-client.apps.googleusercontent.com',
       RATE_LIMIT_ENABLED: 'false',
       LOG_LEVEL: 'silent',
+      MEDIA_DIR: './var/test-media',
+      R2_PUBLIC_BASE_URL: 'http://localhost:4000/media',
     },
   },
 });

@@ -22,6 +22,13 @@
       "when": 1795183986452,
       "tag": "0002_app_role_grants",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1795186710411,
+      "tag": "0003_media_variants",
+      "breakpoints": true
     }
   ]
 }

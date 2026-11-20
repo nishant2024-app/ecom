@@ -2,6 +2,8 @@ import cookie from '@fastify/cookie';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
+import multipart from '@fastify/multipart';
+import fastifyStatic from '@fastify/static';
 import swagger from '@fastify/swagger';
 import scalar from '@scalar/fastify-api-reference';
 import type { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
@@ -15,6 +17,12 @@ import { MoneySchema, Problem } from './lib/schemas';
 import authPlugin from './plugins/auth';
 import idempotencyPlugin from './plugins/idempotency';
 import adminCatalogRoutes from './routes/admin/catalog';
+import adminContentRoutes from './routes/admin/content';
+import adminMediaRoutes from './routes/admin/media';
+import contentRoutes from './routes/store/content';
+import { MAX_UPLOAD_BYTES } from './services/images';
+import { createStorage } from './services/storage';
+import { mkdirSync } from 'node:fs';
 import dashboardRoutes from './routes/admin/dashboard';
 import adminInventoryRoutes from './routes/admin/inventory';
 import adminMeRoutes from './routes/admin/me';
@@ -55,6 +63,7 @@ export async function buildApp(deps: AppDeps, opts: { logger?: boolean | object 
     bodyLimit: 256 * 1024,
   }).withTypeProvider<TypeBoxTypeProvider>();
 
+  deps.storage ??= createStorage(deps.config);
   app.decorate('deps', deps);
   app.addSchema(MoneySchema);
   app.addSchema(Problem);
@@ -100,6 +109,20 @@ export async function buildApp(deps: AppDeps, opts: { logger?: boolean | object 
   });
   if (!deps.config.isProduction) await app.register(scalar, { routePrefix: '/docs' });
 
+  await app.register(multipart, { limits: { fileSize: MAX_UPLOAD_BYTES, files: 10, fields: 10 } });
+  const storage = deps.storage;
+  if (storage.kind === 'local' && storage.root) {
+    mkdirSync(storage.root, { recursive: true });
+    await app.register(fastifyStatic, {
+      root: storage.root,
+      prefix: '/media/',
+      decorateReply: false,
+      immutable: true,
+      maxAge: '365d',
+      setHeaders: (res) => res.setHeader('cross-origin-resource-policy', 'cross-origin'),
+    });
+  }
+
   await app.register(authPlugin);
   await app.register(idempotencyPlugin);
 
@@ -108,6 +131,7 @@ export async function buildApp(deps: AppDeps, opts: { logger?: boolean | object 
       await v1.register(metaRoutes);
       await v1.register(authRoutes, { prefix: '/auth' });
       await v1.register(catalogRoutes, { prefix: '/store' });
+      await v1.register(contentRoutes, { prefix: '/store' });
       await v1.register(meRoutes, { prefix: '/store' });
       await v1.register(checkoutRoutes, { prefix: '/store' });
       await v1.register(orderRoutes, { prefix: '/store' });
@@ -117,6 +141,8 @@ export async function buildApp(deps: AppDeps, opts: { logger?: boolean | object 
       await v1.register(dashboardRoutes, { prefix: '/admin' });
       await v1.register(adminOrderRoutes, { prefix: '/admin' });
       await v1.register(adminCatalogRoutes, { prefix: '/admin' });
+      await v1.register(adminMediaRoutes, { prefix: '/admin' });
+      await v1.register(adminContentRoutes, { prefix: '/admin' });
       await v1.register(adminInventoryRoutes, { prefix: '/admin' });
       await v1.register(adminPeopleRoutes, { prefix: '/admin' });
     },

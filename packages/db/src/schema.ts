@@ -278,12 +278,30 @@ export const productMedia = pgTable(
     r2Key: text('r2_key').notNull(),
     width: integer('width'),
     height: integer('height'),
+    variants: jsonb('variants').$type<ImageVariant[]>().notNull().default([]),
     altEn: text('alt_en').notNull().default(''),
     sort: integer('sort').notNull().default(0),
     createdAt: createdAt(),
   },
   (t) => [index('product_media_product_idx').on(t.productId, t.sort)],
 );
+
+export interface ImageVariant {
+  width: number;
+  height: number;
+  key: string;
+}
+
+/** Images used by storefront content (hero, story, banners), managed in admin. */
+export const siteMedia = pgTable('site_media', {
+  id: id(),
+  key: text('key').notNull(),
+  width: integer('width').notNull(),
+  height: integer('height').notNull(),
+  variants: jsonb('variants').$type<ImageVariant[]>().notNull().default([]),
+  alt: text('alt').notNull().default(''),
+  createdAt: createdAt(),
+});
 
 // ── Shipping ───────────────────────────────────────────────────────────────
 export const shippingZones = pgTable(

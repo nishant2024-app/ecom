@@ -6,13 +6,20 @@ import { and, asc, eq, inArray, sql, type SQL } from 'drizzle-orm';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { notFound } from '../../lib/errors';
 import { ErrorResponses, Money, Nullable, PageInfo, decodeCursor, encodeCursor, money } from '../../lib/schemas';
+import { imageOut } from '../../services/images';
 import { availability } from '../../services/stock';
 
 export const lang = (req: FastifyRequest): 'en' | 'hi' =>
   String(req.headers['accept-language'] ?? '').toLowerCase().startsWith('hi') ? 'hi' : 'en';
 
 export const PackSchema = Type.Object({ kind: Type.String(), color: Type.String(), accent: Type.String() });
-const Image = Type.Object({ url: Type.String(), alt: Type.String(), width: Type.Integer(), height: Type.Integer() });
+const Image = Type.Object({
+  url: Type.String(),
+  alt: Type.String(),
+  width: Type.Integer(),
+  height: Type.Integer(),
+  srcset: Type.Array(Type.Object({ url: Type.String(), width: Type.Integer() })),
+});
 const Variant = Type.Object({
   id: Type.String(),
   sku: Type.String(),
@@ -47,6 +54,7 @@ const ProductDetail = Type.Intersect([
     storage: Type.String(),
     hsnCode: Type.String(),
     fssaiNumber: Nullable(Type.String()),
+    gallery: Type.Array(Image),
     related: Type.Array(ProductSummary),
   }),
 ]);
@@ -65,7 +73,7 @@ function prefixQuery(q: string): string | null {
 export default async function catalogRoutes(fastify: FastifyInstance) {
   const app = fastify.withTypeProvider<TypeBoxTypeProvider>();
   const { db } = app.deps.db;
-  const mediaBase = app.deps.config.R2_PUBLIC_BASE_URL.replace(/\/$/, '');
+  const storage = app.deps.storage!;
 
   async function loadProducts(where: SQL[], language: 'en' | 'hi') {
     const rows = await db
@@ -87,10 +95,16 @@ export default async function catalogRoutes(fastify: FastifyInstance) {
     const stock = await availability(db, variants.map((v) => v.id), todayIST(app.deps.now()));
     return rows.map(({ p, c }) => {
       const vs = variants.filter((v) => v.productId === p.id);
-      const img = media.find((m) => m.productId === p.id && m.kind === 'image');
+      const gallery = media
+        .filter((m) => m.productId === p.id && m.kind === 'image')
+        .map((m) => {
+          const { id: _id, ...img } = imageOut(storage, { id: m.id, width: m.width, height: m.height, variants: m.variants.length ? m.variants : [{ key: m.r2Key, width: m.width ?? 0, height: m.height ?? 0 }], alt: m.altEn });
+          return img;
+        });
       return {
         row: p,
         variantsRaw: vs,
+        gallery,
         summary: {
           id: p.id,
           slug: p.slug,
@@ -98,7 +112,7 @@ export default async function catalogRoutes(fastify: FastifyInstance) {
           tagline: p.tagline,
           category: { slug: c.slug, name: language === 'hi' ? c.nameHi : c.nameEn },
           pack: p.pack,
-          image: img ? { url: `${mediaBase}/${img.r2Key}`, alt: img.altEn, width: img.width ?? 0, height: img.height ?? 0 } : null,
+          image: gallery[0] ?? null,
           isVeg: p.isVeg,
           featured: p.featured,
           attributes: p.attributes as Record<string, unknown>,
@@ -221,6 +235,7 @@ export default async function catalogRoutes(fastify: FastifyInstance) {
         storage: first?.storage ?? 'ambient',
         hsnCode: first?.hsnCode ?? '',
         fssaiNumber: seller?.fssai ?? null,
+        gallery: found.gallery,
         related: related.map((r) => r.summary),
       };
     },
