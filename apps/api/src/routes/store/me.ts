@@ -8,6 +8,7 @@ import { AppError, notFound } from '../../lib/errors';
 import { ErrorResponses, IdParam, Nullable } from '../../lib/schemas';
 import { requireAuth, revokedKey } from '../../plugins/auth';
 import { ACCESS_TTL_SECONDS } from '../../services/tokens';
+import { directionsUrl, isInIndia, roundCoord } from '@dairy/core';
 
 const AddressInput = Type.Object(
   {
@@ -21,9 +22,24 @@ const AddressInput = Type.Object(
     state: Type.Optional(Type.String({ minLength: 2, maxLength: 60 })),
     pincode: Type.String({ pattern: '^[1-9][0-9]{5}$' }),
     isDefault: Type.Optional(Type.Boolean()),
+    /** Exact door location from the phone's GPS or a map pin. Send null to clear it. */
+    location: Type.Optional(
+      Nullable(
+        Type.Object(
+          {
+            lat: Type.Number({ minimum: -90, maximum: 90 }),
+            lng: Type.Number({ minimum: -180, maximum: 180 }),
+            accuracyM: Type.Optional(Nullable(Type.Integer({ minimum: 0, maximum: 100000 }))),
+            source: Type.Union([Type.Literal('device'), Type.Literal('map_pin')]),
+          },
+          { additionalProperties: false },
+        ),
+      ),
+    ),
   },
   { additionalProperties: false },
 );
+export const LocationOut = Nullable(Type.Object({ lat: Type.Number(), lng: Type.Number(), accuracyM: Nullable(Type.Integer()), source: Type.String(), directionsUrl: Type.String() }));
 
 const AddressOut = Type.Object({
   id: Type.String(),
@@ -37,6 +53,7 @@ const AddressOut = Type.Object({
   state: Type.String(),
   pincode: Type.String(),
   isDefault: Type.Boolean(),
+  location: LocationOut,
 });
 
 const CustomerOut = Type.Object({
@@ -97,6 +114,10 @@ export default async function meRoutes(fastify: FastifyInstance) {
       state: a.state,
       pincode: a.pincode,
       isDefault: a.id === defaultId,
+      location:
+        a.latitude != null && a.longitude != null
+          ? { lat: a.latitude, lng: a.longitude, accuracyM: a.locationAccuracyM, source: a.locationSource ?? 'map_pin', directionsUrl: directionsUrl(a.latitude, a.longitude) }
+          : null,
     }));
   }
 
@@ -116,7 +137,18 @@ export default async function meRoutes(fastify: FastifyInstance) {
       city: body.city.trim(),
       state,
       pincode: body.pincode,
+      ...locationColumns(body.location),
     };
+  }
+
+  /** undefined = leave unchanged; null = clear; a point must be inside India. */
+  function locationColumns(loc: typeof AddressInput.static.location) {
+    if (loc === undefined) return {};
+    if (loc === null) return { latitude: null, longitude: null, locationAccuracyM: null, locationSource: null };
+    if (!isInIndia(loc.lat, loc.lng)) {
+      throw new AppError('VALIDATION_FAILED', 400, 'That location is outside India. Move the pin to your address.', [{ field: '/location', code: 'range', message: 'Outside India' }]);
+    }
+    return { latitude: roundCoord(loc.lat), longitude: roundCoord(loc.lng), locationAccuracyM: loc.accuracyM ?? null, locationSource: loc.source };
   }
 
   app.get('/me', { config: customerCfg, schema: { tags: ['Profile'], summary: 'My profile', response: { 200: CustomerOut } } }, async (req) =>

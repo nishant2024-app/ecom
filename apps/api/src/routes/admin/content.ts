@@ -10,8 +10,9 @@ import { ContentInput, ContentOut } from '../content-schema';
 export async function contentOut(app: FastifyInstance) {
   const { db } = app.deps.db;
   const content = await loadContent(db, await defaultSellerId(db));
-  const imgs = await siteImages(db, app.deps.storage!, [content.hero.imageId, content.story.imageId]);
-  return { ...content, images: { hero: imgs.get(content.hero.imageId ?? '') ?? null, story: imgs.get(content.story.imageId ?? '') ?? null } };
+  const imgs = await siteImages(db, app.deps.storage!, [content.hero.imageId, content.story.imageId, ...content.banners.map((b) => b.imageId)]);
+  const img = (id: string | null) => (id ? (imgs.get(id) ?? null) : null);
+  return { ...content, images: { hero: img(content.hero.imageId), story: img(content.story.imageId), banners: content.banners.map((b) => img(b.imageId)) } };
 }
 
 export default async function adminContentRoutes(fastify: FastifyInstance) {
@@ -26,7 +27,7 @@ export default async function adminContentRoutes(fastify: FastifyInstance) {
     async (req) => {
       const sellerId = await defaultSellerId(db);
       const body = req.body as StoreContent;
-      const ids = [body.hero.imageId, body.story.imageId].filter((x): x is string => !!x);
+      const ids = [body.hero.imageId, body.story.imageId, ...body.banners.map((b) => b.imageId)].filter((x): x is string => !!x);
       const found = await siteImages(db, app.deps.storage!, ids);
       for (const id of ids) if (!found.has(id)) throw badRequest(`Image ${id} is not in the storefront image library`);
       const before = await loadContent(db, sellerId);

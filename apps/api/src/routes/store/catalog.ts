@@ -1,8 +1,8 @@
-import { todayIST, unitPrice } from '@dairy/core';
+import { addDays, daysBetween, todayIST, unitPrice } from '@dairy/core';
 import { schema as s } from '@dairy/db';
 import type { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { Type } from '@sinclair/typebox';
-import { and, asc, eq, inArray, sql, type SQL } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, inArray, sql, type SQL } from 'drizzle-orm';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { notFound } from '../../lib/errors';
 import { ErrorResponses, Money, Nullable, PageInfo, decodeCursor, encodeCursor, money } from '../../lib/schemas';
@@ -221,6 +221,45 @@ export default async function catalogRoutes(fastify: FastifyInstance) {
       const hasMore = offset + limit < items.length;
       reply.header('cache-control', 'public, max-age=30, stale-while-revalidate=120');
       return { data: page, page: { nextCursor: hasMore ? encodeCursor({ o: offset + limit }) : null, hasMore } };
+    },
+  );
+
+  app.get(
+    '/fresh',
+    {
+      config: { auth: 'public' },
+      schema: {
+        tags: ['Catalog'],
+        summary: 'Recently made batches that are in stock (made in the last 21 days), newest first',
+        response: {
+          200: Type.Object({
+            data: Type.Array(Type.Object({ product: ProductSummary, variantId: Type.String(), packSize: Type.String(), manufacturedOn: Type.String(), daysAgo: Type.Integer() })),
+          }),
+        },
+      },
+    },
+    async (req, reply) => {
+      const today = todayIST(app.deps.now());
+      const rows = await db
+        .select({ variantId: s.batches.variantId, made: s.batches.manufacturedOn, productId: s.productVariants.productId, packSize: s.productVariants.packSize })
+        .from(s.batches)
+        .innerJoin(s.productVariants, eq(s.productVariants.id, s.batches.variantId))
+        .where(and(eq(s.batches.status, 'active'), gte(s.batches.manufacturedOn, addDays(today, -21)), sql`${s.batches.onHand} > ${s.batches.reserved}`, eq(s.productVariants.status, 'active')))
+        .orderBy(desc(s.batches.manufacturedOn));
+      // One entry per product: its newest batch.
+      const seen = new Set<string>();
+      const picks = rows.filter((r) => (seen.has(r.productId) ? false : (seen.add(r.productId), true))).slice(0, 8);
+      if (!picks.length) return { data: [] };
+      const products = await loadProducts([inArray(s.products.id, picks.map((p) => p.productId))], lang(req));
+      reply.header('cache-control', 'public, max-age=300, stale-while-revalidate=600');
+      return {
+        data: picks
+          .map((p) => {
+            const prod = products.find((x) => x.row.id === p.productId);
+            return prod ? { product: prod.summary, variantId: p.variantId, packSize: p.packSize, manufacturedOn: p.made, daysAgo: daysBetween(p.made, today) } : null;
+          })
+          .filter((x): x is NonNullable<typeof x> => x !== null),
+      };
     },
   );
 

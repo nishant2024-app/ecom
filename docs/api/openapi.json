@@ -1212,6 +1212,304 @@
         }
       }
     },
+    "/v1/store/fresh": {
+      "get": {
+        "summary": "Recently made batches that are in stock (made in the last 21 days), newest first",
+        "tags": [
+          "Catalog"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "product",
+                          "variantId",
+                          "packSize",
+                          "manufacturedOn",
+                          "daysAgo"
+                        ],
+                        "properties": {
+                          "product": {
+                            "type": "object",
+                            "required": [
+                              "id",
+                              "slug",
+                              "name",
+                              "tagline",
+                              "category",
+                              "pack",
+                              "image",
+                              "isVeg",
+                              "featured",
+                              "attributes",
+                              "fromPrice",
+                              "rating",
+                              "variants"
+                            ],
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "slug": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "tagline": {
+                                "type": "string"
+                              },
+                              "category": {
+                                "type": "object",
+                                "required": [
+                                  "slug",
+                                  "name"
+                                ],
+                                "properties": {
+                                  "slug": {
+                                    "type": "string"
+                                  },
+                                  "name": {
+                                    "type": "string"
+                                  }
+                                }
+                              },
+                              "pack": {
+                                "type": "object",
+                                "required": [
+                                  "kind",
+                                  "color",
+                                  "accent"
+                                ],
+                                "properties": {
+                                  "kind": {
+                                    "type": "string"
+                                  },
+                                  "color": {
+                                    "type": "string"
+                                  },
+                                  "accent": {
+                                    "type": "string"
+                                  }
+                                }
+                              },
+                              "image": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "required": [
+                                      "url",
+                                      "alt",
+                                      "width",
+                                      "height",
+                                      "srcset"
+                                    ],
+                                    "properties": {
+                                      "url": {
+                                        "type": "string"
+                                      },
+                                      "alt": {
+                                        "type": "string"
+                                      },
+                                      "width": {
+                                        "type": "integer"
+                                      },
+                                      "height": {
+                                        "type": "integer"
+                                      },
+                                      "srcset": {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "object",
+                                          "required": [
+                                            "url",
+                                            "width"
+                                          ],
+                                          "properties": {
+                                            "url": {
+                                              "type": "string"
+                                            },
+                                            "width": {
+                                              "type": "integer"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "isVeg": {
+                                "type": "boolean"
+                              },
+                              "featured": {
+                                "type": "boolean"
+                              },
+                              "attributes": {
+                                "type": "object",
+                                "additionalProperties": {}
+                              },
+                              "fromPrice": {
+                                "$ref": "#/components/schemas/def-0"
+                              },
+                              "rating": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "required": [
+                                      "average",
+                                      "count"
+                                    ],
+                                    "properties": {
+                                      "average": {
+                                        "type": "number"
+                                      },
+                                      "count": {
+                                        "type": "integer"
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "variants": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "required": [
+                                    "id",
+                                    "sku",
+                                    "packSize",
+                                    "price",
+                                    "mrp",
+                                    "weightGrams",
+                                    "shelfLifeDays",
+                                    "inStock",
+                                    "lowStock",
+                                    "maxPerOrder",
+                                    "unitPrice",
+                                    "nextBatch"
+                                  ],
+                                  "properties": {
+                                    "id": {
+                                      "type": "string"
+                                    },
+                                    "sku": {
+                                      "type": "string"
+                                    },
+                                    "packSize": {
+                                      "type": "string"
+                                    },
+                                    "price": {
+                                      "$ref": "#/components/schemas/def-0"
+                                    },
+                                    "mrp": {
+                                      "$ref": "#/components/schemas/def-0"
+                                    },
+                                    "weightGrams": {
+                                      "type": "integer"
+                                    },
+                                    "shelfLifeDays": {
+                                      "type": "integer"
+                                    },
+                                    "inStock": {
+                                      "type": "boolean"
+                                    },
+                                    "lowStock": {
+                                      "type": "boolean"
+                                    },
+                                    "maxPerOrder": {
+                                      "type": "integer"
+                                    },
+                                    "unitPrice": {
+                                      "anyOf": [
+                                        {
+                                          "type": "object",
+                                          "required": [
+                                            "amount",
+                                            "per"
+                                          ],
+                                          "properties": {
+                                            "amount": {
+                                              "$ref": "#/components/schemas/def-0"
+                                            },
+                                            "per": {
+                                              "type": "string"
+                                            }
+                                          }
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ]
+                                    },
+                                    "nextBatch": {
+                                      "anyOf": [
+                                        {
+                                          "type": "object",
+                                          "required": [
+                                            "manufacturedOn",
+                                            "bestBefore"
+                                          ],
+                                          "properties": {
+                                            "manufacturedOn": {
+                                              "type": "string"
+                                            },
+                                            "bestBefore": {
+                                              "type": "string"
+                                            }
+                                          }
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ]
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          },
+                          "variantId": {
+                            "type": "string"
+                          },
+                          "packSize": {
+                            "type": "string"
+                          },
+                          "manufacturedOn": {
+                            "type": "string"
+                          },
+                          "daysAgo": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/store/products/{slug}": {
       "get": {
         "summary": "Product detail",
@@ -1916,6 +2214,7 @@
                       "required": [
                         "announcement",
                         "hero",
+                        "banners",
                         "story",
                         "promises",
                         "seo"
@@ -1963,6 +2262,99 @@
                                   "type": "null"
                                 }
                               ]
+                            }
+                          }
+                        },
+                        "banners": {
+                          "minItems": 1,
+                          "maxItems": 5,
+                          "type": "array",
+                          "items": {
+                            "additionalProperties": false,
+                            "type": "object",
+                            "required": [
+                              "eyebrow",
+                              "title",
+                              "subtitle",
+                              "ctaLabel",
+                              "href",
+                              "theme",
+                              "categorySlug",
+                              "imageId"
+                            ],
+                            "properties": {
+                              "eyebrow": {
+                                "maxLength": 60,
+                                "type": "string"
+                              },
+                              "title": {
+                                "minLength": 3,
+                                "maxLength": 90,
+                                "type": "string"
+                              },
+                              "subtitle": {
+                                "maxLength": 200,
+                                "type": "string"
+                              },
+                              "ctaLabel": {
+                                "minLength": 2,
+                                "maxLength": 30,
+                                "type": "string"
+                              },
+                              "href": {
+                                "pattern": "^/[^\\s]*$",
+                                "maxLength": 200,
+                                "type": "string"
+                              },
+                              "theme": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "ghee"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "milk"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "sweets"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "green"
+                                    ]
+                                  }
+                                ]
+                              },
+                              "categorySlug": {
+                                "anyOf": [
+                                  {
+                                    "maxLength": 60,
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "imageId": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              }
                             }
                           }
                         },
@@ -2060,7 +2452,8 @@
                           "type": "object",
                           "required": [
                             "hero",
-                            "story"
+                            "story",
+                            "banners"
                           ],
                           "properties": {
                             "hero": {
@@ -2168,6 +2561,62 @@
                                   "type": "null"
                                 }
                               ]
+                            },
+                            "banners": {
+                              "type": "array",
+                              "items": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "required": [
+                                      "id",
+                                      "url",
+                                      "alt",
+                                      "width",
+                                      "height",
+                                      "srcset"
+                                    ],
+                                    "properties": {
+                                      "id": {
+                                        "type": "string"
+                                      },
+                                      "url": {
+                                        "type": "string"
+                                      },
+                                      "alt": {
+                                        "type": "string"
+                                      },
+                                      "width": {
+                                        "type": "integer"
+                                      },
+                                      "height": {
+                                        "type": "integer"
+                                      },
+                                      "srcset": {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "object",
+                                          "required": [
+                                            "url",
+                                            "width"
+                                          ],
+                                          "properties": {
+                                            "url": {
+                                              "type": "string"
+                                            },
+                                            "width": {
+                                              "type": "integer"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              }
                             }
                           }
                         }
@@ -2775,6 +3224,172 @@
         }
       }
     },
+    "/v1/store/geo/reverse": {
+      "get": {
+        "summary": "Suggest area, city, state and pincode for a map point (to prefill the address form)",
+        "tags": [
+          "Profile"
+        ],
+        "description": "Signed-in customers only, 15/min. Results are suggestions: the customer confirms or edits them. Returns all nulls when the provider has no answer.",
+        "parameters": [
+          {
+            "schema": {
+              "minimum": -90,
+              "maximum": 90,
+              "type": "number"
+            },
+            "in": "query",
+            "name": "lat",
+            "required": true
+          },
+          {
+            "schema": {
+              "minimum": -180,
+              "maximum": 180,
+              "type": "number"
+            },
+            "in": "query",
+            "name": "lng",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "area",
+                    "city",
+                    "state",
+                    "pincode",
+                    "label",
+                    "provider"
+                  ],
+                  "properties": {
+                    "area": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "city": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "state": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "pincode": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "label": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "provider": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-1"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/store/me": {
       "get": {
         "summary": "My profile",
@@ -3074,7 +3689,8 @@
                           "city",
                           "state",
                           "pincode",
-                          "isDefault"
+                          "isDefault",
+                          "location"
                         ],
                         "properties": {
                           "id": {
@@ -3130,6 +3746,47 @@
                           },
                           "isDefault": {
                             "type": "boolean"
+                          },
+                          "location": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "required": [
+                                  "lat",
+                                  "lng",
+                                  "accuracyM",
+                                  "source",
+                                  "directionsUrl"
+                                ],
+                                "properties": {
+                                  "lat": {
+                                    "type": "number"
+                                  },
+                                  "lng": {
+                                    "type": "number"
+                                  },
+                                  "accuracyM": {
+                                    "anyOf": [
+                                      {
+                                        "type": "integer"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  },
+                                  "source": {
+                                    "type": "string"
+                                  },
+                                  "directionsUrl": {
+                                    "type": "string"
+                                  }
+                                }
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           }
                         }
                       }
@@ -3203,6 +3860,62 @@
                   },
                   "isDefault": {
                     "type": "boolean"
+                  },
+                  "location": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": false,
+                        "type": "object",
+                        "required": [
+                          "lat",
+                          "lng",
+                          "source"
+                        ],
+                        "properties": {
+                          "lat": {
+                            "minimum": -90,
+                            "maximum": 90,
+                            "type": "number"
+                          },
+                          "lng": {
+                            "minimum": -180,
+                            "maximum": 180,
+                            "type": "number"
+                          },
+                          "accuracyM": {
+                            "anyOf": [
+                              {
+                                "minimum": 0,
+                                "maximum": 100000,
+                                "type": "integer"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "source": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "device"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "map_pin"
+                                ]
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 }
               }
@@ -3227,7 +3940,8 @@
                     "city",
                     "state",
                     "pincode",
-                    "isDefault"
+                    "isDefault",
+                    "location"
                   ],
                   "properties": {
                     "id": {
@@ -3283,6 +3997,47 @@
                     },
                     "isDefault": {
                       "type": "boolean"
+                    },
+                    "location": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "required": [
+                            "lat",
+                            "lng",
+                            "accuracyM",
+                            "source",
+                            "directionsUrl"
+                          ],
+                          "properties": {
+                            "lat": {
+                              "type": "number"
+                            },
+                            "lng": {
+                              "type": "number"
+                            },
+                            "accuracyM": {
+                              "anyOf": [
+                                {
+                                  "type": "integer"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "source": {
+                              "type": "string"
+                            },
+                            "directionsUrl": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     }
                   }
                 }
@@ -3415,6 +4170,62 @@
                   },
                   "isDefault": {
                     "type": "boolean"
+                  },
+                  "location": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": false,
+                        "type": "object",
+                        "required": [
+                          "lat",
+                          "lng",
+                          "source"
+                        ],
+                        "properties": {
+                          "lat": {
+                            "minimum": -90,
+                            "maximum": 90,
+                            "type": "number"
+                          },
+                          "lng": {
+                            "minimum": -180,
+                            "maximum": 180,
+                            "type": "number"
+                          },
+                          "accuracyM": {
+                            "anyOf": [
+                              {
+                                "minimum": 0,
+                                "maximum": 100000,
+                                "type": "integer"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "source": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "device"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "map_pin"
+                                ]
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 }
               }
@@ -3451,7 +4262,8 @@
                     "city",
                     "state",
                     "pincode",
-                    "isDefault"
+                    "isDefault",
+                    "location"
                   ],
                   "properties": {
                     "id": {
@@ -3507,6 +4319,47 @@
                     },
                     "isDefault": {
                       "type": "boolean"
+                    },
+                    "location": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "required": [
+                            "lat",
+                            "lng",
+                            "accuracyM",
+                            "source",
+                            "directionsUrl"
+                          ],
+                          "properties": {
+                            "lat": {
+                              "type": "number"
+                            },
+                            "lng": {
+                              "type": "number"
+                            },
+                            "accuracyM": {
+                              "anyOf": [
+                                {
+                                  "type": "integer"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "source": {
+                              "type": "string"
+                            },
+                            "directionsUrl": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     }
                   }
                 }
@@ -6427,6 +7280,7 @@
                       "required": [
                         "announcement",
                         "hero",
+                        "banners",
                         "story",
                         "promises",
                         "seo"
@@ -6474,6 +7328,99 @@
                                   "type": "null"
                                 }
                               ]
+                            }
+                          }
+                        },
+                        "banners": {
+                          "minItems": 1,
+                          "maxItems": 5,
+                          "type": "array",
+                          "items": {
+                            "additionalProperties": false,
+                            "type": "object",
+                            "required": [
+                              "eyebrow",
+                              "title",
+                              "subtitle",
+                              "ctaLabel",
+                              "href",
+                              "theme",
+                              "categorySlug",
+                              "imageId"
+                            ],
+                            "properties": {
+                              "eyebrow": {
+                                "maxLength": 60,
+                                "type": "string"
+                              },
+                              "title": {
+                                "minLength": 3,
+                                "maxLength": 90,
+                                "type": "string"
+                              },
+                              "subtitle": {
+                                "maxLength": 200,
+                                "type": "string"
+                              },
+                              "ctaLabel": {
+                                "minLength": 2,
+                                "maxLength": 30,
+                                "type": "string"
+                              },
+                              "href": {
+                                "pattern": "^/[^\\s]*$",
+                                "maxLength": 200,
+                                "type": "string"
+                              },
+                              "theme": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "ghee"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "milk"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "sweets"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "green"
+                                    ]
+                                  }
+                                ]
+                              },
+                              "categorySlug": {
+                                "anyOf": [
+                                  {
+                                    "maxLength": 60,
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "imageId": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              }
                             }
                           }
                         },
@@ -6571,7 +7518,8 @@
                           "type": "object",
                           "required": [
                             "hero",
-                            "story"
+                            "story",
+                            "banners"
                           ],
                           "properties": {
                             "hero": {
@@ -6679,6 +7627,62 @@
                                   "type": "null"
                                 }
                               ]
+                            },
+                            "banners": {
+                              "type": "array",
+                              "items": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "required": [
+                                      "id",
+                                      "url",
+                                      "alt",
+                                      "width",
+                                      "height",
+                                      "srcset"
+                                    ],
+                                    "properties": {
+                                      "id": {
+                                        "type": "string"
+                                      },
+                                      "url": {
+                                        "type": "string"
+                                      },
+                                      "alt": {
+                                        "type": "string"
+                                      },
+                                      "width": {
+                                        "type": "integer"
+                                      },
+                                      "height": {
+                                        "type": "integer"
+                                      },
+                                      "srcset": {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "object",
+                                          "required": [
+                                            "url",
+                                            "width"
+                                          ],
+                                          "properties": {
+                                            "url": {
+                                              "type": "string"
+                                            },
+                                            "width": {
+                                              "type": "integer"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              }
                             }
                           }
                         }
@@ -6706,6 +7710,7 @@
                 "required": [
                   "announcement",
                   "hero",
+                  "banners",
                   "story",
                   "promises",
                   "seo"
@@ -6753,6 +7758,99 @@
                             "type": "null"
                           }
                         ]
+                      }
+                    }
+                  },
+                  "banners": {
+                    "minItems": 1,
+                    "maxItems": 5,
+                    "type": "array",
+                    "items": {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "eyebrow",
+                        "title",
+                        "subtitle",
+                        "ctaLabel",
+                        "href",
+                        "theme",
+                        "categorySlug",
+                        "imageId"
+                      ],
+                      "properties": {
+                        "eyebrow": {
+                          "maxLength": 60,
+                          "type": "string"
+                        },
+                        "title": {
+                          "minLength": 3,
+                          "maxLength": 90,
+                          "type": "string"
+                        },
+                        "subtitle": {
+                          "maxLength": 200,
+                          "type": "string"
+                        },
+                        "ctaLabel": {
+                          "minLength": 2,
+                          "maxLength": 30,
+                          "type": "string"
+                        },
+                        "href": {
+                          "pattern": "^/[^\\s]*$",
+                          "maxLength": 200,
+                          "type": "string"
+                        },
+                        "theme": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "ghee"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "milk"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "sweets"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "green"
+                              ]
+                            }
+                          ]
+                        },
+                        "categorySlug": {
+                          "anyOf": [
+                            {
+                              "maxLength": 60,
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "imageId": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
                       }
                     }
                   },
@@ -6857,6 +7955,7 @@
                       "required": [
                         "announcement",
                         "hero",
+                        "banners",
                         "story",
                         "promises",
                         "seo"
@@ -6904,6 +8003,99 @@
                                   "type": "null"
                                 }
                               ]
+                            }
+                          }
+                        },
+                        "banners": {
+                          "minItems": 1,
+                          "maxItems": 5,
+                          "type": "array",
+                          "items": {
+                            "additionalProperties": false,
+                            "type": "object",
+                            "required": [
+                              "eyebrow",
+                              "title",
+                              "subtitle",
+                              "ctaLabel",
+                              "href",
+                              "theme",
+                              "categorySlug",
+                              "imageId"
+                            ],
+                            "properties": {
+                              "eyebrow": {
+                                "maxLength": 60,
+                                "type": "string"
+                              },
+                              "title": {
+                                "minLength": 3,
+                                "maxLength": 90,
+                                "type": "string"
+                              },
+                              "subtitle": {
+                                "maxLength": 200,
+                                "type": "string"
+                              },
+                              "ctaLabel": {
+                                "minLength": 2,
+                                "maxLength": 30,
+                                "type": "string"
+                              },
+                              "href": {
+                                "pattern": "^/[^\\s]*$",
+                                "maxLength": 200,
+                                "type": "string"
+                              },
+                              "theme": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "ghee"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "milk"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "sweets"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "green"
+                                    ]
+                                  }
+                                ]
+                              },
+                              "categorySlug": {
+                                "anyOf": [
+                                  {
+                                    "maxLength": 60,
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "imageId": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              }
                             }
                           }
                         },
@@ -7001,7 +8193,8 @@
                           "type": "object",
                           "required": [
                             "hero",
-                            "story"
+                            "story",
+                            "banners"
                           ],
                           "properties": {
                             "hero": {
@@ -7109,6 +8302,62 @@
                                   "type": "null"
                                 }
                               ]
+                            },
+                            "banners": {
+                              "type": "array",
+                              "items": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "required": [
+                                      "id",
+                                      "url",
+                                      "alt",
+                                      "width",
+                                      "height",
+                                      "srcset"
+                                    ],
+                                    "properties": {
+                                      "id": {
+                                        "type": "string"
+                                      },
+                                      "url": {
+                                        "type": "string"
+                                      },
+                                      "alt": {
+                                        "type": "string"
+                                      },
+                                      "width": {
+                                        "type": "integer"
+                                      },
+                                      "height": {
+                                        "type": "integer"
+                                      },
+                                      "srcset": {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "object",
+                                          "required": [
+                                            "url",
+                                            "width"
+                                          ],
+                                          "properties": {
+                                            "url": {
+                                              "type": "string"
+                                            },
+                                            "width": {
+                                              "type": "integer"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              }
                             }
                           }
                         }

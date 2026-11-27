@@ -17,10 +17,11 @@ Keep the access token in memory and send `Authorization: Bearer …` plus `X-Cli
 
 | Screen | API |
 |---|---|
-| Home / shop | `GET /v1/store/categories`, `GET /v1/store/products?featured=true` |
-| Product | `GET /v1/store/products/{slug}`, `GET /v1/store/shipping/estimate?pincode=` |
+| Home / shop | `GET /v1/store/content` (banners, promises), `GET /v1/store/categories`, `GET /v1/store/products`, `GET /v1/store/fresh` |
+| Product | `GET /v1/store/products/{slug}` (gallery, `unitPrice`, `nextBatch`), `GET …/reviews`, `GET /v1/store/shipping/estimate?pincode=` |
+| Verify a pack | `GET /v1/store/verify/{code}` (batch code from the label; a scanner for a printed QR is a later option) |
 | Cart | Local cart; `POST /v1/store/checkout/quote {lines, pincode}` for prices, stock and shipping |
-| Addresses | `GET/POST /v1/store/me/addresses` |
+| Addresses | `GET/POST/PATCH /v1/store/me/addresses` with the GPS pin; `GET /v1/store/geo/reverse` to prefill. See [Exact delivery location](16-location-and-delivery.md#android-app) |
 | Checkout | `POST /v1/store/orders` with `Idempotency-Key` → `payment.paymentSessionId` |
 | Pay | Cashfree Android SDK with `paymentSessionId`; then poll `GET /v1/store/orders/{id}` until not `pending_payment` (never trust the SDK result alone) |
 | Orders | `GET /v1/store/orders`, `GET /v1/store/orders/{id}`, `POST …/cancel`, `POST …/pay` |

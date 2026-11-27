@@ -16,8 +16,9 @@ export interface StoreContent {
   hero: { eyebrow: string; title: string; subtitle: string; ctaLabel: string; imageId: string | null };
   story: { title: string; paragraphs: string[]; signature: string; imageId: string | null };
   promises: { title: string; body: string }[];
+  banners: { eyebrow: string; title: string; subtitle: string; ctaLabel: string; href: string; theme: 'ghee' | 'milk' | 'sweets' | 'green'; categorySlug: string | null; imageId: string | null }[];
   seo: { title: string; description: string };
-  images: { hero: (Img & { id: string }) | null; story: (Img & { id: string }) | null };
+  images: { hero: (Img & { id: string }) | null; story: (Img & { id: string }) | null; banners: ((Img & { id: string }) | null)[] };
 }
 
 export interface Pack {
@@ -110,6 +111,7 @@ export interface Address {
   state: string;
   pincode: string;
   isDefault: boolean;
+  location: { lat: number; lng: number; accuracyM: number | null; source: string; directionsUrl: string } | null;
 }
 
 export interface PaymentStart {

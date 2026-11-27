@@ -47,6 +47,7 @@ export async function createTestApp(now = new Date(), payments: PaymentProvider 
       google: createGoogleVerifier(CLIENT_ID, createLocalJWKSet({ keys: [googleJwk] })),
       payments,
       now: () => now,
+      geocoder: { name: 'test', reverse: async () => ({ area: 'Baner Road, Baner', city: 'Pune', state: 'Maharashtra', pincode: '411045', label: 'Baner Road, Baner, Pune' }) },
     },
     { logger: false },
   );

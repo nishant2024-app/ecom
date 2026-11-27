@@ -24,6 +24,8 @@ import reviewRoutes from './routes/store/reviews';
 import adminReviewRoutes from './routes/admin/reviews';
 import { MAX_UPLOAD_BYTES } from './services/images';
 import { createStorage } from './services/storage';
+import { createNominatim, noGeocoder } from './services/geocoder';
+import geoRoutes from './routes/store/geo';
 import { mkdirSync } from 'node:fs';
 import dashboardRoutes from './routes/admin/dashboard';
 import adminInventoryRoutes from './routes/admin/inventory';
@@ -66,6 +68,7 @@ export async function buildApp(deps: AppDeps, opts: { logger?: boolean | object 
   }).withTypeProvider<TypeBoxTypeProvider>();
 
   deps.storage ??= createStorage(deps.config);
+  deps.geocoder ??= deps.config.GEOCODER_URL === 'off' ? noGeocoder : createNominatim(deps.config, deps.kv);
   app.decorate('deps', deps);
   app.addSchema(MoneySchema);
   app.addSchema(Problem);
@@ -135,6 +138,7 @@ export async function buildApp(deps: AppDeps, opts: { logger?: boolean | object 
       await v1.register(catalogRoutes, { prefix: '/store' });
       await v1.register(contentRoutes, { prefix: '/store' });
       await v1.register(reviewRoutes, { prefix: '/store' });
+      await v1.register(geoRoutes, { prefix: '/store' });
       await v1.register(meRoutes, { prefix: '/store' });
       await v1.register(checkoutRoutes, { prefix: '/store' });
       await v1.register(orderRoutes, { prefix: '/store' });

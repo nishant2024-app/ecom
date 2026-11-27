@@ -168,7 +168,7 @@ interface Detail {
   shipping: Money;
   taxIncluded: Money;
   total: Money;
-  shippingAddress: { name: string; phone: string; line1: string; line2: string | null; landmark: string | null; city: string; state: string; pincode: string };
+  shippingAddress: { name: string; phone: string; line1: string; line2: string | null; landmark: string | null; city: string; state: string; pincode: string; location?: { lat: number; lng: number; accuracyM: number | null; source: string; directionsUrl: string } | null };
   delivery: { zone: string; etaMinDays: number; etaMaxDays: number; courier: string | null; trackingNumber: string | null; trackingUrl: string | null };
   payment: { id: string; provider: string; status: string; method: string | null } | null;
   refunds: { id: string; amount: Money; status: string; reason: string }[];
@@ -303,6 +303,14 @@ export function OrderDetailPage({ id, permissions }: { id: string; permissions: 
             <p className="text-ink-2">{[a.line1, a.line2, a.landmark].filter(Boolean).join(', ')}</p>
             <p className="text-ink-2">{a.city}, {a.state} <span className="num">{a.pincode}</span></p>
             <p className="num mt-1">{a.phone}</p>
+            {a.location ? (
+              <a href={a.location.directionsUrl} target="_blank" rel="noreferrer" className="mt-3 flex items-center justify-between gap-2 rounded-3 bg-meadow px-3 py-2 text-sm font-semibold text-forest hover:underline">
+                <span>📍 Open exact location in Google Maps</span>
+                <span className="text-xs font-normal text-ink-2">{a.location.source === 'device' ? `GPS${a.location.accuracyM ? ` ±${a.location.accuracyM} m` : ''}` : 'map pin'}</span>
+              </a>
+            ) : (
+              <p className="mt-3 rounded-3 bg-paper-2 px-3 py-2 text-xs text-ink-2">No map pin. Use the address and landmark.</p>
+            )}
             <p className="mt-2 text-xs text-ink-2">Promised {o.delivery.etaMinDays}–{o.delivery.etaMaxDays} days after dispatch</p>
           </Card>
           {o.customer && (

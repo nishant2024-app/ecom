@@ -27,6 +27,10 @@ const ConfigSchema = Type.Object({
   R2_SECRET_ACCESS_KEY: Type.String({ default: '' }),
   R2_BUCKET_MEDIA: Type.String({ default: '' }),
   MEDIA_DIR: Type.String({ default: './var/media' }),
+  /** Reverse geocoding (pin → area/city/pincode). Nominatim-compatible URL, or "off". */
+  GEOCODER_URL: Type.String({ default: 'https://nominatim.openstreetmap.org' }),
+  /** Contact email sent to the geocoding provider, as its usage policy asks. */
+  GEOCODER_EMAIL: Type.String({ default: '' }),
   CASHFREE_ENV: Type.Union([Type.Literal('sandbox'), Type.Literal('production')], { default: 'sandbox' }),
   CASHFREE_APP_ID: Type.String({ default: '' }),
   CASHFREE_SECRET_KEY: Type.String({ default: '' }),

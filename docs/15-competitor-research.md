@@ -114,3 +114,14 @@ Researched 20 November 2026 by visiting the stores on desktop and mobile (Pune p
 - Two Brothers: https://twobrothersindiashop.com/collections/ghee
 - Akshayakalpa: https://akshayakalpa.org/products/akshayakalpa-organic-cow-ghee
 - Reference for layout style chosen by the owner: https://milko.in/
+
+## First-impression research (27 Nov 2026)
+
+Looked at the first screen of Indian food and dairy stores (Country Delight, Milky Mist, Two Brothers; Licious and Blinkit blocked automated browsers, Amul shows a pincode pop-up over a red banner). What the good ones do:
+
+- **A big, full-width banner within the first screen** with a clear product or offer and one button (Country Delight, Two Brothers, Milky Mist). Ours: rotating banners with colour scenes and products, editable in the admin, swipeable on phones.
+- **Category circles right under it** so a visitor sees the range in seconds. Ours: round category tiles.
+- **Trust and press logos or counts** (Two Brothers). We have no real press or counts yet, so instead we show **live batch dates** ("Made 2 days ago") from our own records, which can't be faked.
+- **Popups and app-download prompts on load** (Country Delight, Amul) hurt first impressions on phones. We deliberately avoid them.
+
+Decision: banner carousel, category tiles, "Fresh from the dairy" strip and a "Buy with confidence" band, with no load-time pop-ups.

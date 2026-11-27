@@ -8,9 +8,21 @@ interface Content {
   hero: { eyebrow: string; title: string; subtitle: string; ctaLabel: string; imageId: string | null };
   story: { title: string; paragraphs: string[]; signature: string; imageId: string | null };
   promises: { title: string; body: string }[];
+  banners: Banner[];
   seo: { title: string; description: string };
-  images: { hero: Image | null; story: Image | null };
+  images: { hero: Image | null; story: Image | null; banners: (Image | null)[] };
 }
+interface Banner {
+  eyebrow: string;
+  title: string;
+  subtitle: string;
+  ctaLabel: string;
+  href: string;
+  theme: 'ghee' | 'milk' | 'sweets' | 'green';
+  categorySlug: string | null;
+  imageId: string | null;
+}
+const THEME_LABEL: Record<Banner['theme'], string> = { ghee: 'Ghee gold', milk: 'Milk blue', sweets: 'Mithai brown', green: 'Farm green' };
 
 const area = `${input} h-auto py-2`;
 
@@ -81,9 +93,11 @@ export function StorefrontPage({ permissions }: { permissions: string[] }) {
   const [c, setC] = useState<Content | null>(null);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [categories, setCategories] = useState<{ slug: string; nameEn: string }[]>([]);
   const readOnly = !permissions.includes('catalog.write');
   useEffect(() => {
     api<Content>('/v1/admin/storefront').then(setC);
+    api<{ data: { slug: string; nameEn: string }[] }>('/v1/admin/categories').then((r) => setCategories(r.data));
   }, []);
   if (!c) return <p className="p-6 text-ink-2">Loading…</p>;
 
@@ -128,18 +142,60 @@ export function StorefrontPage({ permissions }: { permissions: string[] }) {
           </div>
         </Card>
 
-        <Card title="Top of the home page" className="lg:col-span-2">
-          <div className="grid gap-4 md:grid-cols-[1fr_auto]">
-            <div className="space-y-3">
-              <Field label="Small line above the headline"><input value={c.hero.eyebrow} onChange={(e) => patch({ hero: { ...c.hero, eyebrow: e.target.value } })} className={input} /></Field>
-              <Field label="Headline"><textarea rows={2} value={c.hero.title} onChange={(e) => patch({ hero: { ...c.hero, title: e.target.value } })} className={`${area} text-xl font-bold`} /></Field>
-              <Field label="Sentence under the headline"><textarea rows={2} value={c.hero.subtitle} onChange={(e) => patch({ hero: { ...c.hero, subtitle: e.target.value } })} className={area} /></Field>
-              <Field label="Button text"><input value={c.hero.ctaLabel} onChange={(e) => patch({ hero: { ...c.hero, ctaLabel: e.target.value } })} className={`${input} max-w-xs`} /></Field>
-            </div>
-            <Field label="Main photo" hint="Wide photo, at least 1600 px. Without one, the shop shows your products.">
-              <ImagePicker readOnly={readOnly} value={c.images.hero} onChange={(img) => setC({ ...c, hero: { ...c.hero, imageId: img?.id ?? null }, images: { ...c.images, hero: img } })} />
-            </Field>
+        <Card title="Banners (rotating slides at the top of the home page)" className="lg:col-span-2">
+          <p className="-mt-1 mb-3 text-sm text-ink-2">Each slide shows a colour scene with your products, or your own wide photo if you choose one. Up to 5 slides; they change every 6 seconds.</p>
+          <div className="space-y-4">
+            {c.banners.map((b, i) => {
+              const setB = (patch: Partial<Banner>) => setC({ ...c, banners: c.banners.map((x, j) => (j === i ? { ...x, ...patch } : x)) });
+              return (
+                <div key={i} className="grid gap-3 rounded-3 bg-paper-2 p-3 md:grid-cols-[1fr_auto]">
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <Field label="Small line"><input value={b.eyebrow} onChange={(e) => setB({ eyebrow: e.target.value })} className={input} /></Field>
+                    <Field label="Button text"><input value={b.ctaLabel} onChange={(e) => setB({ ctaLabel: e.target.value })} className={input} /></Field>
+                    <div className="sm:col-span-2"><Field label="Headline"><input value={b.title} onChange={(e) => setB({ title: e.target.value })} className={`${input} font-bold`} /></Field></div>
+                    <div className="sm:col-span-2"><Field label="Sentence"><input value={b.subtitle} onChange={(e) => setB({ subtitle: e.target.value })} className={input} /></Field></div>
+                    <Field label="Colour scene">
+                      <select value={b.theme} onChange={(e) => setB({ theme: e.target.value as Banner['theme'] })} className={input}>
+                        {Object.entries(THEME_LABEL).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+                      </select>
+                    </Field>
+                    <Field label="Products shown and button link">
+                      <select
+                        value={b.categorySlug ?? ''}
+                        onChange={(e) => setB({ categorySlug: e.target.value || null, href: e.target.value ? `/products?category=${e.target.value}` : '/products' })}
+                        className={input}
+                      >
+                        <option value="">Best sellers → all products</option>
+                        {categories.map((cat) => <option key={cat.slug} value={cat.slug}>{cat.nameEn}</option>)}
+                      </select>
+                    </Field>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <Field label="Photo (optional)">
+                      <ImagePicker readOnly={readOnly} value={c.images.banners[i] ?? null} onChange={(img) => setC({ ...c, banners: c.banners.map((x, j) => (j === i ? { ...x, imageId: img?.id ?? null } : x)), images: { ...c.images, banners: c.images.banners.map((x, j) => (j === i ? img : x)) } })} />
+                    </Field>
+                    {!readOnly && (
+                      <div className="flex gap-1 text-xs">
+                        <Btn variant="ghost" disabled={i === 0} onClick={() => { const bs = [...c.banners]; const im = [...c.images.banners]; [bs[i - 1], bs[i]] = [bs[i]!, bs[i - 1]!]; [im[i - 1], im[i]] = [im[i] ?? null, im[i - 1] ?? null]; setC({ ...c, banners: bs, images: { ...c.images, banners: im } }); }}>↑</Btn>
+                        <Btn variant="ghost" disabled={c.banners.length < 2} className="text-alert" onClick={() => setC({ ...c, banners: c.banners.filter((_, j) => j !== i), images: { ...c.images, banners: c.images.banners.filter((_, j) => j !== i) } })}>Remove</Btn>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+            {!readOnly && c.banners.length < 5 && (
+              <Btn variant="outline" onClick={() => setC({ ...c, banners: [...c.banners, { eyebrow: '', title: 'New banner headline', subtitle: '', ctaLabel: 'Shop now', href: '/products', theme: 'green', categorySlug: null, imageId: null }], images: { ...c.images, banners: [...c.images.banners, null] } })}>
+                + Add banner
+              </Btn>
+            )}
           </div>
+        </Card>
+
+        <Card title="Main heading for Google and screen readers" className="lg:col-span-2">
+          <Field label="Not shown on screen; describes the whole shop in one line" hint="Example: Ghee, milk powder and mithai from our farm in Mulshi, shipped across India">
+            <input value={c.hero.title} onChange={(e) => patch({ hero: { ...c.hero, title: e.target.value } })} className={input} />
+          </Field>
         </Card>
 
         <Card title="Our story" className="lg:col-span-2">

@@ -10,11 +10,13 @@ Customer-facing endpoints for the storefront and the future Android app. Convent
 | GET | `/v1/store/products/{slug}/reviews` | Public | Approved reviews with average, count and 1–5 breakdown (cursor) |
 | GET / PUT | `/v1/store/products/{slug}/reviews/mine` | Customer | Whether I can review (needs a delivered order with this product) / write or edit my review `{rating, title?, body?}`. New and edited reviews wait for staff approval |
 | GET | `/v1/store/verify/{code}` | Public · 20/min | Check a batch code printed on a pack: product, made-on and best-before dates, `expired`; `404 BATCH_NOT_FOUND` if unknown |
-| GET | `/v1/store/content` | Public | Home page copy and images edited in Admin → Storefront (announcement, hero, story, promises, SEO) |
+| GET | `/v1/store/fresh` | Public | Up to 8 products with a batch made in the last 21 days and in stock, newest first (`daysAgo`) |
+| GET | `/v1/store/geo/reverse?lat=&lng=` | Customer · 15/min | Suggest area, city, state, pincode for a map point |
+| GET | `/v1/store/content` | Public | Home page copy and images edited in Admin → Storefront: announcement, rotating `banners` (title, colour theme, category, optional photo), story, promises, SEO |
 | GET | `/v1/store/shipping/estimate?pincode=` | Public | Zone, fee, free-shipping threshold, delivery dates |
 | POST | `/v1/store/checkout/quote` | Public | Price a cart `{lines, pincode?}` with live prices, stock problems and shipping |
 | GET / PATCH / DELETE | `/v1/store/me` | Customer | Profile; delete starts account deletion |
-| GET / POST | `/v1/store/me/addresses` | Customer | Addresses (state derived from pincode, phone normalised to +91) |
+| GET / POST | `/v1/store/me/addresses` | Customer | Addresses (state derived from pincode, phone normalised to +91) with optional exact `location`. See [Exact delivery location](../16-location-and-delivery.md) |
 | PATCH / DELETE | `/v1/store/me/addresses/{id}` | Customer | Update / remove |
 | POST / DELETE | `/v1/store/me/devices[/{id}]` | Customer | Push tokens |
 | GET / PUT | `/v1/store/me/notification-preferences` | Customer | `marketingEmail`, `orderUpdates` |

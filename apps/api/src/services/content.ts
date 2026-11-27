@@ -3,10 +3,24 @@ import { and, eq, inArray } from 'drizzle-orm';
 import type { Storage } from './storage';
 import { imageOut } from './images';
 
+export interface Banner {
+  eyebrow: string;
+  title: string;
+  subtitle: string;
+  ctaLabel: string;
+  href: string;
+  /** Colour scheme for the drawn banner when there is no photo. */
+  theme: 'ghee' | 'milk' | 'sweets' | 'green';
+  /** Products from this category are drawn on the banner. */
+  categorySlug: string | null;
+  imageId: string | null;
+}
+
 /** Storefront copy and images the owner edits in Admin → Storefront. */
 export interface StoreContent {
   announcement: string;
   hero: { eyebrow: string; title: string; subtitle: string; ctaLabel: string; imageId: string | null };
+  banners: Banner[];
   story: { title: string; paragraphs: string[]; signature: string; imageId: string | null };
   promises: { title: string; body: string }[];
   seo: { title: string; description: string };
@@ -21,6 +35,11 @@ export const DEFAULT_CONTENT: StoreContent = {
     ctaLabel: 'Shop the pantry',
     imageId: null,
   },
+  banners: [
+    { eyebrow: 'Bilona A2 ghee', title: 'Slow-churned ghee, golden and granular', subtitle: 'Hand-churned from curd and cooked over a wood fire. Keeps 9 months sealed.', ctaLabel: 'Shop ghee', href: '/products?category=ghee', theme: 'ghee', categorySlug: 'ghee', imageId: null },
+    { eyebrow: 'Milk that waits for you', title: 'Milk powder and UHT milk, no fridge needed', subtitle: 'Spray-dried and sealed at our dairy. Real milk in your pantry for months.', ctaLabel: 'Shop milk', href: '/products?category=milk-powder', theme: 'milk', categorySlug: 'milk-powder', imageId: null },
+    { eyebrow: 'Festive boxes', title: 'Peda, milk cake and condensed milk', subtitle: 'Made from khoa in small batches and packed to travel across India.', ctaLabel: 'Shop mithai', href: '/products?category=condensed-sweets', theme: 'sweets', categorySlug: 'condensed-sweets', imageId: null },
+  ],
   story: {
     title: 'Why we make dairy that keeps',
     paragraphs: [
@@ -52,6 +71,7 @@ export async function loadContent(db: DbOrTx, sellerId: string): Promise<StoreCo
     story: { ...DEFAULT_CONTENT.story, ...saved.story },
     seo: { ...DEFAULT_CONTENT.seo, ...saved.seo },
     promises: saved.promises?.length ? saved.promises : DEFAULT_CONTENT.promises,
+    banners: saved.banners?.length ? saved.banners : DEFAULT_CONTENT.banners,
   };
 }
 

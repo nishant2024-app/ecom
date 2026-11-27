@@ -32,6 +32,7 @@ Documentation for the Mulshi Dairy shop: storefront, admin panel, public API, vi
 | 11 | [Operations & runbooks](11-operations.md) | Monitoring, alerts, backups, deploys, incident runbooks |
 | 12 | [Development guide](12-development.md) | Local setup, repo layout, environment variables, standards, testing, git workflow |
 | 13 | [Android integration](13-android-integration.md) | Using the API from the future Android app |
+| 16 | [Exact delivery location](16-location-and-delivery.md) | Map pin and GPS on addresses, what couriers see, Android steps, privacy, map and lookup providers at scale |
 | 15 | [Competitor research](15-competitor-research.md) | Amul, Two Brothers, Akshayakalpa and others: what they do, where we win, feature list |
 | 14 | [Go-live checklist](14-go-live.md) | The keys and details the owner provides, first deploy, setting up the shop in the admin, launch tests |
 

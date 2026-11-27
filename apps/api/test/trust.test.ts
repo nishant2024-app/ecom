@@ -23,6 +23,15 @@ describe('catalog trust signals', () => {
     expect(p.rating).toBeNull();
   });
 
+  it('lists recently made batches, newest first, one per product', async () => {
+    const res = (await t.app.inject({ url: '/v1/store/fresh' })).json();
+    expect(res.data.length).toBeGreaterThan(0);
+    const slugs = res.data.map((d: { product: { slug: string } }) => d.product.slug);
+    expect(new Set(slugs).size).toBe(slugs.length);
+    expect(res.data[0].daysAgo).toBeLessThanOrEqual(res.data.at(-1).daysAgo);
+    expect(res.data[0].daysAgo).toBeLessThanOrEqual(21);
+  });
+
   it('verifies a batch code printed on the pack, case-insensitively', async () => {
     const res = await t.app.inject({ url: '/v1/store/verify/gh-a2-500-b' });
     expect(res.statusCode, res.body).toBe(200);
@@ -72,5 +81,37 @@ describe('verified reviews', () => {
     // Editing sends it back for approval.
     await t.app.inject({ method: 'PUT', url: `/v1/store/products/${slug}/reviews/mine`, headers: c.headers, payload: { rating: 5 } });
     expect((await t.app.inject({ url: `/v1/store/products/${slug}/reviews` })).json().summary.count).toBe(0);
+  });
+});
+
+describe('exact delivery location', () => {
+  it('saves a GPS point on the address, rejects points outside India, and copies it to orders', async () => {
+    const c = await readyCustomer(t);
+    const ids = await variantIds(t);
+    const outside = await t.app.inject({ method: 'PATCH', url: `/v1/store/me/addresses/${c.addressId}`, headers: c.headers, payload: { name: 'Asha Test', phone: '9876543210', line1: 'Flat 704, Sai Residency', city: 'Pune', pincode: '411045', location: { lat: 51.5, lng: -0.12, source: 'device' } } });
+    expect(outside.statusCode).toBe(400);
+
+    const ok = await t.app.inject({ method: 'PATCH', url: `/v1/store/me/addresses/${c.addressId}`, headers: c.headers, payload: { name: 'Asha Test', phone: '9876543210', line1: 'Flat 704, Sai Residency', city: 'Pune', pincode: '411045', location: { lat: 18.55901234567, lng: 73.7868, accuracyM: 12, source: 'device' } } });
+    expect(ok.statusCode, ok.body).toBe(200);
+    expect(ok.json().location).toEqual({ lat: 18.559012, lng: 73.7868, accuracyM: 12, source: 'device', directionsUrl: 'https://www.google.com/maps/dir/?api=1&destination=18.559012,73.7868' });
+
+    const placed = await t.app.inject({ method: 'POST', url: '/v1/store/orders', headers: { ...c.headers, 'idempotency-key': crypto.randomUUID() }, payload: { lines: [{ variantId: ids.powder500, quantity: 1 }], addressId: c.addressId } });
+    const orderId = placed.json().order.id;
+    const staff = await staffHeaders(t, 'warehouse');
+    const detail = (await t.app.inject({ url: `/v1/admin/orders/${orderId}`, headers: staff })).json();
+    expect(detail.shippingAddress.location).toMatchObject({ lat: 18.559012, lng: 73.7868, source: 'device', directionsUrl: expect.stringContaining('destination=18.559012,73.7868') });
+
+    // Clearing the pin keeps the typed address.
+    const cleared = await t.app.inject({ method: 'PATCH', url: `/v1/store/me/addresses/${c.addressId}`, headers: c.headers, payload: { name: 'Asha Test', phone: '9876543210', line1: 'Flat 704, Sai Residency', city: 'Pune', pincode: '411045', location: null } });
+    expect(cleared.json().location).toBeNull();
+  });
+
+  it('suggests address fields for a map point (signed-in only)', async () => {
+    const c = await readyCustomer(t);
+    expect((await t.app.inject({ url: '/v1/store/geo/reverse?lat=18.559&lng=73.7868' })).statusCode).toBe(401);
+    const r = await t.app.inject({ url: '/v1/store/geo/reverse?lat=18.559&lng=73.7868', headers: c.headers });
+    expect(r.statusCode, r.body).toBe(200);
+    expect(r.json()).toMatchObject({ area: 'Baner Road, Baner', city: 'Pune', state: 'Maharashtra', pincode: '411045', provider: 'test' });
+    expect((await t.app.inject({ url: '/v1/store/geo/reverse?lat=0&lng=0', headers: c.headers })).statusCode).toBe(400);
   });
 });

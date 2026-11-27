@@ -6,6 +6,7 @@ import type { GoogleVerifier } from './services/google';
 import type { Kv } from './services/kv';
 import type { PaymentProvider } from './services/payments';
 import type { Storage } from './services/storage';
+import type { Geocoder } from './services/geocoder';
 import type { AccessClaims, TokenService } from './services/tokens';
 
 export interface AppDeps {
@@ -17,6 +18,8 @@ export interface AppDeps {
   payments: PaymentProvider;
   /** Image storage; defaults to R2 or local disk from config. */
   storage?: Storage;
+  /** Reverse geocoder; defaults to Nominatim from config. */
+  geocoder?: Geocoder;
   /** Injectable clock for tests. */
   now: () => Date;
   /** Set by the auth routes; reused by the dev sign-in route. */

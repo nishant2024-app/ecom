@@ -5,7 +5,7 @@
  * - timestamptz in UTC; business dates as `date` strings in IST
  */
 import { sql } from 'drizzle-orm';
-import { bigint, boolean, check, date, index, integer, jsonb, pgTable, primaryKey, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
+import { bigint, boolean, check, date, doublePrecision, index, integer, jsonb, pgTable, primaryKey, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
 
 const id = () => text('id').primaryKey();
 const paise = (name: string) => bigint(name, { mode: 'number' });
@@ -141,11 +141,20 @@ export const addresses = pgTable(
     city: text('city').notNull(),
     state: text('state').notNull(),
     pincode: text('pincode').notNull(),
+    /** Exact door location from the customer's phone GPS or map pin, for the delivery partner. */
+    latitude: doublePrecision('latitude'),
+    longitude: doublePrecision('longitude'),
+    locationAccuracyM: integer('location_accuracy_m'),
+    locationSource: text('location_source'),
     archivedAt: ts('archived_at'),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  (t) => [index('addresses_customer_idx').on(t.customerId)],
+  (t) => [
+    index('addresses_customer_idx').on(t.customerId),
+    check('addresses_location_ck', sql`(${t.latitude} is null) = (${t.longitude} is null) and (${t.latitude} is null or (${t.latitude} between 6 and 37.6 and ${t.longitude} between 68 and 97.5))`),
+    check('addresses_location_source_ck', sql`${t.locationSource} is null or ${t.locationSource} in ('device','map_pin')`),
+  ],
 );
 
 export const devices = pgTable(
@@ -333,6 +342,8 @@ export interface AddressSnapshot {
   city: string;
   state: string;
   pincode: string;
+  /** Door location at the time of ordering, if the customer shared it. */
+  location?: { lat: number; lng: number; accuracyM: number | null; source: 'device' | 'map_pin' } | null;
 }
 
 export const orders = pgTable(

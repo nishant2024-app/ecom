@@ -11,8 +11,9 @@ export async function getContent(): Promise<StoreContent> {
       hero: { eyebrow: '', title: 'Ghee, milk powder and mithai, made the slow way.', subtitle: 'Shipped across India.', ctaLabel: 'Shop the pantry', imageId: null },
       story: { title: '', paragraphs: [], signature: '', imageId: null },
       promises: [],
+      banners: [],
       seo: { title: 'Mulshi Dairy', description: 'Ghee, milk powder and mithai shipped across India.' },
-      images: { hero: null, story: null },
+      images: { hero: null, story: null, banners: [] },
     }
   );
 }

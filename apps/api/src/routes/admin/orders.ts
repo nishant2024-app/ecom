@@ -1,3 +1,4 @@
+import { directionsUrl } from '@dairy/core';
 import { schema as s } from '@dairy/db';
 import type { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { Type } from '@sinclair/typebox';
@@ -88,7 +89,7 @@ export default async function adminOrderRoutes(fastify: FastifyInstance) {
         return /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t;
       };
       const rupees = (p: number) => (p / 100).toFixed(2);
-      const header = ['Order', 'Placed (IST)', 'Status', 'Customer', 'Phone', 'City', 'State', 'Pincode', 'Items', 'Subtotal', 'Shipping', 'Discount', 'Total', 'Courier', 'Tracking'];
+      const header = ['Order', 'Placed (IST)', 'Status', 'Customer', 'Phone', 'City', 'State', 'Pincode', 'Items', 'Subtotal', 'Shipping', 'Discount', 'Total', 'Courier', 'Tracking', 'Map'];
       const lines = rows.map((o) =>
         [
           o.number,
@@ -106,6 +107,7 @@ export default async function adminOrderRoutes(fastify: FastifyInstance) {
           rupees(o.totalPaise),
           o.courier,
           o.trackingNumber,
+          o.shippingAddress.location ? directionsUrl(o.shippingAddress.location.lat, o.shippingAddress.location.lng) : '',
         ]
           .map(cell)
           .join(','),

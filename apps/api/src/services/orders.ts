@@ -1,3 +1,4 @@
+import { directionsUrl } from '@dairy/core';
 import { addMinutes } from './time-utils';
 import { newId, nextStatus, orderNumber, OrderStateError, todayIST, type OrderAction, type OrderStatus } from '@dairy/core';
 import { schema as s, type Db, type DbOrTx } from '@dairy/db';
@@ -88,6 +89,10 @@ export async function placeOrder(deps: AppDeps, input: PlaceOrderInput) {
     city: address.city,
     state: address.state,
     pincode: address.pincode,
+    location:
+      address.latitude != null && address.longitude != null
+        ? { lat: address.latitude, lng: address.longitude, accuracyM: address.locationAccuracyM, source: (address.locationSource as 'device' | 'map_pin' | null) ?? 'map_pin' }
+        : null,
   };
 
   await db.transaction(async (tx) => {
@@ -331,7 +336,7 @@ export async function orderView(db: DbOrTx | Db, orderId: string) {
     discount: m(order.discountPaise),
     taxIncluded: m(order.taxPaise),
     total: m(order.totalPaise),
-    shippingAddress: order.shippingAddress,
+    shippingAddress: { ...order.shippingAddress, location: order.shippingAddress.location ? { ...order.shippingAddress.location, directionsUrl: directionsUrl(order.shippingAddress.location.lat, order.shippingAddress.location.lng) } : null },
     delivery: {
       zone: order.shippingZone,
       etaMinDays: order.etaMinDays,

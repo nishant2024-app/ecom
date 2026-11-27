@@ -181,7 +181,7 @@ export default async function adminMediaRoutes(fastify: FastifyInstance) {
     { config: write, schema: { tags: ['Admin'], summary: 'Delete a storefront image', params: IdParam('mediaId'), response: { 204: Type.Null() } } },
     async (req, reply) => {
       const content = await loadContent(db, await defaultSellerId(db));
-      if ([content.hero.imageId, content.story.imageId].includes(req.params.mediaId)) {
+      if ([content.hero.imageId, content.story.imageId, ...content.banners.map((b) => b.imageId)].includes(req.params.mediaId)) {
         throw new AppError('CONFLICT', 409, 'This photo is on the storefront. Choose a different photo there first.');
       }
       const [row] = await db.delete(s.siteMedia).where(and(eq(s.siteMedia.id, req.params.mediaId))).returning();
