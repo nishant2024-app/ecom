@@ -34,7 +34,9 @@ export function FreshThisWeek({ items }: { items: FreshItem[] }) {
           <h2 className="mt-1 text-[22px] font-extrabold tracking-[-0.025em] md:text-[28px]">Fresh from the dairy</h2>
           <p className="text-[14px] text-ink-2 md:text-[15px]">Recently made batches, in stock now. The date on your pack will match.</p>
         </div>
-        <Link href="/verify" className="inline-flex min-h-[44px] items-center text-[14px] font-semibold text-forest hover:underline">How to verify your pack →</Link>
+        <Link href="/verify" className="inline-flex min-h-[44px] items-center text-[14px] font-semibold text-forest hover:underline">
+          How to verify your pack →
+        </Link>
       </div>
       <ul className="-mx-5 mt-5 flex snap-x gap-3 overflow-x-auto px-5 pb-1 md:-mx-0 md:px-0">
         {items.map((it, i) => (

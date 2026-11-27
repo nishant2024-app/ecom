@@ -59,9 +59,7 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
   const converted = Value.Convert(ConfigSchema, Value.Default(ConfigSchema, raw));
   const errors = [...Value.Errors(ConfigSchema, converted)];
   if (errors.length > 0) {
-    throw new ConfigError(
-      'Invalid configuration:\n' + errors.map((e) => `  ${e.path.slice(1) || '(root)'}: ${e.message}`).join('\n'),
-    );
+    throw new ConfigError('Invalid configuration:\n' + errors.map((e) => `  ${e.path.slice(1) || '(root)'}: ${e.message}`).join('\n'));
   }
   const c = converted as Static<typeof ConfigSchema>;
   const isProduction = c.APP_ENV === 'production';
@@ -72,7 +70,9 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
   if (c.EMAIL_PROVIDER === 'brevo' && !c.BREVO_API_KEY) throw new ConfigError('BREVO_API_KEY is required when EMAIL_PROVIDER=brevo');
   return {
     ...c,
-    corsOrigins: c.CORS_ORIGINS.split(',').map((s) => s.trim()).filter(Boolean),
+    corsOrigins: c.CORS_ORIGINS.split(',')
+      .map((s) => s.trim())
+      .filter(Boolean),
     isProduction,
     secureCookies: c.APP_ENV === 'production' || c.APP_ENV === 'staging',
   };

@@ -29,7 +29,12 @@ export function parseFrom(from: string): { name: string; email: string } {
 }
 
 async function post(url: string, headers: Record<string, string>, body: unknown, fetchImpl: typeof fetch) {
-  const res = await fetchImpl(url, { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json', ...headers }, body: JSON.stringify(body), signal: AbortSignal.timeout(10_000) });
+  const res = await fetchImpl(url, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', accept: 'application/json', ...headers },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(10_000),
+  });
   if (!res.ok) throw new Error(`email provider ${res.status}: ${(await res.text().catch(() => '')).slice(0, 200)}`);
 }
 
@@ -47,7 +52,12 @@ export function createBrevoProvider(apiKey: string, from: string, fetchImpl: typ
   return {
     name: 'brevo',
     send: (e) =>
-      post('https://api.brevo.com/v3/smtp/email', { 'api-key': apiKey }, { sender: { name: sender.name || undefined, email: sender.email }, to: [{ email: e.to }], subject: e.subject, htmlContent: e.html, textContent: e.text }, fetchImpl),
+      post(
+        'https://api.brevo.com/v3/smtp/email',
+        { 'api-key': apiKey },
+        { sender: { name: sender.name || undefined, email: sender.email }, to: [{ email: e.to }], subject: e.subject, htmlContent: e.html, textContent: e.text },
+        fetchImpl,
+      ),
   };
 }
 

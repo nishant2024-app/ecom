@@ -84,7 +84,13 @@ export default async function adminInventoryRoutes(fastify: FastifyInstance) {
         tags: ['Admin'],
         summary: 'Record a production batch',
         body: Type.Object(
-          { variantId: Type.String(), code: Type.String({ minLength: 2, maxLength: 40 }), manufacturedOn: BusinessDate, expiresOn: BusinessDate, quantity: Type.Integer({ minimum: 1, maximum: 1_000_000 }) },
+          {
+            variantId: Type.String(),
+            code: Type.String({ minLength: 2, maxLength: 40 }),
+            manufacturedOn: BusinessDate,
+            expiresOn: BusinessDate,
+            quantity: Type.Integer({ minimum: 1, maximum: 1_000_000 }),
+          },
           { additionalProperties: false },
         ),
       },
@@ -95,11 +101,16 @@ export default async function adminInventoryRoutes(fastify: FastifyInstance) {
       const [variant] = await db.select().from(s.productVariants).where(eq(s.productVariants.id, b.variantId));
       if (!variant) throw notFound('Variant');
       const sellerId = await defaultSellerId(db);
-      const [clash] = await db.select({ id: s.batches.id }).from(s.batches).where(and(eq(s.batches.sellerId, sellerId), eq(s.batches.code, b.code)));
+      const [clash] = await db
+        .select({ id: s.batches.id })
+        .from(s.batches)
+        .where(and(eq(s.batches.sellerId, sellerId), eq(s.batches.code, b.code)));
       if (clash) throw new AppError('CONFLICT', 409, `Batch ${b.code} already exists`);
       const id = newId('bat');
       await db.transaction(async (tx) => {
-        await tx.insert(s.batches).values({ id, variantId: b.variantId, sellerId, code: b.code, manufacturedOn: b.manufacturedOn, expiresOn: b.expiresOn, quantityProduced: b.quantity, onHand: b.quantity });
+        await tx
+          .insert(s.batches)
+          .values({ id, variantId: b.variantId, sellerId, code: b.code, manufacturedOn: b.manufacturedOn, expiresOn: b.expiresOn, quantityProduced: b.quantity, onHand: b.quantity });
         await tx.insert(s.stockMovements).values({ id: newId('stm'), batchId: id, kind: 'produced', quantity: b.quantity, createdByType: 'staff', createdById: req.auth!.sub });
       });
       await audit(db, req, 'batch.create', 'batch', id, null, b);
@@ -134,7 +145,10 @@ export default async function adminInventoryRoutes(fastify: FastifyInstance) {
         const [b] = await tx.select().from(s.batches).where(eq(s.batches.id, batchId)).for('update');
         if (!b) throw notFound('Batch');
         if (b.onHand + delta < b.reserved) throw new AppError('CONFLICT', 409, `Only ${b.onHand - b.reserved} units are free in this batch; the rest is reserved for orders`);
-        await tx.update(s.batches).set({ onHand: b.onHand + delta, status: b.onHand + delta === 0 ? 'depleted' : 'active' }).where(eq(s.batches.id, batchId));
+        await tx
+          .update(s.batches)
+          .set({ onHand: b.onHand + delta, status: b.onHand + delta === 0 ? 'depleted' : 'active' })
+          .where(eq(s.batches.id, batchId));
         await tx.insert(s.stockMovements).values({ id: newId('stm'), batchId, kind, quantity: delta, reason, createdByType: 'staff', createdById: req.auth!.sub });
         const [after] = await tx.select().from(s.batches).where(eq(s.batches.id, batchId));
         return { before: b, after: after! };

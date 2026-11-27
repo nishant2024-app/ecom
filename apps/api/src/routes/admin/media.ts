@@ -51,7 +51,10 @@ export default async function adminMediaRoutes(fastify: FastifyInstance) {
 
   app.get(
     '/products/:productId/media',
-    { config: { auth: 'staff', permission: 'catalog.read' }, schema: { tags: ['Admin'], summary: 'Product photos, in display order', params: IdParam('productId'), response: { 200: Type.Object({ data: Type.Array(ImageOut) }) } } },
+    {
+      config: { auth: 'staff', permission: 'catalog.read' },
+      schema: { tags: ['Admin'], summary: 'Product photos, in display order', params: IdParam('productId'), response: { 200: Type.Object({ data: Type.Array(ImageOut) }) } },
+    },
     async (req) => ({ data: await listFor(req.params.productId) }),
   );
 
@@ -72,7 +75,10 @@ export default async function adminMediaRoutes(fastify: FastifyInstance) {
       const [product] = await db.select({ id: s.products.id, slug: s.products.slug, name: s.products.nameEn }).from(s.products).where(eq(s.products.id, req.params.productId));
       if (!product) throw notFound('Product');
       const { files, alt } = await readUploads(req);
-      const [{ top } = { top: null }] = await db.select({ top: max(s.productMedia.sort) }).from(s.productMedia).where(eq(s.productMedia.productId, product.id));
+      const [{ top } = { top: null }] = await db
+        .select({ top: max(s.productMedia.sort) })
+        .from(s.productMedia)
+        .where(eq(s.productMedia.productId, product.id));
       let sort = (top ?? -1) + 1;
       for (const file of files) {
         const id = newId('med');
@@ -124,7 +130,7 @@ export default async function adminMediaRoutes(fastify: FastifyInstance) {
       config: write,
       schema: {
         tags: ['Admin'],
-        summary: 'Edit a product photo\'s alt text',
+        summary: "Edit a product photo's alt text",
         params: IdParam('mediaId'),
         body: Type.Object({ alt: Type.String({ maxLength: 200 }) }, { additionalProperties: false }),
         response: { 200: ImageOut },
@@ -137,17 +143,13 @@ export default async function adminMediaRoutes(fastify: FastifyInstance) {
     },
   );
 
-  app.delete(
-    '/media/:mediaId',
-    { config: write, schema: { tags: ['Admin'], summary: 'Delete a product photo', params: IdParam('mediaId'), response: { 204: Type.Null() } } },
-    async (req, reply) => {
-      const [row] = await db.delete(s.productMedia).where(eq(s.productMedia.id, req.params.mediaId)).returning();
-      if (!row) throw notFound('Photo');
-      await deleteImage(storage, row.variants);
-      await audit(db, req, 'product.media.delete', 'product', row.productId, { mediaId: row.id }, null);
-      return reply.status(204).send(null);
-    },
-  );
+  app.delete('/media/:mediaId', { config: write, schema: { tags: ['Admin'], summary: 'Delete a product photo', params: IdParam('mediaId'), response: { 204: Type.Null() } } }, async (req, reply) => {
+    const [row] = await db.delete(s.productMedia).where(eq(s.productMedia.id, req.params.mediaId)).returning();
+    if (!row) throw notFound('Photo');
+    await deleteImage(storage, row.variants);
+    await audit(db, req, 'product.media.delete', 'product', row.productId, { mediaId: row.id }, null);
+    return reply.status(204).send(null);
+  });
 
   // ---- Site images (hero, story, banners) ----
 
@@ -161,7 +163,12 @@ export default async function adminMediaRoutes(fastify: FastifyInstance) {
     '/site-media',
     {
       config: write,
-      schema: { tags: ['Admin'], summary: 'Upload storefront images (multipart, field "file"; optional "alt")', consumes: ['multipart/form-data'], response: { 201: Type.Object({ data: Type.Array(ImageOut) }) } },
+      schema: {
+        tags: ['Admin'],
+        summary: 'Upload storefront images (multipart, field "file"; optional "alt")',
+        consumes: ['multipart/form-data'],
+        response: { 201: Type.Object({ data: Type.Array(ImageOut) }) },
+      },
     },
     async (req, reply) => {
       const { files, alt } = await readUploads(req);
@@ -169,7 +176,10 @@ export default async function adminMediaRoutes(fastify: FastifyInstance) {
       for (const file of files) {
         const id = newId('med');
         const stored = await storeImage(storage, file, `site/${id}`);
-        const [row] = await db.insert(s.siteMedia).values({ id, key: stored.variants.at(-1)!.key, width: stored.width, height: stored.height, variants: stored.variants, alt }).returning();
+        const [row] = await db
+          .insert(s.siteMedia)
+          .values({ id, key: stored.variants.at(-1)!.key, width: stored.width, height: stored.height, variants: stored.variants, alt })
+          .returning();
         out.push(imageOut(storage, row!));
       }
       return reply.status(201).send({ data: out });
@@ -184,7 +194,10 @@ export default async function adminMediaRoutes(fastify: FastifyInstance) {
       if ([content.hero.imageId, content.story.imageId, ...content.banners.map((b) => b.imageId)].includes(req.params.mediaId)) {
         throw new AppError('CONFLICT', 409, 'This photo is on the storefront. Choose a different photo there first.');
       }
-      const [row] = await db.delete(s.siteMedia).where(and(eq(s.siteMedia.id, req.params.mediaId))).returning();
+      const [row] = await db
+        .delete(s.siteMedia)
+        .where(and(eq(s.siteMedia.id, req.params.mediaId)))
+        .returning();
       if (!row) throw notFound('Image');
       await deleteImage(storage, row.variants);
       return reply.status(204).send(null);

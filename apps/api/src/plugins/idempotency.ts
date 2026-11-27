@@ -21,7 +21,11 @@ export default fp(async function idempotencyPlugin(app: FastifyInstance) {
     }
     const userId = req.auth?.sub ?? 'anonymous';
     const route = `${req.method} ${req.routeOptions.url}`;
-    const requestHash = createHash('sha256').update(route).update(JSON.stringify(req.body ?? null)).update(JSON.stringify(req.params ?? null)).digest('base64url');
+    const requestHash = createHash('sha256')
+      .update(route)
+      .update(JSON.stringify(req.body ?? null))
+      .update(JSON.stringify(req.params ?? null))
+      .digest('base64url');
     const { db } = app.deps.db;
 
     const inserted = await db

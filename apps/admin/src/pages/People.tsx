@@ -69,9 +69,22 @@ export function CustomerDetailPage({ id }: { id: string }) {
   useEffect(() => {
     api<typeof c>(`/v1/admin/customers/${id}`).then(setC);
   }, [id]);
-  if (!c) return <Page title="Customer"><p className="text-ink-2">Loading…</p></Page>;
+  if (!c)
+    return (
+      <Page title="Customer">
+        <p className="text-ink-2">Loading…</p>
+      </Page>
+    );
   return (
-    <Page title={c.name} subtitle={`${c.email} · joined ${day(c.joinedAt)}`} actions={<Btn variant="outline" onClick={() => history.back()}>← Back</Btn>}>
+    <Page
+      title={c.name}
+      subtitle={`${c.email} · joined ${day(c.joinedAt)}`}
+      actions={
+        <Btn variant="outline" onClick={() => history.back()}>
+          ← Back
+        </Btn>
+      }
+    >
       <div className="grid gap-4 xl:grid-cols-3">
         <Card title="Orders" className="xl:col-span-2">
           <table className="w-full">
@@ -80,7 +93,9 @@ export function CustomerDetailPage({ id }: { id: string }) {
                 <tr key={o.id} onClick={() => (location.hash = `#/orders/${o.id}`)} className="cursor-pointer rule-b hover:bg-paper-2">
                   <td className={`${td} num`}>{o.number}</td>
                   <td className={`${td} num text-ink-2`}>{when(o.placedAt)}</td>
-                  <td className={td}><StatusBadge status={o.status} /></td>
+                  <td className={td}>
+                    <StatusBadge status={o.status} />
+                  </td>
                   <td className={`${td} num text-right`}>{rupees(o.total.amount)}</td>
                 </tr>
               ))}
@@ -93,7 +108,9 @@ export function CustomerDetailPage({ id }: { id: string }) {
             {c.addresses.map((a) => (
               <li key={a.id}>
                 {a.name}
-                <span className="block text-sm text-ink-2">{a.line1}, {a.city}, {a.state} <span className="num">{a.pincode}</span></span>
+                <span className="block text-sm text-ink-2">
+                  {a.line1}, {a.city}, {a.state} <span className="num">{a.pincode}</span>
+                </span>
                 <span className="num block text-sm">{a.phone}</span>
               </li>
             ))}
@@ -171,7 +188,11 @@ export function SettingsPage({ permissions, meId }: { permissions: string[]; meI
   const rupee = (p: number | null) => (p === null ? '' : String(p / 100));
   return (
     <Page title="Settings" subtitle="Shipping rates and your team.">
-      {msg && <p role="status" className="mb-4 rounded-3 bg-paper-2 p-3">{msg}</p>}
+      {msg && (
+        <p role="status" className="mb-4 rounded-3 bg-paper-2 p-3">
+          {msg}
+        </p>
+      )}
       <Card title="Shipping zones (longest pincode prefix wins)">
         <div className="space-y-3">
           {zones.map((z, i) => {
@@ -179,13 +200,27 @@ export function SettingsPage({ permissions, meId }: { permissions: string[]; meI
             return (
               <fieldset key={z.code} disabled={!canSettings} className="grid gap-2 rounded-3 bg-paper-2 p-3 md:grid-cols-8">
                 <div className="md:col-span-2">
-                  <Field label="Zone"><input value={z.name} onChange={(e) => set({ name: e.target.value })} className={input} /></Field>
+                  <Field label="Zone">
+                    <input value={z.name} onChange={(e) => set({ name: e.target.value })} className={input} />
+                  </Field>
                 </div>
                 <div className="md:col-span-2">
-                  <Field label="Pincode prefixes"><input value={z.pincodePrefixes.join(', ')} onChange={(e) => set({ pincodePrefixes: e.target.value.split(/[,\s]+/).filter(Boolean) })} className={`${input} num`} /></Field>
+                  <Field label="Pincode prefixes">
+                    <input value={z.pincodePrefixes.join(', ')} onChange={(e) => set({ pincodePrefixes: e.target.value.split(/[,\s]+/).filter(Boolean) })} className={`${input} num`} />
+                  </Field>
                 </div>
-                <Field label="Fee ₹"><input type="number" value={rupee(z.feePaise)} onChange={(e) => set({ feePaise: Math.round(Number(e.target.value) * 100) })} className={`${input} num`} /></Field>
-                <Field label="Free above ₹"><input type="number" value={rupee(z.freeAbovePaise)} placeholder="never" onChange={(e) => set({ freeAbovePaise: e.target.value === '' ? null : Math.round(Number(e.target.value) * 100) })} className={`${input} num`} /></Field>
+                <Field label="Fee ₹">
+                  <input type="number" value={rupee(z.feePaise)} onChange={(e) => set({ feePaise: Math.round(Number(e.target.value) * 100) })} className={`${input} num`} />
+                </Field>
+                <Field label="Free above ₹">
+                  <input
+                    type="number"
+                    value={rupee(z.freeAbovePaise)}
+                    placeholder="never"
+                    onChange={(e) => set({ freeAbovePaise: e.target.value === '' ? null : Math.round(Number(e.target.value) * 100) })}
+                    className={`${input} num`}
+                  />
+                </Field>
                 <Field label="Days">
                   <div className="flex items-center gap-1">
                     <input type="number" value={z.etaMinDays} onChange={(e) => set({ etaMinDays: Number(e.target.value) })} className={`${input} num`} />–
@@ -193,8 +228,14 @@ export function SettingsPage({ permissions, meId }: { permissions: string[]; meI
                   </div>
                 </Field>
                 <div className="flex items-end gap-2">
-                  <label className="flex items-center gap-1 pb-2 text-xs"><input type="checkbox" checked={z.serviceable} onChange={(e) => set({ serviceable: e.target.checked })} /> Ships</label>
-                  {canSettings && <Btn variant="outline" onClick={() => saveZone(z)}>Save</Btn>}
+                  <label className="flex items-center gap-1 pb-2 text-xs">
+                    <input type="checkbox" checked={z.serviceable} onChange={(e) => set({ serviceable: e.target.checked })} /> Ships
+                  </label>
+                  {canSettings && (
+                    <Btn variant="outline" onClick={() => saveZone(z)}>
+                      Save
+                    </Btn>
+                  )}
                 </div>
               </fieldset>
             );
@@ -211,7 +252,9 @@ export function SettingsPage({ permissions, meId }: { permissions: string[]; meI
                 <th className={th}>Role</th>
                 <th className={th}>Google linked</th>
                 <th className={th}>Last sign-in</th>
-                <th className={th}><span className="sr-only">Actions</span></th>
+                <th className={th}>
+                  <span className="sr-only">Actions</span>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -223,7 +266,11 @@ export function SettingsPage({ permissions, meId }: { permissions: string[]; meI
                   </td>
                   <td className={td}>
                     <select aria-label={`Role of ${m.name}`} value={m.role} disabled={m.id === meId} onChange={(e) => patchStaff(m.id, { role: e.target.value })} className={`${input} w-40`}>
-                      {ROLES.map((r) => <option key={r} value={r}>{r.replace('_', ' ')}</option>)}
+                      {ROLES.map((r) => (
+                        <option key={r} value={r}>
+                          {r.replace('_', ' ')}
+                        </option>
+                      ))}
                     </select>
                   </td>
                   <td className={td}>{m.linked ? 'Yes' : 'Invited'}</td>
@@ -240,14 +287,26 @@ export function SettingsPage({ permissions, meId }: { permissions: string[]; meI
             </tbody>
           </table>
           <form onSubmit={invite} className="mt-4 grid gap-2 sm:grid-cols-4">
-            <Field label="Google email"><input name="email" type="email" required className={input} /></Field>
-            <Field label="Name"><input name="name" required className={input} /></Field>
+            <Field label="Google email">
+              <input name="email" type="email" required className={input} />
+            </Field>
+            <Field label="Name">
+              <input name="name" required className={input} />
+            </Field>
             <Field label="Role">
               <select name="role" aria-label="Role" className={input} defaultValue="warehouse">
-                {ROLES.map((r) => <option key={r} value={r}>{r.replace('_', ' ')}</option>)}
+                {ROLES.map((r) => (
+                  <option key={r} value={r}>
+                    {r.replace('_', ' ')}
+                  </option>
+                ))}
               </select>
             </Field>
-            <div className="flex items-end"><Btn type="submit" variant="primary">Invite</Btn></div>
+            <div className="flex items-end">
+              <Btn type="submit" variant="primary">
+                Invite
+              </Btn>
+            </div>
           </form>
         </Card>
       )}

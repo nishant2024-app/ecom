@@ -65,7 +65,10 @@ export function problemBody(req: FastifyRequest, code: string, status: number, d
 }
 
 export function sendProblem(req: FastifyRequest, reply: FastifyReply, code: string, status: number, detail?: string, errors: AppError['fieldErrors'] = []) {
-  return reply.status(status).type('application/problem+json').send(problemBody(req, code, status, detail, errors));
+  return reply
+    .status(status)
+    .type('application/problem+json')
+    .send(problemBody(req, code, status, detail, errors));
 }
 
 export function errorHandler(error: FastifyError | AppError, req: FastifyRequest, reply: FastifyReply) {

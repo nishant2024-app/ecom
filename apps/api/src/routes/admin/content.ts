@@ -19,7 +19,9 @@ export default async function adminContentRoutes(fastify: FastifyInstance) {
   const app = fastify.withTypeProvider<TypeBoxTypeProvider>();
   const { db } = app.deps.db;
 
-  app.get('/storefront', { config: { auth: 'staff', permission: 'catalog.read' }, schema: { tags: ['Admin'], summary: 'Storefront copy and images', response: { 200: ContentOut } } }, async () => contentOut(app));
+  app.get('/storefront', { config: { auth: 'staff', permission: 'catalog.read' }, schema: { tags: ['Admin'], summary: 'Storefront copy and images', response: { 200: ContentOut } } }, async () =>
+    contentOut(app),
+  );
 
   app.put(
     '/storefront',

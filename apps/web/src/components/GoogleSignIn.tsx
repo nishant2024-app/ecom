@@ -88,7 +88,11 @@ export function GoogleSignIn() {
           Google sign-in isn&rsquo;t configured on this server yet. Set <code className="num">GOOGLE_WEB_CLIENT_ID</code> for the API (see docs/04-authentication.md).
         </p>
         {dev}
-        {error && <p role="alert" className="mt-3 text-alert">{error}</p>}
+        {error && (
+          <p role="alert" className="mt-3 text-alert">
+            {error}
+          </p>
+        )}
       </div>
     );
   }

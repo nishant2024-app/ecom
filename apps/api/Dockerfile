@@ -23,6 +23,9 @@ FROM node:22-bookworm-slim AS runtime
 ENV NODE_ENV=production
 WORKDIR /app
 COPY --from=build --chown=node:node /out ./
+# Photos uploaded without R2 live here (mount a volume on it).
+RUN mkdir -p /app/media && chown node:node /app/media
+ENV MEDIA_DIR=/app/media
 USER node
 EXPOSE 4000
 HEALTHCHECK --interval=15s --timeout=3s --start-period=10s CMD node -e "fetch('http://127.0.0.1:4000/v1/health/live').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"

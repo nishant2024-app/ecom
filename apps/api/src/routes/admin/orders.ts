@@ -36,13 +36,30 @@ export default async function adminOrderRoutes(fastify: FastifyInstance) {
       if (req.query.q) {
         const q = `%${req.query.q.trim()}%`;
         where.push(
-          or(ilike(s.orders.number, q), sql`${s.orders.shippingAddress}->>'name' ilike ${q}`, sql`${s.orders.shippingAddress}->>'phone' ilike ${q}`, sql`${s.orders.shippingAddress}->>'pincode' ilike ${q}`, ilike(s.orders.trackingNumber, q))!,
+          or(
+            ilike(s.orders.number, q),
+            sql`${s.orders.shippingAddress}->>'name' ilike ${q}`,
+            sql`${s.orders.shippingAddress}->>'phone' ilike ${q}`,
+            sql`${s.orders.shippingAddress}->>'pincode' ilike ${q}`,
+            ilike(s.orders.trackingNumber, q),
+          )!,
         );
       }
-      const rows = await db.select().from(s.orders).where(and(...where)).orderBy(desc(s.orders.id)).limit(limit + 1);
+      const rows = await db
+        .select()
+        .from(s.orders)
+        .where(and(...where))
+        .orderBy(desc(s.orders.id))
+        .limit(limit + 1);
       const page = rows.slice(0, limit);
-      const summaries = await orderSummaries(db, page.map((o) => o.id));
-      const counts = await db.select({ status: s.orders.status, n: sql<number>`count(*)::int` }).from(s.orders).groupBy(s.orders.status);
+      const summaries = await orderSummaries(
+        db,
+        page.map((o) => o.id),
+      );
+      const counts = await db
+        .select({ status: s.orders.status, n: sql<number>`count(*)::int` })
+        .from(s.orders)
+        .groupBy(s.orders.status);
       return {
         data: page.map((o) => ({
           id: o.id,
@@ -81,8 +98,16 @@ export default async function adminOrderRoutes(fastify: FastifyInstance) {
       if (req.query.status) where.push(eq(s.orders.status, req.query.status));
       if (req.query.from) where.push(sql`(${s.orders.createdAt} at time zone 'Asia/Kolkata')::date >= ${req.query.from}::date`);
       if (req.query.to) where.push(sql`(${s.orders.createdAt} at time zone 'Asia/Kolkata')::date <= ${req.query.to}::date`);
-      const rows = await db.select().from(s.orders).where(and(...where)).orderBy(desc(s.orders.id)).limit(20_000);
-      const summaries = await orderSummaries(db, rows.map((o) => o.id));
+      const rows = await db
+        .select()
+        .from(s.orders)
+        .where(and(...where))
+        .orderBy(desc(s.orders.id))
+        .limit(20_000);
+      const summaries = await orderSummaries(
+        db,
+        rows.map((o) => o.id),
+      );
       const cell = (v: unknown) => {
         let t = v == null ? '' : String(v);
         if (/^[=+\-@\t\r]/.test(t)) t = `'${t}`; // stop spreadsheet formula injection
@@ -156,30 +181,26 @@ export default async function adminOrderRoutes(fastify: FastifyInstance) {
     async (req) => ({ data: await Promise.all([...new Set(req.body.orderIds)].map((id) => orderView(db, id))) }),
   );
 
-  app.get(
-    '/orders/:orderId',
-    { config: { auth: 'staff', permission: 'orders.read' }, schema: { tags: ['Admin'], summary: 'Order detail', params: IdParam('orderId') } },
-    async (req) => {
-      const view = await orderView(db, req.params.orderId);
-      const [customer] = await db.select().from(s.customers).where(eq(s.customers.id, view.customerId));
-      const emails = await db
-        .select({ template: s.notifications.template, status: s.notifications.status, attempts: s.notifications.attempts, lastError: s.notifications.lastError, sentAt: s.notifications.sentAt })
-        .from(s.notifications)
-        .where(and(eq(s.notifications.customerId, view.customerId), sql`${s.notifications.data}->>'orderId' = ${view.id}`))
-        .orderBy(desc(s.notifications.createdAt));
-      return { ...view, customer: customer ? { id: customer.id, name: customer.name, email: customer.email, phone: customer.phone } : null, emails: emails.map((e) => ({ ...e, sentAt: e.sentAt?.toISOString() ?? null })) };
-    },
-  );
+  app.get('/orders/:orderId', { config: { auth: 'staff', permission: 'orders.read' }, schema: { tags: ['Admin'], summary: 'Order detail', params: IdParam('orderId') } }, async (req) => {
+    const view = await orderView(db, req.params.orderId);
+    const [customer] = await db.select().from(s.customers).where(eq(s.customers.id, view.customerId));
+    const emails = await db
+      .select({ template: s.notifications.template, status: s.notifications.status, attempts: s.notifications.attempts, lastError: s.notifications.lastError, sentAt: s.notifications.sentAt })
+      .from(s.notifications)
+      .where(and(eq(s.notifications.customerId, view.customerId), sql`${s.notifications.data}->>'orderId' = ${view.id}`))
+      .orderBy(desc(s.notifications.createdAt));
+    return {
+      ...view,
+      customer: customer ? { id: customer.id, name: customer.name, email: customer.email, phone: customer.phone } : null,
+      emails: emails.map((e) => ({ ...e, sentAt: e.sentAt?.toISOString() ?? null })),
+    };
+  });
 
-  app.post(
-    '/orders/:orderId/pack',
-    { config: { auth: 'staff', permission: 'orders.fulfil' }, schema: { tags: ['Admin'], summary: 'Mark packed', params: IdParam('orderId') } },
-    async (req) => {
-      await db.transaction((tx) => transition(tx, req.params.orderId, 'pack', actor(req)));
-      await audit(db, req, 'order.pack', 'order', req.params.orderId, null, null);
-      return orderView(db, req.params.orderId);
-    },
-  );
+  app.post('/orders/:orderId/pack', { config: { auth: 'staff', permission: 'orders.fulfil' }, schema: { tags: ['Admin'], summary: 'Mark packed', params: IdParam('orderId') } }, async (req) => {
+    await db.transaction((tx) => transition(tx, req.params.orderId, 'pack', actor(req)));
+    await audit(db, req, 'order.pack', 'order', req.params.orderId, null, null);
+    return orderView(db, req.params.orderId);
+  });
 
   app.post(
     '/orders/:orderId/ship',
@@ -190,7 +211,11 @@ export default async function adminOrderRoutes(fastify: FastifyInstance) {
         summary: 'Hand over to the courier (stock leaves the warehouse)',
         params: IdParam('orderId'),
         body: Type.Object(
-          { courier: Type.String({ minLength: 2, maxLength: 40 }), trackingNumber: Type.String({ minLength: 4, maxLength: 60 }), trackingUrl: Type.Optional(Type.String({ format: 'uri', maxLength: 300 })) },
+          {
+            courier: Type.String({ minLength: 2, maxLength: 40 }),
+            trackingNumber: Type.String({ minLength: 4, maxLength: 60 }),
+            trackingUrl: Type.Optional(Type.String({ format: 'uri', maxLength: 300 })),
+          },
           { additionalProperties: false },
         ),
       },
@@ -202,15 +227,11 @@ export default async function adminOrderRoutes(fastify: FastifyInstance) {
     },
   );
 
-  app.post(
-    '/orders/:orderId/deliver',
-    { config: { auth: 'staff', permission: 'orders.fulfil' }, schema: { tags: ['Admin'], summary: 'Mark delivered', params: IdParam('orderId') } },
-    async (req) => {
-      await db.transaction((tx) => transition(tx, req.params.orderId, 'deliver', actor(req)));
-      await audit(db, req, 'order.deliver', 'order', req.params.orderId, null, null);
-      return orderView(db, req.params.orderId);
-    },
-  );
+  app.post('/orders/:orderId/deliver', { config: { auth: 'staff', permission: 'orders.fulfil' }, schema: { tags: ['Admin'], summary: 'Mark delivered', params: IdParam('orderId') } }, async (req) => {
+    await db.transaction((tx) => transition(tx, req.params.orderId, 'deliver', actor(req)));
+    await audit(db, req, 'order.deliver', 'order', req.params.orderId, null, null);
+    return orderView(db, req.params.orderId);
+  });
 
   app.post(
     '/orders/:orderId/cancel',

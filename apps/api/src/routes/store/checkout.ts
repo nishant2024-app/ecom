@@ -8,10 +8,10 @@ import { quoteCart } from '../../services/quote';
 import { shippingZones } from '../../services/store';
 import { PackSchema } from './catalog';
 
-export const CartLines = Type.Array(
-  Type.Object({ variantId: Type.String({ maxLength: 40 }), quantity: Type.Integer({ minimum: 1, maximum: 50 }) }, { additionalProperties: false }),
-  { minItems: 1, maxItems: 30 },
-);
+export const CartLines = Type.Array(Type.Object({ variantId: Type.String({ maxLength: 40 }), quantity: Type.Integer({ minimum: 1, maximum: 50 }) }, { additionalProperties: false }), {
+  minItems: 1,
+  maxItems: 30,
+});
 
 const ShippingOut = Type.Object({
   zone: Type.String(),

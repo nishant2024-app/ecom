@@ -14,7 +14,7 @@
     "@dairy/ui": "workspace:*",
     "leaflet": "1.9.4",
     "motion": "^12.23.0",
-    "next": "^15.5.2",
+    "next": "^15.5.29",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },

@@ -54,13 +54,11 @@ function hasPrettyLogger(): boolean {
 
 export async function buildApp(deps: AppDeps, opts: { logger?: boolean | object } = {}): Promise<FastifyInstance> {
   const app = Fastify({
-    logger:
-      opts.logger ??
-      {
-        level: deps.config.LOG_LEVEL,
-        redact: ['req.headers.authorization', 'req.headers.cookie', 'res.headers["set-cookie"]'],
-        ...(deps.config.NODE_ENV === 'development' && hasPrettyLogger() ? { transport: { target: 'pino-pretty' } } : {}),
-      },
+    logger: opts.logger ?? {
+      level: deps.config.LOG_LEVEL,
+      redact: ['req.headers.authorization', 'req.headers.cookie', 'res.headers["set-cookie"]'],
+      ...(deps.config.NODE_ENV === 'development' && hasPrettyLogger() ? { transport: { target: 'pino-pretty' } } : {}),
+    },
     genReqId: () => newId('req'),
     requestIdHeader: false,
     trustProxy: true,
@@ -125,7 +123,7 @@ export async function buildApp(deps: AppDeps, opts: { logger?: boolean | object 
       decorateReply: false,
       immutable: true,
       maxAge: '365d',
-      setHeaders: (res) => res.setHeader('cross-origin-resource-policy', 'cross-origin'),
+      setHeaders: (reply) => void reply.header('cross-origin-resource-policy', 'cross-origin'),
     });
   }
 

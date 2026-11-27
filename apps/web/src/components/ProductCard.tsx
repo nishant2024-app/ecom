@@ -36,14 +36,22 @@ export function ProductCard({ product, priority = false, sizes = '(min-width: 10
           <span className="truncate">{product.category.name}</span>
           {product.rating && (
             <span className="inline-flex shrink-0 items-center gap-0.5 font-semibold text-ink-2" aria-label={`Rated ${product.rating.average} out of 5 from ${product.rating.count} reviews`}>
-              <span className="text-[#e3a008]" aria-hidden>★</span>
+              <span className="text-[#e3a008]" aria-hidden>
+                ★
+              </span>
               {product.rating.average.toFixed(1)} <span className="font-normal text-ink-3">({product.rating.count})</span>
             </span>
           )}
         </p>
         <h3 className="mt-0.5 flex items-start gap-1.5 text-[15px] font-bold leading-snug md:text-base">
-          <Link href={`/p/${product.slug}`} className="line-clamp-2 py-0.5 hover:text-forest">{product.name}</Link>
-          {product.isVeg && <span className="mt-1 shrink-0"><VegMark /></span>}
+          <Link href={`/p/${product.slug}`} className="line-clamp-2 py-0.5 hover:text-forest">
+            {product.name}
+          </Link>
+          {product.isVeg && (
+            <span className="mt-1 shrink-0">
+              <VegMark />
+            </span>
+          )}
         </h3>
         {product.variants.length > 1 ? (
           <div className="mt-1.5 flex flex-wrap gap-1.5" role="radiogroup" aria-label={`${product.name} size`}>
@@ -85,17 +93,40 @@ export function ProductCard({ product, priority = false, sizes = '(min-width: 10
                     exit={{ scale: 0.6, opacity: 0 }}
                     whileTap={{ scale: 0.9 }}
                     type="button"
-                    onClick={() => add({ variantId: v.id, quantity: 1, slug: product.slug, name: product.name, packSize: v.packSize, pack: product.pack, pricePaise: v.price.amount }, imageRef.current?.getBoundingClientRect())}
+                    onClick={() =>
+                      add(
+                        { variantId: v.id, quantity: 1, slug: product.slug, name: product.name, packSize: v.packSize, pack: product.pack, pricePaise: v.price.amount },
+                        imageRef.current?.getBoundingClientRect(),
+                      )
+                    }
                     className="grid h-10 w-10 place-items-center rounded-pill bg-forest text-on-forest hover:bg-forest-2"
                     aria-label={`Add ${product.name}, ${v.packSize}, to cart`}
                   >
                     <PlusIcon />
                   </motion.button>
                 ) : (
-                  <motion.div key="step" initial={{ width: 40, opacity: 0 }} animate={{ width: 104, opacity: 1 }} exit={{ opacity: 0 }} className="flex h-10 items-center justify-between overflow-hidden rounded-pill bg-forest text-on-forest">
-                    <button type="button" onClick={() => setQuantity(v.id, inCart - 1)} className="grid h-10 w-9 place-items-center" aria-label={`One less ${product.name}`}><MinusIcon size={16} /></button>
-                    <span className="num text-[15px] font-bold" aria-live="polite">{inCart}</span>
-                    <button type="button" disabled={inCart >= v.maxPerOrder} onClick={() => setQuantity(v.id, inCart + 1)} className="grid h-10 w-9 place-items-center disabled:opacity-40" aria-label={`One more ${product.name}`}><PlusIcon size={16} /></button>
+                  <motion.div
+                    key="step"
+                    initial={{ width: 40, opacity: 0 }}
+                    animate={{ width: 104, opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="flex h-10 items-center justify-between overflow-hidden rounded-pill bg-forest text-on-forest"
+                  >
+                    <button type="button" onClick={() => setQuantity(v.id, inCart - 1)} className="grid h-10 w-9 place-items-center" aria-label={`One less ${product.name}`}>
+                      <MinusIcon size={16} />
+                    </button>
+                    <span className="num text-[15px] font-bold" aria-live="polite">
+                      {inCart}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={inCart >= v.maxPerOrder}
+                      onClick={() => setQuantity(v.id, inCart + 1)}
+                      className="grid h-10 w-9 place-items-center disabled:opacity-40"
+                      aria-label={`One more ${product.name}`}
+                    >
+                      <PlusIcon size={16} />
+                    </button>
                   </motion.div>
                 )}
               </AnimatePresence>

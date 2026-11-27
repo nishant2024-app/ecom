@@ -87,33 +87,53 @@ export default async function adminCouponRoutes(fastify: FastifyInstance) {
 
   app.get('/coupons', { config: { auth: 'staff', permission: 'catalog.read' }, schema: { tags: ['Admin'], summary: 'Coupons with how often each was used' } }, async () => {
     const rows = await db.select().from(s.coupons).orderBy(desc(s.coupons.createdAt));
-    const data = [];
-    for (const c of rows) {
-      const u = await usage(c.id);
-      data.push(out(c, u.used, u.sum));
-    }
-    return { data };
+    // One grouped query for all coupons instead of one query per coupon.
+    const totals = await db
+      .select({ couponId: s.couponRedemptions.couponId, n: count(), sum: sql<number>`coalesce(sum(${s.couponRedemptions.amountPaise}), 0)::bigint` })
+      .from(s.couponRedemptions)
+      .innerJoin(s.orders, eq(s.orders.id, s.couponRedemptions.orderId))
+      .where(sql`${s.orders.status} <> 'cancelled'`)
+      .groupBy(s.couponRedemptions.couponId);
+    const byCoupon = new Map(totals.map((t) => [t.couponId, t]));
+    return { data: rows.map((c) => out(c, Number(byCoupon.get(c.id)?.n ?? 0), Number(byCoupon.get(c.id)?.sum ?? 0))) };
   });
 
   app.post('/coupons', { config: { auth: 'staff', permission: 'pricing.write' }, schema: { tags: ['Admin'], summary: 'Create a coupon', body: CouponInput } }, async (req, reply) => {
     const v = values(req.body);
     const sellerId = await defaultSellerId(db);
-    const [clash] = await db.select({ id: s.coupons.id }).from(s.coupons).where(sql`${s.coupons.sellerId} = ${sellerId} and ${s.coupons.code} = ${v.code}`);
+    const [clash] = await db
+      .select({ id: s.coupons.id })
+      .from(s.coupons)
+      .where(sql`${s.coupons.sellerId} = ${sellerId} and ${s.coupons.code} = ${v.code}`);
     if (clash) throw new AppError('CONFLICT', 409, `The code ${v.code} already exists`);
-    const [row] = await db.insert(s.coupons).values({ id: newId('cpn'), sellerId, ...v }).returning();
+    const [row] = await db
+      .insert(s.coupons)
+      .values({ id: newId('cpn'), sellerId, ...v })
+      .returning();
     await audit(db, req, 'coupon.create', 'coupon', row!.id, null, row);
     return reply.status(201).send(out(row!, 0, 0));
   });
 
-  app.put('/coupons/:couponId', { config: { auth: 'staff', permission: 'pricing.write' }, schema: { tags: ['Admin'], summary: 'Update a coupon', params: IdParam('couponId'), body: CouponInput } }, async (req) => {
-    const [before] = await db.select().from(s.coupons).where(eq(s.coupons.id, req.params.couponId));
-    if (!before) throw notFound('Coupon');
-    const v = values(req.body);
-    const [clash] = await db.select({ id: s.coupons.id }).from(s.coupons).where(sql`${s.coupons.sellerId} = ${before.sellerId} and ${s.coupons.code} = ${v.code} and ${s.coupons.id} <> ${before.id}`);
-    if (clash) throw new AppError('CONFLICT', 409, `The code ${v.code} already exists`);
-    const [row] = await db.update(s.coupons).set({ ...v, updatedAt: new Date() }).where(eq(s.coupons.id, before.id)).returning();
-    await audit(db, req, 'coupon.update', 'coupon', before.id, before, row);
-    const u = await usage(before.id);
-    return out(row!, u.used, u.sum);
-  });
+  app.put(
+    '/coupons/:couponId',
+    { config: { auth: 'staff', permission: 'pricing.write' }, schema: { tags: ['Admin'], summary: 'Update a coupon', params: IdParam('couponId'), body: CouponInput } },
+    async (req) => {
+      const [before] = await db.select().from(s.coupons).where(eq(s.coupons.id, req.params.couponId));
+      if (!before) throw notFound('Coupon');
+      const v = values(req.body);
+      const [clash] = await db
+        .select({ id: s.coupons.id })
+        .from(s.coupons)
+        .where(sql`${s.coupons.sellerId} = ${before.sellerId} and ${s.coupons.code} = ${v.code} and ${s.coupons.id} <> ${before.id}`);
+      if (clash) throw new AppError('CONFLICT', 409, `The code ${v.code} already exists`);
+      const [row] = await db
+        .update(s.coupons)
+        .set({ ...v, updatedAt: new Date() })
+        .where(eq(s.coupons.id, before.id))
+        .returning();
+      await audit(db, req, 'coupon.update', 'coupon', before.id, before, row);
+      const u = await usage(before.id);
+      return out(row!, u.used, u.sum);
+    },
+  );
 }

@@ -257,10 +257,55 @@ const catalog: P[] = [
 
 const zones: (typeof s.shippingZones.$inferInsert)[] = [
   { code: 'local', name: 'Pune', pincodePrefixes: ['411', '412'], feePaise: 4000, freeAbovePaise: 49900, includedGrams: 2000, perExtraKgPaise: 2000, etaMinDays: 1, etaMaxDays: 2, sort: 0 },
-  { code: 'state', name: 'Maharashtra & Goa', pincodePrefixes: ['40', '41', '42', '43', '44'], feePaise: 6000, freeAbovePaise: 69900, includedGrams: 2000, perExtraKgPaise: 2500, etaMinDays: 2, etaMaxDays: 4, sort: 1 },
-  { code: 'national', name: 'Rest of India', pincodePrefixes: ['1', '2', '3', '4', '5', '6', '7', '8'], feePaise: 9000, freeAbovePaise: 99900, includedGrams: 2000, perExtraKgPaise: 3000, etaMinDays: 3, etaMaxDays: 6, sort: 2 },
-  { code: 'remote', name: 'North East, J&K and islands', pincodePrefixes: ['18', '19', '78', '79', '744', '6825'], feePaise: 15000, freeAbovePaise: null, includedGrams: 1000, perExtraKgPaise: 5000, etaMinDays: 6, etaMaxDays: 10, sort: 3 },
-  { code: 'apo', name: 'Army post offices', pincodePrefixes: ['9'], feePaise: 0, freeAbovePaise: null, includedGrams: 0, perExtraKgPaise: 0, etaMinDays: 0, etaMaxDays: 0, serviceable: false, sort: 4 },
+  {
+    code: 'state',
+    name: 'Maharashtra & Goa',
+    pincodePrefixes: ['40', '41', '42', '43', '44'],
+    feePaise: 6000,
+    freeAbovePaise: 69900,
+    includedGrams: 2000,
+    perExtraKgPaise: 2500,
+    etaMinDays: 2,
+    etaMaxDays: 4,
+    sort: 1,
+  },
+  {
+    code: 'national',
+    name: 'Rest of India',
+    pincodePrefixes: ['1', '2', '3', '4', '5', '6', '7', '8'],
+    feePaise: 9000,
+    freeAbovePaise: 99900,
+    includedGrams: 2000,
+    perExtraKgPaise: 3000,
+    etaMinDays: 3,
+    etaMaxDays: 6,
+    sort: 2,
+  },
+  {
+    code: 'remote',
+    name: 'North East, J&K and islands',
+    pincodePrefixes: ['18', '19', '78', '79', '744', '6825'],
+    feePaise: 15000,
+    freeAbovePaise: null,
+    includedGrams: 1000,
+    perExtraKgPaise: 5000,
+    etaMinDays: 6,
+    etaMaxDays: 10,
+    sort: 3,
+  },
+  {
+    code: 'apo',
+    name: 'Army post offices',
+    pincodePrefixes: ['9'],
+    feePaise: 0,
+    freeAbovePaise: null,
+    includedGrams: 0,
+    perExtraKgPaise: 0,
+    etaMinDays: 0,
+    etaMaxDays: 0,
+    serviceable: false,
+    sort: 4,
+  },
 ];
 
 const variantRows = new Map<string, { id: string; price: number; name: string; packSize: string; grams: number; hsn: string; gst: number; batchId: string }>();
@@ -360,7 +405,18 @@ await db.transaction(async (tx) => {
   );
 
   if (catalogMode === 'demo') {
-    await tx.insert(s.coupons).values({ id: newId('cpn'), sellerId, code: 'WELCOME10', description: 'Sample: 10% off a first order', kind: 'percent', percentBps: 1000, maxDiscountPaise: 10000, minSubtotalPaise: 30000, perCustomerLimit: 1, firstOrderOnly: true });
+    await tx.insert(s.coupons).values({
+      id: newId('cpn'),
+      sellerId,
+      code: 'WELCOME10',
+      description: 'Sample: 10% off a first order',
+      kind: 'percent',
+      percentBps: 1000,
+      maxDiscountPaise: 10000,
+      minSubtotalPaise: 30000,
+      perCustomerLimit: 1,
+      firstOrderOnly: true,
+    });
   }
 
   const ownerEmail = process.env.SEED_OWNER_EMAIL;
@@ -388,12 +444,40 @@ await db.transaction(async (tx) => {
 
     // Sample orders across the last week, in different states.
     const samples: { daysAgo: number; status: 'delivered' | 'shipped' | 'packed' | 'confirmed'; lines: [string, number][] }[] = [
-      { daysAgo: 6, status: 'delivered', lines: [['GH-A2-500', 1], ['MP-WH-500', 2]] },
+      {
+        daysAgo: 6,
+        status: 'delivered',
+        lines: [
+          ['GH-A2-500', 1],
+          ['MP-WH-500', 2],
+        ],
+      },
       { daysAgo: 5, status: 'delivered', lines: [['UHT-TM-6L', 1]] },
-      { daysAgo: 3, status: 'delivered', lines: [['SW-PD-250', 2], ['CM-400', 1]] },
-      { daysAgo: 2, status: 'shipped', lines: [['GH-DN-1000', 1], ['FM-KB-6', 1]] },
+      {
+        daysAgo: 3,
+        status: 'delivered',
+        lines: [
+          ['SW-PD-250', 2],
+          ['CM-400', 1],
+        ],
+      },
+      {
+        daysAgo: 2,
+        status: 'shipped',
+        lines: [
+          ['GH-DN-1000', 1],
+          ['FM-KB-6', 1],
+        ],
+      },
       { daysAgo: 1, status: 'packed', lines: [['GH-A2-1000', 1]] },
-      { daysAgo: 0, status: 'confirmed', lines: [['DW-1000', 1], ['FM-EL-6', 2]] },
+      {
+        daysAgo: 0,
+        status: 'confirmed',
+        lines: [
+          ['DW-1000', 1],
+          ['FM-EL-6', 2],
+        ],
+      },
     ];
     for (const [n, sample] of samples.entries()) {
       const orderId = newId('ord');

@@ -42,7 +42,7 @@ describe('placing and paying for orders', () => {
     expect(list.data[0]).toMatchObject({ id: order.id, itemCount: 2 });
   });
 
-  it('refuses unserviceable pincodes, out-of-stock items and other people\'s orders', async () => {
+  it("refuses unserviceable pincodes, out-of-stock items and other people's orders", async () => {
     const ids = await variantIds(t);
     const apo = await readyCustomer(t, '900001');
     expect((await place(apo, [{ variantId: ids.uht1l, quantity: 1 }])).json().code).toBe('NOT_SERVICEABLE');
@@ -100,7 +100,12 @@ describe('Cashfree', () => {
   it('creates a Cashfree order with amounts in rupees and confirms on a signed webhook, once', async () => {
     const c = await readyCustomer(cf);
     const ids = await variantIds(cf);
-    const res = await cf.app.inject({ method: 'POST', url: '/v1/store/orders', headers: { ...c.headers, 'idempotency-key': crypto.randomUUID() }, payload: { lines: [{ variantId: ids.ghee500, quantity: 1 }], addressId: c.addressId } });
+    const res = await cf.app.inject({
+      method: 'POST',
+      url: '/v1/store/orders',
+      headers: { ...c.headers, 'idempotency-key': crypto.randomUUID() },
+      payload: { lines: [{ variantId: ids.ghee500, quantity: 1 }], addressId: c.addressId },
+    });
     const { order, payment } = res.json();
     expect(payment).toMatchObject({ provider: 'cashfree', environment: 'sandbox', paymentSessionId: `session_${payment.id}`, mockCheckoutPath: null });
     const created = calls.find((x) => x.url.endsWith('/orders'))!.body as { order_amount: number; order_currency: string; customer_details: { customer_phone: string } };
@@ -113,7 +118,12 @@ describe('Cashfree', () => {
     });
     const timestamp = String(Math.floor(Date.now() / 1000));
     const send = (signature: string) =>
-      cf.app.inject({ method: 'POST', url: '/v1/webhooks/cashfree/payments', headers: { 'content-type': 'application/json', 'x-webhook-timestamp': timestamp, 'x-webhook-signature': signature }, payload: body });
+      cf.app.inject({
+        method: 'POST',
+        url: '/v1/webhooks/cashfree/payments',
+        headers: { 'content-type': 'application/json', 'x-webhook-timestamp': timestamp, 'x-webhook-signature': signature },
+        payload: body,
+      });
 
     expect((await send('bad-signature')).statusCode).toBe(400);
     const ok = await send(signCashfreeWebhook(body, secret, timestamp));
@@ -129,7 +139,12 @@ describe('Cashfree', () => {
   it('rejects stale webhook timestamps', async () => {
     const body = JSON.stringify({ type: 'PAYMENT_SUCCESS_WEBHOOK', data: { order: { order_id: newId('pay') } } });
     const old = String(Math.floor(Date.now() / 1000) - 3600);
-    const res = await cf.app.inject({ method: 'POST', url: '/v1/webhooks/cashfree/payments', headers: { 'content-type': 'application/json', 'x-webhook-timestamp': old, 'x-webhook-signature': signCashfreeWebhook(body, secret, old) }, payload: body });
+    const res = await cf.app.inject({
+      method: 'POST',
+      url: '/v1/webhooks/cashfree/payments',
+      headers: { 'content-type': 'application/json', 'x-webhook-timestamp': old, 'x-webhook-signature': signCashfreeWebhook(body, secret, old) },
+      payload: body,
+    });
     expect(res.statusCode).toBe(400);
   });
 });

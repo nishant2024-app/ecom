@@ -23,7 +23,11 @@ export function useQuote(lines: { variantId: string; quantity: number }[], pinco
     const ctrl = new AbortController();
     setLoading(true);
     const t = setTimeout(() => {
-      api<Quote>('/v1/store/checkout/quote', { method: 'POST', body: JSON.stringify({ lines, ...(/^[1-9]\d{5}$/.test(pincode) ? { pincode } : {}), ...(couponCode ? { couponCode } : {}) }), signal: ctrl.signal })
+      api<Quote>('/v1/store/checkout/quote', {
+        method: 'POST',
+        body: JSON.stringify({ lines, ...(/^[1-9]\d{5}$/.test(pincode) ? { pincode } : {}), ...(couponCode ? { couponCode } : {}) }),
+        signal: ctrl.signal,
+      })
         .then((q) => {
           setQuote(q);
           setError(null);
@@ -131,7 +135,14 @@ export function CartDrawer() {
                       const line = quote?.lines.find((l) => l.variantId === item.variantId);
                       const max = Math.max(1, line?.maxQuantity ?? 10);
                       return (
-                        <motion.li key={item.variantId} layout initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30, height: 0 }} className="flex gap-3 bg-paper-2 p-3 rounded-4">
+                        <motion.li
+                          key={item.variantId}
+                          layout
+                          initial={{ opacity: 0, x: 30 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -30, height: 0 }}
+                          className="flex gap-3 bg-paper-2 p-3 rounded-4"
+                        >
                           <Link href={`/p/${item.slug}`} onClick={() => setOpen(false)} className="w-16 shrink-0">
                             <PackShot kind={item.pack.kind} color={item.pack.color} accent={item.pack.accent} label={item.name} size={item.packSize} className="h-20 w-16" />
                           </Link>
@@ -143,7 +154,11 @@ export function CartDrawer() {
                               </div>
                               <Money paise={line?.total.amount ?? item.pricePaise * item.quantity} />
                             </div>
-                            {line?.problem && <p className="mt-1 text-sm text-alert">{line.problem === 'out_of_stock' ? 'Out of stock' : line.problem === 'unavailable' ? 'No longer sold' : `Only ${line.maxQuantity} available`}</p>}
+                            {line?.problem && (
+                              <p className="mt-1 text-sm text-alert">
+                                {line.problem === 'out_of_stock' ? 'Out of stock' : line.problem === 'unavailable' ? 'No longer sold' : `Only ${line.maxQuantity} available`}
+                              </p>
+                            )}
                             <div className="mt-auto flex items-center justify-between pt-2">
                               <div className="flex items-center rounded-pill bg-paper">
                                 <button type="button" aria-label={`One less ${item.name}`} onClick={() => setQuantity(item.variantId, item.quantity - 1)} className="h-8 w-8 text-lg">
@@ -152,7 +167,13 @@ export function CartDrawer() {
                                 <span className="num w-6 text-center" aria-live="polite">
                                   {item.quantity}
                                 </span>
-                                <button type="button" aria-label={`One more ${item.name}`} disabled={item.quantity >= max} onClick={() => setQuantity(item.variantId, item.quantity + 1)} className="h-8 w-8 text-lg disabled:text-ink-3">
+                                <button
+                                  type="button"
+                                  aria-label={`One more ${item.name}`}
+                                  disabled={item.quantity >= max}
+                                  onClick={() => setQuantity(item.variantId, item.quantity + 1)}
+                                  className="h-8 w-8 text-lg disabled:text-ink-3"
+                                >
                                   +
                                 </button>
                               </div>
@@ -190,7 +211,9 @@ export function CartDrawer() {
                     {quote && quote.discount.amount > 0 && (
                       <div className="flex justify-between text-forest">
                         <dt>Coupon {quote.coupon?.code}</dt>
-                        <dd>−<Money paise={quote.discount.amount} /></dd>
+                        <dd>
+                          −<Money paise={quote.discount.amount} />
+                        </dd>
                       </div>
                     )}
                     <div className="flex justify-between">

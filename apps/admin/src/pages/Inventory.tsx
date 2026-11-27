@@ -54,8 +54,12 @@ export function InventoryPage({ permissions }: { permissions: string[] }) {
       subtitle="Stock by batch. Orders reserve the batch that expires first."
       actions={
         <>
-          <Btn variant={filter === 'all' ? 'solid' : 'outline'} onClick={() => setFilter('all')}>All</Btn>
-          <Btn variant={filter === 'low' ? 'solid' : 'outline'} onClick={() => setFilter('low')}>Low stock <span className="num">{rows.filter((r) => r.low).length}</span></Btn>
+          <Btn variant={filter === 'all' ? 'solid' : 'outline'} onClick={() => setFilter('all')}>
+            All
+          </Btn>
+          <Btn variant={filter === 'low' ? 'solid' : 'outline'} onClick={() => setFilter('low')}>
+            Low stock <span className="num">{rows.filter((r) => r.low).length}</span>
+          </Btn>
         </>
       }
     >
@@ -116,7 +120,10 @@ function Batches({ row, canWrite, onChanged }: { row: Row; canWrite: boolean; on
     const f = new FormData(e.currentTarget);
     setError(null);
     try {
-      await api('/v1/admin/batches', { method: 'POST', body: JSON.stringify({ variantId: row.variantId, code: f.get('code'), manufacturedOn: f.get('manufacturedOn'), expiresOn: f.get('expiresOn'), quantity: Number(f.get('quantity')) }) });
+      await api('/v1/admin/batches', {
+        method: 'POST',
+        body: JSON.stringify({ variantId: row.variantId, code: f.get('code'), manufacturedOn: f.get('manufacturedOn'), expiresOn: f.get('expiresOn'), quantity: Number(f.get('quantity')) }),
+      });
       (e.target as HTMLFormElement).reset();
       await load();
       onChanged();
@@ -144,7 +151,11 @@ function Batches({ row, canWrite, onChanged }: { row: Row; canWrite: boolean; on
   const today = new Date().toISOString().slice(0, 10);
   return (
     <div className="space-y-5">
-      {error && <p role="alert" className="text-alert">{error}</p>}
+      {error && (
+        <p role="alert" className="text-alert">
+          {error}
+        </p>
+      )}
       <Card title="Batches (first to expire ships first)">
         <table className="w-full">
           <thead>
@@ -154,7 +165,9 @@ function Batches({ row, canWrite, onChanged }: { row: Row; canWrite: boolean; on
               <th className={th}>Expires</th>
               <th className={`${th} text-right`}>On hand</th>
               <th className={`${th} text-right`}>Reserved</th>
-              <th className={th}><span className="sr-only">Actions</span></th>
+              <th className={th}>
+                <span className="sr-only">Actions</span>
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -165,7 +178,13 @@ function Batches({ row, canWrite, onChanged }: { row: Row; canWrite: boolean; on
                 <td className={`${td} num ${b.expiresOn < today ? 'text-alert' : ''}`}>{day(b.expiresOn)}</td>
                 <td className={`${td} num text-right`}>{b.onHand}</td>
                 <td className={`${td} num text-right text-ink-2`}>{b.reserved}</td>
-                <td className={`${td} text-right`}>{canWrite && b.onHand > 0 && <Btn variant="ghost" onClick={() => adjust(b)}>Adjust</Btn>}</td>
+                <td className={`${td} text-right`}>
+                  {canWrite && b.onHand > 0 && (
+                    <Btn variant="ghost" onClick={() => adjust(b)}>
+                      Adjust
+                    </Btn>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -174,11 +193,23 @@ function Batches({ row, canWrite, onChanged }: { row: Row; canWrite: boolean; on
       {canWrite && (
         <Card title="Record a production batch">
           <form onSubmit={addBatch} className="grid gap-3 sm:grid-cols-4">
-            <Field label="Batch code"><input name="code" required defaultValue={`${row.sku}-${today.replaceAll('-', '').slice(2)}`} className={`${input} num`} /></Field>
-            <Field label="Made on"><input name="manufacturedOn" type="date" required defaultValue={today} className={`${input} num`} /></Field>
-            <Field label="Expires on"><input name="expiresOn" type="date" required className={`${input} num`} /></Field>
-            <Field label="Units"><input name="quantity" type="number" min={1} required className={`${input} num`} /></Field>
-            <div className="sm:col-span-4"><Btn type="submit" variant="primary">Add batch</Btn></div>
+            <Field label="Batch code">
+              <input name="code" required defaultValue={`${row.sku}-${today.replaceAll('-', '').slice(2)}`} className={`${input} num`} />
+            </Field>
+            <Field label="Made on">
+              <input name="manufacturedOn" type="date" required defaultValue={today} className={`${input} num`} />
+            </Field>
+            <Field label="Expires on">
+              <input name="expiresOn" type="date" required className={`${input} num`} />
+            </Field>
+            <Field label="Units">
+              <input name="quantity" type="number" min={1} required className={`${input} num`} />
+            </Field>
+            <div className="sm:col-span-4">
+              <Btn type="submit" variant="primary">
+                Add batch
+              </Btn>
+            </div>
           </form>
         </Card>
       )}
@@ -189,7 +220,9 @@ function Batches({ row, canWrite, onChanged }: { row: Row; canWrite: boolean; on
               <span className="num w-40 shrink-0 whitespace-nowrap text-ink-2">{when(m.createdAt)}</span>
               <span className="num w-20">{m.batchCode.split('-').pop()}</span>
               <span className="w-20 capitalize">{m.kind}</span>
-              <span className={`num w-14 text-right ${['shipped', 'wasted', 'reserved'].includes(m.kind) || m.quantity < 0 ? 'text-ink-2' : ''}`}>{m.quantity > 0 && !['shipped', 'reserved'].includes(m.kind) ? `+${m.quantity}` : m.quantity}</span>
+              <span className={`num w-14 text-right ${['shipped', 'wasted', 'reserved'].includes(m.kind) || m.quantity < 0 ? 'text-ink-2' : ''}`}>
+                {m.quantity > 0 && !['shipped', 'reserved'].includes(m.kind) ? `+${m.quantity}` : m.quantity}
+              </span>
               <span className="text-ink-2">{m.reason ?? m.referenceType ?? ''}</span>
             </li>
           ))}

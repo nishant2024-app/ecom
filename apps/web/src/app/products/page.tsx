@@ -27,15 +27,18 @@ export default async function Products({ searchParams }: { searchParams: Promise
   ]);
   const list = products?.data ?? [];
   const current = categories?.data.find((c) => c.slug === category);
-  const chip = (active: boolean) => `whitespace-nowrap py-1 text-[17px] ${active ? 'text-ink underline decoration-2 underline-offset-[7px]' : 'text-ink-2 hover:text-ink'}`;
 
   const sortLink = (v: string) => `/products?${new URLSearchParams({ ...(category ? { category } : {}), ...(q ? { q } : {}), ...(v ? { sort: v } : {}) })}`;
-  const tab = (active: boolean) => `whitespace-nowrap rounded-pill border px-4 py-2 text-[14px] font-semibold transition-colors ${active ? 'border-forest bg-forest text-on-forest' : 'border-rule bg-paper hover:border-forest'}`;
+  const tab = (active: boolean) =>
+    `whitespace-nowrap rounded-pill border px-4 py-2 text-[14px] font-semibold transition-colors ${active ? 'border-forest bg-forest text-on-forest' : 'border-rule bg-paper hover:border-forest'}`;
 
   return (
     <div className="mx-auto max-w-[1280px] px-4 pb-10 pt-6 md:px-6">
       <nav aria-label="Breadcrumb" className="text-[13px] text-ink-2 [&_a]:inline-block [&_a]:py-2">
-        <Link href="/" className="hover:text-forest">Home</Link> / <span className="text-ink-2">{q ? 'Search' : (current?.name ?? 'All products')}</span>
+        <Link href="/" className="hover:text-forest">
+          Home
+        </Link>{' '}
+        / <span className="text-ink-2">{q ? 'Search' : (current?.name ?? 'All products')}</span>
       </nav>
       <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
         <div>
@@ -45,26 +48,40 @@ export default async function Products({ searchParams }: { searchParams: Promise
         <div className="flex items-center gap-2 text-[14px] text-ink-2">
           Sort
           <span className="flex gap-1 rounded-pill bg-paper-2 p-1">
-            {[['', 'Popular'], ['price_asc', 'Price: low'], ['price_desc', 'Price: high']].map(([v, l]) => (
-              <Link key={v} href={sortLink(v!)} className={`rounded-pill px-3 py-1.5 text-[13px] font-semibold ${(sort ?? '') === v ? 'bg-paper text-ink shadow-card' : 'text-ink-2 hover:text-ink'}`}>{l}</Link>
+            {[
+              ['', 'Popular'],
+              ['price_asc', 'Price: low'],
+              ['price_desc', 'Price: high'],
+            ].map(([v, l]) => (
+              <Link key={v} href={sortLink(v!)} className={`rounded-pill px-3 py-1.5 text-[13px] font-semibold ${(sort ?? '') === v ? 'bg-paper text-ink shadow-card' : 'text-ink-2 hover:text-ink'}`}>
+                {l}
+              </Link>
             ))}
           </span>
         </div>
       </div>
 
       <nav aria-label="Categories" className="-mx-4 mt-5 flex gap-2 overflow-x-auto px-4 pb-1 md:mx-0 md:px-0">
-        <Link href="/products" aria-current={!category ? 'page' : undefined} className={tab(!category && !q)}>All</Link>
+        <Link href="/products" aria-current={!category ? 'page' : undefined} className={tab(!category && !q)}>
+          All
+        </Link>
         {categories?.data.map((c) => (
-          <Link key={c.slug} href={`/products?category=${c.slug}`} aria-current={category === c.slug ? 'page' : undefined} className={tab(category === c.slug)}>{c.name}</Link>
+          <Link key={c.slug} href={`/products?category=${c.slug}`} aria-current={category === c.slug ? 'page' : undefined} className={tab(category === c.slug)}>
+            {c.name}
+          </Link>
         ))}
       </nav>
 
-      <h2 className="sr-only">{list.length} product{list.length === 1 ? '' : 's'}</h2>
+      <h2 className="sr-only">
+        {list.length} product{list.length === 1 ? '' : 's'}
+      </h2>
       {list.length === 0 ? (
         <div className="mt-12 rounded-5 bg-paper-2 p-10 text-center">
           <p className="text-lg font-bold">No products found</p>
           <p className="mt-1 text-ink-2">Try “ghee”, “powder” or “peda”.</p>
-          <Link href="/products" className="mt-5 inline-flex h-11 items-center rounded-pill bg-forest px-6 font-semibold text-on-forest">See all products</Link>
+          <Link href="/products" className="mt-5 inline-flex h-11 items-center rounded-pill bg-forest px-6 font-semibold text-on-forest">
+            See all products
+          </Link>
         </div>
       ) : (
         <div className="mt-6 grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-5">

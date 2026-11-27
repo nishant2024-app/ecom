@@ -38,7 +38,10 @@ export default async function orderRoutes(fastify: FastifyInstance) {
       schema: {
         tags: ['Orders'],
         summary: 'Place an order and start payment',
-        body: Type.Object({ lines: CartLines, addressId: Type.String(), note: Type.Optional(Type.String({ maxLength: 300 })), couponCode: Type.Optional(Type.String({ maxLength: 40 })) }, { additionalProperties: false }),
+        body: Type.Object(
+          { lines: CartLines, addressId: Type.String(), note: Type.Optional(Type.String({ maxLength: 300 })), couponCode: Type.Optional(Type.String({ maxLength: 40 })) },
+          { additionalProperties: false },
+        ),
       },
     },
     async (req, reply) => {
@@ -66,7 +69,10 @@ export default async function orderRoutes(fastify: FastifyInstance) {
         .orderBy(desc(s.orders.id))
         .limit(limit + 1);
       const page = rows.slice(0, limit);
-      const summaries = await orderSummaries(db, page.map((o) => o.id));
+      const summaries = await orderSummaries(
+        db,
+        page.map((o) => o.id),
+      );
       return {
         data: page.map((o) => ({
           id: o.id,
@@ -85,18 +91,14 @@ export default async function orderRoutes(fastify: FastifyInstance) {
     },
   );
 
-  app.get(
-    '/orders/:orderId',
-    { config: cfg, schema: { tags: ['Orders'], summary: 'Order detail with timeline', params: IdParam('orderId') } },
-    async (req) => {
-      const order = await owned(requireAuth(req).sub, req.params.orderId);
-      return {
-        ...order,
-        canCancel: customerCanCancel(order.status as OrderStatus),
-        payment: order.payment ? { ...order.payment, ...(order.payment.paymentSessionId ? paymentOut(order.payment.id, order.payment.paymentSessionId) : {}) } : null,
-      };
-    },
-  );
+  app.get('/orders/:orderId', { config: cfg, schema: { tags: ['Orders'], summary: 'Order detail with timeline', params: IdParam('orderId') } }, async (req) => {
+    const order = await owned(requireAuth(req).sub, req.params.orderId);
+    return {
+      ...order,
+      canCancel: customerCanCancel(order.status as OrderStatus),
+      payment: order.payment ? { ...order.payment, ...(order.payment.paymentSessionId ? paymentOut(order.payment.id, order.payment.paymentSessionId) : {}) } : null,
+    };
+  });
 
   app.post(
     '/orders/:orderId/pay',

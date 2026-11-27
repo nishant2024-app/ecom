@@ -81,9 +81,13 @@ export function CheckoutView() {
     setBusy(true);
     setError(null);
     try {
-      const r = await api<{ order: Order; payment: PaymentStart }>('/v1/store/orders', { method: 'POST', idempotencyKey: idempotency.current, body: JSON.stringify({ lines, addressId, ...(quote?.coupon ? { couponCode: quote.coupon.code } : {}) }) });
+      const r = await api<{ order: Order; payment: PaymentStart }>('/v1/store/orders', {
+        method: 'POST',
+        idempotencyKey: idempotency.current,
+        body: JSON.stringify({ lines, addressId, ...(quote?.coupon ? { couponCode: quote.coupon.code } : {}) }),
+      });
       clear();
-      setCoupon("");
+      setCoupon('');
       await startPayment(r.payment, router);
     } catch (e) {
       setError(e instanceof ApiError ? (e.problem.detail ?? e.problem.title) : e instanceof Error ? e.message : 'Could not place the order');

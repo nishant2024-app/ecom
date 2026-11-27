@@ -9,23 +9,15 @@ export default async function metaRoutes(fastify: FastifyInstance) {
   const app = fastify.withTypeProvider<TypeBoxTypeProvider>();
   const { db } = app.deps.db;
 
-  app.get(
-    '/health/live',
-    { config: { auth: 'public', rateLimit: false }, schema: { tags: ['Meta'], summary: 'Liveness' } },
-    async () => ({ status: 'ok', release: process.env.GIT_SHA ?? 'dev' }),
-  );
+  app.get('/health/live', { config: { auth: 'public', rateLimit: false }, schema: { tags: ['Meta'], summary: 'Liveness' } }, async () => ({ status: 'ok', release: process.env.GIT_SHA ?? 'dev' }));
 
-  app.get(
-    '/health/ready',
-    { config: { auth: 'public', rateLimit: false }, schema: { tags: ['Meta'], summary: 'Readiness' } },
-    async (req, reply) => {
-      const timeout = <T>(p: Promise<T>) => Promise.race([p, new Promise<never>((_, rej) => setTimeout(() => rej(new Error('timeout')), 500))]);
-      const [database, cache] = await Promise.allSettled([timeout(db.execute(sql`select 1`)), timeout(app.deps.kv.ping())]);
-      const ok = database.status === 'fulfilled' && cache.status === 'fulfilled' && cache.value === true;
-      if (!ok) return sendProblem(req, reply, 'SERVICE_UNAVAILABLE', 503, `database: ${database.status}, cache: ${cache.status}`);
-      return { status: 'ready' };
-    },
-  );
+  app.get('/health/ready', { config: { auth: 'public', rateLimit: false }, schema: { tags: ['Meta'], summary: 'Readiness' } }, async (req, reply) => {
+    const timeout = <T>(p: Promise<T>) => Promise.race([p, new Promise<never>((_, rej) => setTimeout(() => rej(new Error('timeout')), 500))]);
+    const [database, cache] = await Promise.allSettled([timeout(db.execute(sql`select 1`)), timeout(app.deps.kv.ping())]);
+    const ok = database.status === 'fulfilled' && cache.status === 'fulfilled' && cache.value === true;
+    if (!ok) return sendProblem(req, reply, 'SERVICE_UNAVAILABLE', 503, `database: ${database.status}, cache: ${cache.status}`);
+    return { status: 'ready' };
+  });
 
   app.get(
     '/app-config',
@@ -56,10 +48,15 @@ export default async function metaRoutes(fastify: FastifyInstance) {
         minVersions: { android: settingNumber(settings, 'app.minAndroidVersion', 1), web: '1.0.0' },
         features: { cashOnDelivery: false, guestCheckout: false },
         support: { phone: String(settings['support.phone'] ?? ''), email: String(settings['support.email'] ?? '') },
-        legal: { fssai: seller?.fssai_number ?? '', name: seller?.legal_name ?? '', address: String(settings['store.address'] ?? settings['store.dispatchFrom'] ?? ''), privacyUrl: `${web}/privacy`, termsUrl: `${web}/terms` },
+        legal: {
+          fssai: seller?.fssai_number ?? '',
+          name: seller?.legal_name ?? '',
+          address: String(settings['store.address'] ?? settings['store.dispatchFrom'] ?? ''),
+          privacyUrl: `${web}/privacy`,
+          termsUrl: `${web}/terms`,
+        },
         auth: { googleClientId: app.deps.config.GOOGLE_WEB_CLIENT_ID, devSignIn: app.deps.config.AUTH_TEST_MODE && !app.deps.config.isProduction && app.deps.payments.name === 'mock' },
         payments: { provider: app.deps.payments.name, environment: app.deps.payments.environment },
-
       };
     },
   );

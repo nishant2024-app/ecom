@@ -18,15 +18,23 @@ export async function evaluateCoupon(db: DbOrTx, rawCode: string, ctx: { subtota
   const code = normalizeCouponCode(rawCode);
   if (!isCouponCode(code)) return { ok: false, message: BAD };
   const sellerId = await defaultSellerId(db);
-  const [coupon] = await db.select().from(s.coupons).where(and(eq(s.coupons.sellerId, sellerId), eq(s.coupons.code, code)));
+  const [coupon] = await db
+    .select()
+    .from(s.coupons)
+    .where(and(eq(s.coupons.sellerId, sellerId), eq(s.coupons.code, code)));
   if (!coupon || coupon.status !== 'active') return { ok: false, message: BAD };
   if (coupon.startsAt && ctx.now < coupon.startsAt) return { ok: false, message: 'This code is not active yet.' };
   if (coupon.endsAt && ctx.now > coupon.endsAt) return { ok: false, message: 'This code has expired.' };
-  if (ctx.subtotalPaise < coupon.minSubtotalPaise) return { ok: false, message: `Add ${rupees(coupon.minSubtotalPaise - ctx.subtotalPaise)} more to use this code (minimum ${rupees(coupon.minSubtotalPaise)}).` };
+  if (ctx.subtotalPaise < coupon.minSubtotalPaise)
+    return { ok: false, message: `Add ${rupees(coupon.minSubtotalPaise - ctx.subtotalPaise)} more to use this code (minimum ${rupees(coupon.minSubtotalPaise)}).` };
 
   const live = ne(s.orders.status, 'cancelled');
   if (coupon.usageLimit !== null) {
-    const [row] = await db.select({ n: count() }).from(s.couponRedemptions).innerJoin(s.orders, eq(s.orders.id, s.couponRedemptions.orderId)).where(and(eq(s.couponRedemptions.couponId, coupon.id), live));
+    const [row] = await db
+      .select({ n: count() })
+      .from(s.couponRedemptions)
+      .innerJoin(s.orders, eq(s.orders.id, s.couponRedemptions.orderId))
+      .where(and(eq(s.couponRedemptions.couponId, coupon.id), live));
     if (Number(row?.n ?? 0) >= coupon.usageLimit) return { ok: false, message: 'This code has been fully used.' };
   }
   if (ctx.customerId) {
@@ -35,7 +43,8 @@ export async function evaluateCoupon(db: DbOrTx, rawCode: string, ctx: { subtota
       .from(s.couponRedemptions)
       .innerJoin(s.orders, eq(s.orders.id, s.couponRedemptions.orderId))
       .where(and(eq(s.couponRedemptions.couponId, coupon.id), eq(s.couponRedemptions.customerId, ctx.customerId), live));
-    if (Number(mineRow?.n ?? 0) >= coupon.perCustomerLimit) return { ok: false, message: coupon.perCustomerLimit === 1 ? 'You have already used this code.' : 'You have used this code the maximum number of times.' };
+    if (Number(mineRow?.n ?? 0) >= coupon.perCustomerLimit)
+      return { ok: false, message: coupon.perCustomerLimit === 1 ? 'You have already used this code.' : 'You have used this code the maximum number of times.' };
     if (coupon.firstOrderOnly) {
       const [priorRow] = await db
         .select({ n: count() })

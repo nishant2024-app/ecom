@@ -1,5 +1,5 @@
 import type { ImageVariant } from '@dairy/db';
-import sharp from 'sharp';
+import sharp, { type Metadata } from 'sharp';
 import { AppError } from '../lib/errors';
 import type { Storage } from './storage';
 
@@ -13,7 +13,7 @@ const ACCEPTED = new Set(['jpeg', 'png', 'webp', 'avif', 'heif']);
  */
 export async function storeImage(storage: Storage, input: Buffer, keyPrefix: string): Promise<{ width: number; height: number; variants: ImageVariant[] }> {
   if (input.length > MAX_UPLOAD_BYTES) throw new AppError('VALIDATION_FAILED', 400, 'Images must be under 20 MB');
-  let meta: sharp.Metadata;
+  let meta: Metadata;
   try {
     meta = await sharp(input).metadata();
   } catch {
@@ -26,7 +26,10 @@ export async function storeImage(storage: Storage, input: Buffer, keyPrefix: str
   if (meta.width < 400) throw new AppError('VALIDATION_FAILED', 400, 'Images need to be at least 400 px wide to look sharp');
 
   const rotated = sharp(input).rotate(); // apply EXIF orientation, then metadata is dropped
-  const { width: w0, height: h0 } = await rotated.clone().toBuffer({ resolveWithObject: true }).then((r) => r.info);
+  const { width: w0, height: h0 } = await rotated
+    .clone()
+    .toBuffer({ resolveWithObject: true })
+    .then((r) => r.info);
   const widths = [...new Set(WIDTHS.map((w) => Math.min(w, w0)))];
   const variants: ImageVariant[] = [];
   for (const width of widths) {

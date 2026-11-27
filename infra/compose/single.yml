@@ -1,5 +1,7 @@
-# Everything on ONE server (a 2 vCPU / 4-8 GB VPS is enough to start). No public ports: Cloudflare Tunnel
-# connects out to Cloudflare, so the server needs no open inbound ports except SSH.
+# Everything on ONE server (a 2 vCPU / 4 GB VPS is enough to start).
+# Every service listens on 127.0.0.1 only; nothing is reachable from the internet except through
+# the reverse proxy on the host: Nginx + Let's Encrypt (docs/17 and DEPLOYMENT.md), or the optional
+# Cloudflare Tunnel (`--profile tunnel`).
 #
 #   cd /opt/dairy/app
 #   docker compose -f infra/compose/single.yml --env-file /opt/dairy/.env up -d --build
@@ -45,6 +47,8 @@ services:
     <<: *env
     build: { context: ../.., dockerfile: apps/api/Dockerfile, target: runtime }
     image: dairy-api:${GIT_SHA:-local}
+    ports: ['127.0.0.1:4000:4000']
+    volumes: ['media:/app/media']
     depends_on:
       migrate: { condition: service_completed_successfully }
       valkey: { condition: service_started }
@@ -67,19 +71,32 @@ services:
     <<: *env
     build: { context: ../.., dockerfile: apps/web/Dockerfile }
     image: dairy-web:${GIT_SHA:-local}
+    ports: ['127.0.0.1:3000:3000']
     environment:
       API_INTERNAL_URL: http://api:4000
     depends_on: { api: { condition: service_healthy } }
     deploy: { resources: { limits: { memory: 768m } } }
 
+  admin:
+    restart: unless-stopped
+    build:
+      context: ../..
+      dockerfile: apps/admin/Dockerfile
+      args: { VITE_API_URL: '${PUBLIC_API_URL}' }
+    image: dairy-admin:${GIT_SHA:-local}
+    ports: ['127.0.0.1:8080:8080']
+    deploy: { resources: { limits: { memory: 64m } } }
+
   cloudflared:
     <<: *env
+    profiles: ['tunnel']
     image: cloudflare/cloudflared:latest
     command: ['tunnel', '--no-autoupdate', 'run']
     # TUNNEL_TOKEN comes from the env file.
-    depends_on: [web, api]
+    depends_on: [web, api, admin]
     deploy: { resources: { limits: { memory: 128m } } }
 
 volumes:
   pgdata:
   valkeydata:
+  media:

@@ -40,6 +40,10 @@ jobs:
       - name: Create app role and extensions
         run: |
           PGPASSWORD=migrator psql -h localhost -U migrator -d dairy_test -c "CREATE ROLE app LOGIN PASSWORD 'app'; CREATE EXTENSION IF NOT EXISTS pg_trgm; GRANT ALL ON SCHEMA public TO app;"
+      - name: Lint and formatting
+        run: |
+          pnpm lint
+          pnpm format:check
       - name: Typecheck
         run: pnpm -r --filter "./packages/*" --filter @dairy/api --filter @dairy/admin --filter @dairy/web --filter @dairy/video typecheck
       - name: Core unit tests

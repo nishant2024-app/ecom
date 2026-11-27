@@ -2,7 +2,6 @@ import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { invoiceKind, invoiceNumber, invoiceTotals, splitInclusive } from '../src/gst';
 import { allocateFefo, productionNeed } from '../src/fefo';
-import { priceLines } from '../src/pricing';
 
 describe('GST', () => {
   it('back-calculates tax from inclusive prices', () => {
@@ -52,20 +51,5 @@ describe('FEFO', () => {
   });
   it('computes production need with buffer', () => {
     expect(productionNeed(2000, 300)).toEqual({ required: 2000, buffer: 100, inStock: 300, toProduce: 1800 });
-  });
-});
-
-describe('pricing', () => {
-  const lines = [
-    { variantId: 'paneer', quantity: 2, unitPricePaise: 9000, categoryId: 'paneer' },
-    { variantId: 'milk-bottle', quantity: 1, unitPricePaise: 4500, depositPaise: 2500, categoryId: 'milk' },
-  ];
-  it('applies percent coupons with a cap and never discounts deposits', () => {
-    const r = priceLines(lines, { code: 'TEN', rule: { kind: 'percent', bps: 1000, maxDiscountPaise: 1500 } });
-    expect(r).toMatchObject({ subtotal: 22500, discount: 1500, deposit: 2500, total: 23500 });
-  });
-  it('limits coupons to categories and minimum subtotal', () => {
-    expect(priceLines(lines, { code: 'P', rule: { kind: 'fixed', amountPaise: 50000 }, categoryIds: ['paneer'] }).discount).toBe(18000);
-    expect(priceLines(lines, { code: 'M', rule: { kind: 'fixed', amountPaise: 100 }, minSubtotalPaise: 99999 }).couponError).toBeTruthy();
   });
 });

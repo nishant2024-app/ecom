@@ -66,11 +66,7 @@ export function RevenueChart({ series }: { series: Point[] }) {
             >
               <rect x={pad.l + i * bw} y={pad.t} width={bw} height={ih} fill="transparent" />
               {h > 0 && (
-                <path
-                  d={`M${x} ${y(0)} V${y(0) - h + r} q0 -${r} ${r} -${r} H${x + w - r} q${r} 0 ${r} ${r} V${y(0)} Z`}
-                  fill="var(--chart)"
-                  opacity={hover === null || hover === i ? 1 : 0.45}
-                />
+                <path d={`M${x} ${y(0)} V${y(0) - h + r} q0 -${r} ${r} -${r} H${x + w - r} q${r} 0 ${r} ${r} V${y(0)} Z`} fill="var(--chart)" opacity={hover === null || hover === i ? 1 : 0.45} />
               )}
               {(series.length <= 14 || i % Math.ceil(series.length / 10) === 0) && (
                 <text x={pad.l + i * bw + bw / 2} y={H - 8} textAnchor="middle" fontSize="11" fill="var(--ink-3)">

@@ -12,5 +12,10 @@ export interface MoneyProps {
 export function Money({ paise, className, signed }: MoneyProps) {
   const text = formatINR(Math.abs(paise));
   const sign = paise < 0 ? '−' : signed && paise > 0 ? '+' : '';
-  return <span className={cn('num whitespace-nowrap', className)}>{sign}{text}</span>;
+  return (
+    <span className={cn('num whitespace-nowrap', className)}>
+      {sign}
+      {text}
+    </span>
+  );
 }

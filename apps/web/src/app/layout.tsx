@@ -46,7 +46,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         url: SITE_URL,
         logo: `${SITE_URL}/icon.svg`,
         ...(config?.support.email ? { email: config.support.email } : {}),
-        ...(config?.support.phone ? { contactPoint: { '@type': 'ContactPoint', telephone: config.support.phone, contactType: 'customer service', areaServed: 'IN', availableLanguage: ['en', 'hi', 'mr'] } } : {}),
+        ...(config?.support.phone
+          ? { contactPoint: { '@type': 'ContactPoint', telephone: config.support.phone, contactType: 'customer service', areaServed: 'IN', availableLanguage: ['en', 'hi', 'mr'] } }
+          : {}),
       },
       {
         '@type': 'WebSite',

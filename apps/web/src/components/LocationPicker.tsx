@@ -91,13 +91,29 @@ export function LocationPicker({ value, onChange }: { value: PickedLocation | nu
         <div className="pointer-events-none absolute inset-x-0 top-2 z-[500] text-center">
           <span className="rounded-pill bg-paper/95 px-3 py-1 text-[12px] font-semibold shadow-card">Move the map to place the pin on your door</span>
         </div>
-        <button type="button" onClick={locate} disabled={status === 'locating'} className="absolute bottom-3 left-1/2 z-[500] flex h-11 -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-pill bg-paper px-4 text-[14px] font-semibold text-forest shadow-float disabled:opacity-70">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><circle cx="12" cy="12" r="4" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3" /></svg>
+        <button
+          type="button"
+          onClick={locate}
+          disabled={status === 'locating'}
+          className="absolute bottom-3 left-1/2 z-[500] flex h-11 -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-pill bg-paper px-4 text-[14px] font-semibold text-forest shadow-float disabled:opacity-70"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+            <circle cx="12" cy="12" r="4" />
+            <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+          </svg>
           {status === 'locating' ? 'Finding you…' : 'Use my current location'}
         </button>
       </div>
-      {status === 'denied' && <p role="alert" className="mt-2 text-[13px] text-alert">Location permission is off. Allow it in your browser settings, or move the map to your address.</p>}
-      {status === 'unavailable' && <p role="alert" className="mt-2 text-[13px] text-alert">Could not get your location. Move the map to your address instead.</p>}
+      {status === 'denied' && (
+        <p role="alert" className="mt-2 text-[13px] text-alert">
+          Location permission is off. Allow it in your browser settings, or move the map to your address.
+        </p>
+      )}
+      {status === 'unavailable' && (
+        <p role="alert" className="mt-2 text-[13px] text-alert">
+          Could not get your location. Move the map to your address instead.
+        </p>
+      )}
       {value?.source === 'device' && value.accuracyM != null && value.accuracyM > 100 && (
         <p className="mt-2 text-[13px] text-ink-2">Your phone located you within about {value.accuracyM} m. Drag the map to put the pin exactly on your building.</p>
       )}

@@ -11,9 +11,7 @@ export default function VerifyPage() {
     <div className="mx-auto max-w-[720px] px-4 pb-10 pt-8 md:px-6">
       <p className="text-[13px] font-semibold text-forest">Authenticity check</p>
       <h1 className="mt-1 text-[30px] font-extrabold tracking-[-0.03em] md:text-[38px]">Verify your pack</h1>
-      <p className="mt-2 text-[16px] text-ink-2">
-        Every jar, tin and box we ship has a batch code printed near the expiry date. Enter it to confirm the pack is genuine and see when it was made.
-      </p>
+      <p className="mt-2 text-[16px] text-ink-2">Every jar, tin and box we ship has a batch code printed near the expiry date. Enter it to confirm the pack is genuine and see when it was made.</p>
       <VerifyForm />
       <div className="mt-8 grid gap-3 sm:grid-cols-3">
         {[

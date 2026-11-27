@@ -60,7 +60,11 @@ export function PincodeSheet({ open, onClose }: { open: boolean; onClose: () => 
   function type(i: number, raw: string) {
     const v = raw.replace(/\D/g, '');
     if (v.length > 1) {
-      const all = (value.slice(0, i) + v).slice(0, 6).padEnd(6, ' ').split('').map((d) => (d === ' ' ? '' : d));
+      const all = (value.slice(0, i) + v)
+        .slice(0, 6)
+        .padEnd(6, ' ')
+        .split('')
+        .map((d) => (d === ' ' ? '' : d));
       setDigits(all);
       boxes.current[Math.min(5, i + v.length)]?.focus();
       return;
@@ -88,10 +92,14 @@ export function PincodeSheet({ open, onClose }: { open: boolean; onClose: () => 
           >
             <div className="flex items-start justify-between">
               <div>
-                <h2 id="pin-title" className="text-xl font-bold">Where should we deliver?</h2>
+                <h2 id="pin-title" className="text-xl font-bold">
+                  Where should we deliver?
+                </h2>
                 <p className="mt-1 text-sm text-forest">We ship across India</p>
               </div>
-              <button type="button" onClick={onClose} aria-label="Close" className="grid h-9 w-9 place-items-center rounded-pill hover:bg-paper-2">✕</button>
+              <button type="button" onClick={onClose} aria-label="Close" className="grid h-9 w-9 place-items-center rounded-pill hover:bg-paper-2">
+                ✕
+              </button>
             </div>
             <form
               className="mt-5"
@@ -100,7 +108,9 @@ export function PincodeSheet({ open, onClose }: { open: boolean; onClose: () => 
                 void check();
               }}
             >
-              <label className="text-sm font-medium" id="pin-label">Pincode</label>
+              <label className="text-sm font-medium" id="pin-label">
+                Pincode
+              </label>
               <div className="mt-2 grid grid-cols-6 gap-2" role="group" aria-labelledby="pin-label">
                 {digits.map((d, i) => (
                   <input
@@ -121,7 +131,10 @@ export function PincodeSheet({ open, onClose }: { open: boolean; onClose: () => 
                   />
                 ))}
               </div>
-              <button disabled={value.length !== 6 || busy} className="mt-5 h-12 w-full rounded-pill bg-forest font-semibold text-on-forest transition-colors hover:bg-forest-2 disabled:bg-paper-3 disabled:text-ink-3">
+              <button
+                disabled={value.length !== 6 || busy}
+                className="mt-5 h-12 w-full rounded-pill bg-forest font-semibold text-on-forest transition-colors hover:bg-forest-2 disabled:bg-paper-3 disabled:text-ink-3"
+              >
                 {busy ? 'Checking…' : 'Check delivery'}
               </button>
             </form>

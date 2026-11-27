@@ -34,7 +34,10 @@ export default async function Home() {
   const ranked = [...all.filter((p) => p.featured), ...all.filter((p) => !p.featured)];
   const packsFor: Record<string, BannerPack[]> = { __all: [...new Map(ranked.map((p) => [p.category.slug, p])).values()].slice(0, 3).map(toPack) };
   for (const c of cats) {
-    const list = ranked.filter((p) => p.category.slug === c.slug).slice(0, 3).map(toPack);
+    const list = ranked
+      .filter((p) => p.category.slug === c.slug)
+      .slice(0, 3)
+      .map(toPack);
     // Tallest pack in the middle.
     if (list.length === 3) list.splice(1, 0, list.splice(0, 1)[0]!);
     packsFor[c.slug] = list;

@@ -53,7 +53,12 @@ describe('verified reviews', () => {
     expect((await t.app.inject({ url: `/v1/store/products/${slug}/reviews/mine`, headers: c.headers })).json()).toEqual({ eligible: false, review: null });
 
     // Buy, pay, and have staff pack, ship and deliver it.
-    const placed = await t.app.inject({ method: 'POST', url: '/v1/store/orders', headers: { ...c.headers, 'idempotency-key': crypto.randomUUID() }, payload: { lines: [{ variantId: ids.peda, quantity: 3 }], addressId: c.addressId } });
+    const placed = await t.app.inject({
+      method: 'POST',
+      url: '/v1/store/orders',
+      headers: { ...c.headers, 'idempotency-key': crypto.randomUUID() },
+      payload: { lines: [{ variantId: ids.peda, quantity: 3 }], addressId: c.addressId },
+    });
     expect(placed.statusCode, placed.body).toBe(201);
     const { order, payment } = placed.json();
     await t.app.inject({ method: 'POST', url: `/v1/dev/payments/${payment.id}/simulate`, headers: c.headers, payload: { outcome: 'success' } });
@@ -62,7 +67,12 @@ describe('verified reviews', () => {
     await t.app.inject({ method: 'POST', url: `/v1/admin/orders/${order.id}/ship`, headers: staff, payload: { courier: 'Delhivery', trackingNumber: 'DLV1234567' } });
     expect((await t.app.inject({ method: 'POST', url: `/v1/admin/orders/${order.id}/deliver`, headers: staff })).statusCode).toBe(200);
 
-    const write = await t.app.inject({ method: 'PUT', url: `/v1/store/products/${slug}/reviews/mine`, headers: c.headers, payload: { rating: 4, title: 'Like home', body: 'Soft and not too sweet.' } });
+    const write = await t.app.inject({
+      method: 'PUT',
+      url: `/v1/store/products/${slug}/reviews/mine`,
+      headers: c.headers,
+      payload: { rating: 4, title: 'Like home', body: 'Soft and not too sweet.' },
+    });
     expect(write.json()).toEqual({ status: 'pending' });
     // Pending reviews are not public.
     expect((await t.app.inject({ url: `/v1/store/products/${slug}/reviews` })).json().summary.count).toBe(0);
@@ -88,21 +98,48 @@ describe('exact delivery location', () => {
   it('saves a GPS point on the address, rejects points outside India, and copies it to orders', async () => {
     const c = await readyCustomer(t);
     const ids = await variantIds(t);
-    const outside = await t.app.inject({ method: 'PATCH', url: `/v1/store/me/addresses/${c.addressId}`, headers: c.headers, payload: { name: 'Asha Test', phone: '9876543210', line1: 'Flat 704, Sai Residency', city: 'Pune', pincode: '411045', location: { lat: 51.5, lng: -0.12, source: 'device' } } });
+    const outside = await t.app.inject({
+      method: 'PATCH',
+      url: `/v1/store/me/addresses/${c.addressId}`,
+      headers: c.headers,
+      payload: { name: 'Asha Test', phone: '9876543210', line1: 'Flat 704, Sai Residency', city: 'Pune', pincode: '411045', location: { lat: 51.5, lng: -0.12, source: 'device' } },
+    });
     expect(outside.statusCode).toBe(400);
 
-    const ok = await t.app.inject({ method: 'PATCH', url: `/v1/store/me/addresses/${c.addressId}`, headers: c.headers, payload: { name: 'Asha Test', phone: '9876543210', line1: 'Flat 704, Sai Residency', city: 'Pune', pincode: '411045', location: { lat: 18.55901234567, lng: 73.7868, accuracyM: 12, source: 'device' } } });
+    const ok = await t.app.inject({
+      method: 'PATCH',
+      url: `/v1/store/me/addresses/${c.addressId}`,
+      headers: c.headers,
+      payload: {
+        name: 'Asha Test',
+        phone: '9876543210',
+        line1: 'Flat 704, Sai Residency',
+        city: 'Pune',
+        pincode: '411045',
+        location: { lat: 18.55901234567, lng: 73.7868, accuracyM: 12, source: 'device' },
+      },
+    });
     expect(ok.statusCode, ok.body).toBe(200);
     expect(ok.json().location).toEqual({ lat: 18.559012, lng: 73.7868, accuracyM: 12, source: 'device', directionsUrl: 'https://www.google.com/maps/dir/?api=1&destination=18.559012,73.7868' });
 
-    const placed = await t.app.inject({ method: 'POST', url: '/v1/store/orders', headers: { ...c.headers, 'idempotency-key': crypto.randomUUID() }, payload: { lines: [{ variantId: ids.powder500, quantity: 1 }], addressId: c.addressId } });
+    const placed = await t.app.inject({
+      method: 'POST',
+      url: '/v1/store/orders',
+      headers: { ...c.headers, 'idempotency-key': crypto.randomUUID() },
+      payload: { lines: [{ variantId: ids.powder500, quantity: 1 }], addressId: c.addressId },
+    });
     const orderId = placed.json().order.id;
     const staff = await staffHeaders(t, 'warehouse');
     const detail = (await t.app.inject({ url: `/v1/admin/orders/${orderId}`, headers: staff })).json();
     expect(detail.shippingAddress.location).toMatchObject({ lat: 18.559012, lng: 73.7868, source: 'device', directionsUrl: expect.stringContaining('destination=18.559012,73.7868') });
 
     // Clearing the pin keeps the typed address.
-    const cleared = await t.app.inject({ method: 'PATCH', url: `/v1/store/me/addresses/${c.addressId}`, headers: c.headers, payload: { name: 'Asha Test', phone: '9876543210', line1: 'Flat 704, Sai Residency', city: 'Pune', pincode: '411045', location: null } });
+    const cleared = await t.app.inject({
+      method: 'PATCH',
+      url: `/v1/store/me/addresses/${c.addressId}`,
+      headers: c.headers,
+      payload: { name: 'Asha Test', phone: '9876543210', line1: 'Flat 704, Sai Residency', city: 'Pune', pincode: '411045', location: null },
+    });
     expect(cleared.json().location).toBeNull();
   });
 
@@ -125,7 +162,12 @@ describe('order emails', () => {
     const staff = await staffHeaders(t, 'ops_manager');
     const mine = () => t.emails.filter((e) => e.to === c.body.user.email);
     const place = async () => {
-      const r = await t.app.inject({ method: 'POST', url: '/v1/store/orders', headers: { ...c.headers, 'idempotency-key': crypto.randomUUID() }, payload: { lines: [{ variantId: ids.powder500, quantity: 1 }], addressId: c.addressId } });
+      const r = await t.app.inject({
+        method: 'POST',
+        url: '/v1/store/orders',
+        headers: { ...c.headers, 'idempotency-key': crypto.randomUUID() },
+        payload: { lines: [{ variantId: ids.powder500, quantity: 1 }], addressId: c.addressId },
+      });
       const { order, payment } = r.json();
       await t.app.inject({ method: 'POST', url: `/v1/dev/payments/${payment.id}/simulate`, headers: c.headers, payload: { outcome: 'success' } });
       return order as { id: string; number: string };
@@ -140,7 +182,12 @@ describe('order emails', () => {
     expect(mine()[0]!.html).toContain('View your order');
 
     await t.app.inject({ method: 'POST', url: `/v1/admin/orders/${o1.id}/pack`, headers: staff });
-    await t.app.inject({ method: 'POST', url: `/v1/admin/orders/${o1.id}/ship`, headers: staff, payload: { courier: 'Delhivery', trackingNumber: 'DLV777', trackingUrl: 'https://track.example/DLV777' } });
+    await t.app.inject({
+      method: 'POST',
+      url: `/v1/admin/orders/${o1.id}/ship`,
+      headers: staff,
+      payload: { courier: 'Delhivery', trackingNumber: 'DLV777', trackingUrl: 'https://track.example/DLV777' },
+    });
     await t.app.inject({ method: 'POST', url: `/v1/admin/orders/${o1.id}/deliver`, headers: staff });
     await sendPendingEmails(deps, 500);
     expect(mine().map((e) => e.subject)).toEqual([`Order ${o1.number} confirmed`, `Your order ${o1.number} is on its way`, `Delivered: order ${o1.number}`]);
@@ -175,10 +222,24 @@ describe('order emails', () => {
     await sendPendingEmails(deps, 500);
     const real = deps.email!;
     let calls = 0;
-    deps.email = { name: 'broken', send: async () => void (calls++, (() => { throw new Error('provider 503'); })()) };
+    deps.email = {
+      name: 'broken',
+      send: async () =>
+        void (
+          calls++,
+          (() => {
+            throw new Error('provider 503');
+          })()
+        ),
+    };
     const c = await readyCustomer(t);
     const ids = await variantIds(t);
-    const r = await t.app.inject({ method: 'POST', url: '/v1/store/orders', headers: { ...c.headers, 'idempotency-key': crypto.randomUUID() }, payload: { lines: [{ variantId: ids.powder500, quantity: 1 }], addressId: c.addressId } });
+    const r = await t.app.inject({
+      method: 'POST',
+      url: '/v1/store/orders',
+      headers: { ...c.headers, 'idempotency-key': crypto.randomUUID() },
+      payload: { lines: [{ variantId: ids.powder500, quantity: 1 }], addressId: c.addressId },
+    });
     await t.app.inject({ method: 'POST', url: `/v1/dev/payments/${r.json().payment.id}/simulate`, headers: c.headers, payload: { outcome: 'success' } });
     for (let i = 0; i < 6; i++) await sendPendingEmails(deps);
     expect(calls).toBe(5);

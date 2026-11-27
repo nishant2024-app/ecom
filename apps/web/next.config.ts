@@ -16,7 +16,7 @@ const csp = [
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
   "connect-src 'self' https://accounts.google.com https://*.cashfree.com https://nominatim.openstreetmap.org",
-  "frame-src https://accounts.google.com https://*.cashfree.com",
+  'frame-src https://accounts.google.com https://*.cashfree.com',
   "form-action 'self' https://*.cashfree.com",
   "frame-ancestors 'none'",
   "base-uri 'self'",

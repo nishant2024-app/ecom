@@ -32,7 +32,9 @@ export function CouponBox({ quote }: { quote: Quote | null }) {
           if (text.trim()) setCoupon(text);
         }}
       >
-        <label htmlFor="coupon" className="sr-only">Coupon code</label>
+        <label htmlFor="coupon" className="sr-only">
+          Coupon code
+        </label>
         <input
           id="coupon"
           value={coupon && !applied ? coupon : text}

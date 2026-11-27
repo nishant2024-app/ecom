@@ -53,7 +53,10 @@ const pairs: [string, string, number][] = [
 ];
 
 let failed = 0;
-for (const [theme, t] of [['light', light], ['dark', dark]] as const) {
+for (const [theme, t] of [
+  ['light', light],
+  ['dark', dark],
+] as const) {
   for (const [fg, bg, min] of pairs) {
     const r = ratio(t[fg]!, t[bg]!);
     const ok = r >= min;

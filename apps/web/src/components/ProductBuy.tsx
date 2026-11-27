@@ -35,7 +35,9 @@ export function ProductBuy({ product, children }: { product: ProductDetail; chil
       return;
     }
     const t = setTimeout(() => {
-      api<Estimate>(`/v1/store/shipping/estimate?pincode=${pincode}&subtotal=${v.price.amount * qty}`).then(setEstimate).catch(() => setEstimate(null));
+      api<Estimate>(`/v1/store/shipping/estimate?pincode=${pincode}&subtotal=${v.price.amount * qty}`)
+        .then(setEstimate)
+        .catch(() => setEstimate(null));
     }, 250);
     return () => clearTimeout(t);
   }, [pincode, v.price.amount, qty]);
@@ -66,14 +68,28 @@ export function ProductBuy({ product, children }: { product: ProductDetail; chil
           )}
         </div>
         <p className="mt-1 text-sm text-ink-2">
-          Inclusive of GST{v.unitPrice && <> · <span className="num">{unitPriceText(v.unitPrice)}</span></>}
+          Inclusive of GST
+          {v.unitPrice && (
+            <>
+              {' '}
+              · <span className="num">{unitPriceText(v.unitPrice)}</span>
+            </>
+          )}
         </p>
         {v.nextBatch && (
           <div className="mt-4 flex items-start gap-3 rounded-4 border border-forest/25 bg-meadow p-3.5">
-            <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-pill bg-forest text-[15px] text-on-forest" aria-hidden>✓</span>
+            <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-pill bg-forest text-[15px] text-on-forest" aria-hidden>
+              ✓
+            </span>
             <p className="text-[14px] leading-snug">
-              <span className="font-bold">Fresh batch:</span> made on <span className="num font-semibold">{longDate(v.nextBatch.manufacturedOn)}</span>, best before <span className="num font-semibold">{monthYear(v.nextBatch.bestBefore)}</span>.
-              <span className="block text-ink-2">We ship the oldest safe batch first and print its code on the pack. <Link href="/verify" className="inline-block py-1.5 font-semibold text-forest underline underline-offset-2">Verify a pack</Link></span>
+              <span className="font-bold">Fresh batch:</span> made on <span className="num font-semibold">{longDate(v.nextBatch.manufacturedOn)}</span>, best before{' '}
+              <span className="num font-semibold">{monthYear(v.nextBatch.bestBefore)}</span>.
+              <span className="block text-ink-2">
+                We ship the oldest safe batch first and print its code on the pack.{' '}
+                <Link href="/verify" className="inline-block py-1.5 font-semibold text-forest underline underline-offset-2">
+                  Verify a pack
+                </Link>
+              </span>
             </p>
           </div>
         )}
@@ -82,7 +98,10 @@ export function ProductBuy({ product, children }: { product: ProductDetail; chil
           <legend className="text-[14px] font-bold">Choose size</legend>
           <div className="mt-2 flex flex-wrap gap-2">
             {product.variants.map((x) => (
-              <label key={x.id} className={`relative cursor-pointer rounded-3 border-2 px-4 py-2.5 transition-colors ${x.id === variantId ? 'border-forest' : 'border-rule hover:border-ink-3'} ${!x.inStock ? 'opacity-50' : ''}`}>
+              <label
+                key={x.id}
+                className={`relative cursor-pointer rounded-3 border-2 px-4 py-2.5 transition-colors ${x.id === variantId ? 'border-forest' : 'border-rule hover:border-ink-3'} ${!x.inStock ? 'opacity-50' : ''}`}
+              >
                 <input type="radio" name="variant" value={x.id} checked={x.id === variantId} onChange={() => setVariantId(x.id)} className="sr-only" disabled={!x.inStock} />
                 {x.id === variantId && <motion.span layoutId="variant-pill" className="absolute inset-0 rounded-[10px] bg-meadow" transition={{ type: 'spring', stiffness: 400, damping: 30 }} />}
                 <span className="relative">
@@ -102,11 +121,23 @@ export function ProductBuy({ product, children }: { product: ProductDetail; chil
             <span className="num w-8 text-center text-lg" aria-live="polite">
               {qty}
             </span>
-            <button type="button" aria-label="One more" disabled={qty >= v.maxPerOrder} onClick={() => setQty((q) => Math.min(v.maxPerOrder, q + 1))} className="h-full w-12 text-xl disabled:text-ink-3">
+            <button
+              type="button"
+              aria-label="One more"
+              disabled={qty >= v.maxPerOrder}
+              onClick={() => setQty((q) => Math.min(v.maxPerOrder, q + 1))}
+              className="h-full w-12 text-xl disabled:text-ink-3"
+            >
               +
             </button>
           </div>
-          <motion.button type="button" whileTap={{ scale: 0.97 }} onClick={addToCart} disabled={!v.inStock} className="relative flex h-14 flex-1 items-center justify-center overflow-hidden rounded-pill bg-forest text-[17px] font-bold text-on-forest hover:bg-forest-2 disabled:bg-ink-3">
+          <motion.button
+            type="button"
+            whileTap={{ scale: 0.97 }}
+            onClick={addToCart}
+            disabled={!v.inStock}
+            className="relative flex h-14 flex-1 items-center justify-center overflow-hidden rounded-pill bg-forest text-[17px] font-bold text-on-forest hover:bg-forest-2 disabled:bg-ink-3"
+          >
             <AnimatePresence mode="wait" initial={false}>
               <motion.span key={added ? 'added' : 'add'} initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -20, opacity: 0 }} transition={{ duration: 0.2 }}>
                 {!v.inStock ? 'Out of stock' : added ? 'Added to basket ✓' : `Add to basket · ₹${((v.price.amount * qty) / 100).toLocaleString('en-IN')}`}
@@ -135,7 +166,9 @@ export function ProductBuy({ product, children }: { product: ProductDetail; chil
                   <>
                     Arrives <strong className="font-medium">{etaText(estimate.shipping.earliest, estimate.shipping.latest)}</strong>
                     {estimate.state && <> in {estimate.state}</>}.{' '}
-                    {estimate.shipping.free ? 'Free shipping.' : estimate.freeAbove ? (
+                    {estimate.shipping.free ? (
+                      'Free shipping.'
+                    ) : estimate.freeAbove ? (
                       <>
                         Shipping <Money paise={estimate.shipping.fee.amount} />, free above <Money paise={estimate.freeAbove.amount} />.
                       </>
@@ -167,7 +200,10 @@ export function ProductBuy({ product, children }: { product: ProductDetail; chil
         <div className="flex items-center gap-3">
           <div className="min-w-0 leading-tight">
             <p className="num text-[17px] font-bold">₹{((v.price.amount * qty) / 100).toLocaleString('en-IN')}</p>
-            <p className="truncate text-[12px] text-ink-2">{v.packSize}{qty > 1 ? ` × ${qty}` : ''}</p>
+            <p className="truncate text-[12px] text-ink-2">
+              {v.packSize}
+              {qty > 1 ? ` × ${qty}` : ''}
+            </p>
           </div>
           <button type="button" onClick={addToCart} disabled={!v.inStock} className="ml-auto h-11 flex-1 rounded-pill bg-forest font-bold text-on-forest disabled:bg-ink-3">
             {!v.inStock ? 'Out of stock' : added ? 'Added ✓' : 'Add to cart'}

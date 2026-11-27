@@ -35,13 +35,7 @@ export class PaymentProviderError extends Error {}
 type FetchLike = (url: string, init: RequestInit) => Promise<Response>;
 
 /** Cashfree Payment Gateway (PG) API v2025-01-01. Docs: docs/07-payments-cashfree.md */
-export function createCashfreeProvider(opts: {
-  appId: string;
-  secretKey: string;
-  environment: 'sandbox' | 'production';
-  apiVersion: string;
-  fetch?: FetchLike;
-}): PaymentProvider {
+export function createCashfreeProvider(opts: { appId: string; secretKey: string; environment: 'sandbox' | 'production'; apiVersion: string; fetch?: FetchLike }): PaymentProvider {
   const base = opts.environment === 'production' ? 'https://api.cashfree.com/pg' : 'https://sandbox.cashfree.com/pg';
   const http = opts.fetch ?? ((url, init) => fetch(url, init));
   const headers = {
@@ -117,14 +111,18 @@ export function verifyCashfreeSignature(rawBody: string, h: Record<string, strin
   if (!signature || !timestamp) return false;
   const tsMs = Number(timestamp) > 1e12 ? Number(timestamp) : Number(timestamp) * 1000;
   if (!Number.isFinite(tsMs) || Math.abs(now.getTime() - tsMs) > 5 * 60_000) return false;
-  const expected = createHmac('sha256', secret).update(timestamp + rawBody).digest('base64');
+  const expected = createHmac('sha256', secret)
+    .update(timestamp + rawBody)
+    .digest('base64');
   const a = Buffer.from(expected);
   const b = Buffer.from(signature);
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
 export function signCashfreeWebhook(rawBody: string, secret: string, timestamp: string): string {
-  return createHmac('sha256', secret).update(timestamp + rawBody).digest('base64');
+  return createHmac('sha256', secret)
+    .update(timestamp + rawBody)
+    .digest('base64');
 }
 
 /** In-memory provider for development and tests. Payments are completed with POST /v1/dev/payments/:id/simulate. */

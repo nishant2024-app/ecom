@@ -22,7 +22,14 @@ export function Gallery({ product, size, variantKey, reduce }: { product: Produc
             transition={{ type: 'spring', stiffness: 220, damping: 24 }}
             className="h-[72%]"
           >
-            <PackShot kind={product.pack.kind} color={product.pack.color} accent={product.pack.accent} label={product.name} size={size} className="h-full w-auto drop-shadow-[0_24px_24px_rgba(20,39,31,0.25)]" />
+            <PackShot
+              kind={product.pack.kind}
+              color={product.pack.color}
+              accent={product.pack.accent}
+              label={product.name}
+              size={size}
+              className="h-full w-auto drop-shadow-[0_24px_24px_rgba(20,39,31,0.25)]"
+            />
           </motion.div>
         </AnimatePresence>
       </div>
@@ -47,7 +54,13 @@ export function Gallery({ product, size, variantKey, reduce }: { product: Produc
         <ul className="order-2 flex gap-2 overflow-x-auto md:order-1 md:flex-col" aria-label="More photos">
           {photos.map((p, i) => (
             <li key={p.url} className="shrink-0">
-              <button type="button" onClick={() => setIndex(i)} aria-label={`Photo ${i + 1}: ${p.alt}`} aria-current={i === index} className={`block h-[72px] w-[72px] overflow-hidden rounded-3 border-2 ${i === index ? 'border-forest' : 'border-transparent opacity-70 hover:opacity-100'}`}>
+              <button
+                type="button"
+                onClick={() => setIndex(i)}
+                aria-label={`Photo ${i + 1}: ${p.alt}`}
+                aria-current={i === index}
+                className={`block h-[72px] w-[72px] overflow-hidden rounded-3 border-2 ${i === index ? 'border-forest' : 'border-transparent opacity-70 hover:opacity-100'}`}
+              >
                 <Photo img={p} sizes="72px" className="h-full w-full object-cover" />
               </button>
             </li>

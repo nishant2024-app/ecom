@@ -10,7 +10,9 @@ function Stars({ value, size = 16 }: { value: number; size?: number }) {
   return (
     <span className="inline-flex" aria-hidden style={{ fontSize: size, lineHeight: 1 }}>
       {[1, 2, 3, 4, 5].map((i) => (
-        <span key={i} className={i <= Math.round(value) ? 'text-[#e3a008]' : 'text-paper-3'}>★</span>
+        <span key={i} className={i <= Math.round(value) ? 'text-[#e3a008]' : 'text-paper-3'}>
+          ★
+        </span>
       ))}
     </span>
   );
@@ -75,14 +77,18 @@ export function Reviews({ slug, initial }: { slug: string; initial: ReviewPage |
                 <span className="pb-1 text-ink-2">out of 5</span>
               </p>
               <Stars value={s.average} size={20} />
-              <p className="mt-1 text-[13px] text-ink-2">{s.count} verified review{s.count === 1 ? '' : 's'}</p>
+              <p className="mt-1 text-[13px] text-ink-2">
+                {s.count} verified review{s.count === 1 ? '' : 's'}
+              </p>
               <ul className="mt-4 space-y-1.5">
                 {[5, 4, 3, 2, 1].map((r) => {
                   const n = s.breakdown[String(r)] ?? 0;
                   return (
                     <li key={r} className="flex items-center gap-2 text-[13px]">
                       <span className="w-6 text-ink-2">{r}★</span>
-                      <span className="h-2 flex-1 overflow-hidden rounded-pill bg-paper-3"><span className="block h-full rounded-pill bg-[#e3a008]" style={{ width: `${(n / s.count) * 100}%` }} /></span>
+                      <span className="h-2 flex-1 overflow-hidden rounded-pill bg-paper-3">
+                        <span className="block h-full rounded-pill bg-[#e3a008]" style={{ width: `${(n / s.count) * 100}%` }} />
+                      </span>
                       <span className="num w-6 text-right text-ink-3">{n}</span>
                     </li>
                   );
@@ -92,7 +98,9 @@ export function Reviews({ slug, initial }: { slug: string; initial: ReviewPage |
           ) : (
             <p className="text-[15px] text-ink-2">No reviews yet. Reviews come only from customers whose order was delivered.</p>
           )}
-          <p className="mt-4 flex items-center gap-1.5 text-[12px] text-ink-3"><span className="text-forest">✓</span> Every review is from a delivered order</p>
+          <p className="mt-4 flex items-center gap-1.5 text-[12px] text-ink-3">
+            <span className="text-forest">✓</span> Every review is from a delivered order
+          </p>
         </div>
 
         <div>
@@ -102,20 +110,53 @@ export function Reviews({ slug, initial }: { slug: string; initial: ReviewPage |
               {mine.review?.status === 'pending' && <p className="mt-1 text-[13px] text-ink-2">Waiting for a quick check before it appears.</p>}
               <div className="mt-2 flex gap-1" role="radiogroup" aria-label="Rating">
                 {[1, 2, 3, 4, 5].map((i) => (
-                  <button key={i} type="button" role="radio" aria-checked={form.rating === i} aria-label={`${i} star${i > 1 ? 's' : ''}`} onClick={() => setForm({ ...form, rating: i })} className={`text-[30px] leading-none transition-transform hover:scale-110 ${i <= form.rating ? 'text-[#e3a008]' : 'text-paper-3'}`}>
+                  <button
+                    key={i}
+                    type="button"
+                    role="radio"
+                    aria-checked={form.rating === i}
+                    aria-label={`${i} star${i > 1 ? 's' : ''}`}
+                    onClick={() => setForm({ ...form, rating: i })}
+                    className={`text-[30px] leading-none transition-transform hover:scale-110 ${i <= form.rating ? 'text-[#e3a008]' : 'text-paper-3'}`}
+                  >
                     ★
                   </button>
                 ))}
               </div>
-              <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} maxLength={80} placeholder="Headline (optional)" aria-label="Review headline" className="mt-3 h-11 w-full rounded-3 border border-rule bg-paper px-3 focus:border-forest" />
-              <textarea value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })} maxLength={2000} rows={3} placeholder="Taste, aroma, packaging, delivery…" aria-label="Review" className="mt-2 w-full rounded-3 border border-rule bg-paper p-3 focus:border-forest" />
-              <button disabled={busy} className="mt-3 h-11 rounded-pill bg-forest px-6 font-semibold text-on-forest disabled:opacity-60">{busy ? 'Saving…' : mine.review ? 'Update review' : 'Submit review'}</button>
-              {msg && <p role="status" className="mt-2 text-[14px] text-ink-2">{msg}</p>}
+              <input
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+                maxLength={80}
+                placeholder="Headline (optional)"
+                aria-label="Review headline"
+                className="mt-3 h-11 w-full rounded-3 border border-rule bg-paper px-3 focus:border-forest"
+              />
+              <textarea
+                value={form.body}
+                onChange={(e) => setForm({ ...form, body: e.target.value })}
+                maxLength={2000}
+                rows={3}
+                placeholder="Taste, aroma, packaging, delivery…"
+                aria-label="Review"
+                className="mt-2 w-full rounded-3 border border-rule bg-paper p-3 focus:border-forest"
+              />
+              <button disabled={busy} className="mt-3 h-11 rounded-pill bg-forest px-6 font-semibold text-on-forest disabled:opacity-60">
+                {busy ? 'Saving…' : mine.review ? 'Update review' : 'Submit review'}
+              </button>
+              {msg && (
+                <p role="status" className="mt-2 text-[14px] text-ink-2">
+                  {msg}
+                </p>
+              )}
             </form>
           )}
           {mine === 'signed-out' && (
             <p className="mb-6 rounded-4 bg-paper-2 p-4 text-[14px] text-ink-2">
-              Bought this before? <Link href={`/signin?next=/p/${slug}%23reviews`} className="inline-block py-1.5 font-semibold text-forest underline underline-offset-2">Sign in</Link> to write a review.
+              Bought this before?{' '}
+              <Link href={`/signin?next=/p/${slug}%23reviews`} className="inline-block py-1.5 font-semibold text-forest underline underline-offset-2">
+                Sign in
+              </Link>{' '}
+              to write a review.
             </p>
           )}
           <ul className="space-y-4">

@@ -7,15 +7,7 @@ import type { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { AppError, notFound } from '../lib/errors';
 import { ErrorResponses, IdParam, Nullable } from '../lib/schemas';
 import { COOKIE_ACCESS, COOKIE_CSRF, COOKIE_REFRESH, checkCsrf, requireAuth, revokedKey } from '../plugins/auth';
-import {
-  ACCESS_TTL_SECONDS,
-  REFRESH_TTL_SECONDS,
-  hashToken,
-  newOpaque,
-  newRefreshToken,
-  type Client,
-  type UserType,
-} from '../services/tokens';
+import { ACCESS_TTL_SECONDS, REFRESH_TTL_SECONDS, hashToken, newOpaque, newRefreshToken, type Client, type UserType } from '../services/tokens';
 
 const NONCE_TTL = 300;
 const REFRESH_GRACE_MS = 30_000;
@@ -80,13 +72,7 @@ export default async function authRoutes(fastify: FastifyInstance) {
     for (const c of [COOKIE_ACCESS, COOKIE_REFRESH, COOKIE_CSRF]) reply.clearCookie(c, opts);
   }
 
-  async function issue(
-    req: FastifyRequest,
-    reply: FastifyReply,
-    user: { type: UserType; id: string; role?: string },
-    client: Client,
-    deviceName: string | undefined,
-  ) {
+  async function issue(req: FastifyRequest, reply: FastifyReply, user: { type: UserType; id: string; role?: string }, client: Client, deviceName: string | undefined) {
     const refreshToken = newRefreshToken();
     const sessionId = newId('ses');
     const now = app.deps.now();
@@ -163,7 +149,10 @@ export default async function authRoutes(fastify: FastifyInstance) {
             .from(s.authIdentities)
             .where(and(eq(s.authIdentities.provider, 'google'), eq(s.authIdentities.subject, identity.sub), eq(s.authIdentities.userType, 'customer')));
           if (existing) {
-            await tx.update(s.authIdentities).set({ email: identity.email }).where(and(eq(s.authIdentities.provider, 'google'), eq(s.authIdentities.subject, identity.sub)));
+            await tx
+              .update(s.authIdentities)
+              .set({ email: identity.email })
+              .where(and(eq(s.authIdentities.provider, 'google'), eq(s.authIdentities.subject, identity.sub)));
             return existing.userId;
           }
           isNewUser = true;
@@ -197,7 +186,7 @@ export default async function authRoutes(fastify: FastifyInstance) {
           member = { ...invited, googleSub: identity.sub };
         }
       }
-      const active = member && (member.status === 'active');
+      const active = member && member.status === 'active';
       if (!member || !active) throw new AppError('STAFF_NOT_ALLOWED', 403, 'This Google account is not an active team member');
       const role = member.role;
       await db.update(s.staff).set({ lastSignInAt: app.deps.now() }).where(eq(s.staff.id, member.id));
@@ -291,17 +280,13 @@ export default async function authRoutes(fastify: FastifyInstance) {
     },
   );
 
-  app.post(
-    '/logout',
-    { config: { auth: 'any' }, schema: { tags: ['Auth'], summary: 'End the current session' } },
-    async (req, reply) => {
-      const auth = requireAuth(req);
-      await db.update(s.sessions).set({ revokedAt: app.deps.now() }).where(eq(s.sessions.id, auth.sid));
-      await kv.set(revokedKey(auth.sid), '1', ACCESS_TTL_SECONDS);
-      clearCookies(reply);
-      return reply.status(204).send();
-    },
-  );
+  app.post('/logout', { config: { auth: 'any' }, schema: { tags: ['Auth'], summary: 'End the current session' } }, async (req, reply) => {
+    const auth = requireAuth(req);
+    await db.update(s.sessions).set({ revokedAt: app.deps.now() }).where(eq(s.sessions.id, auth.sid));
+    await kv.set(revokedKey(auth.sid), '1', ACCESS_TTL_SECONDS);
+    clearCookies(reply);
+    return reply.status(204).send();
+  });
 
   const SessionOut = Type.Object({
     id: Type.String(),
@@ -312,48 +297,36 @@ export default async function authRoutes(fastify: FastifyInstance) {
     current: Type.Boolean(),
   });
 
-  app.get(
-    '/sessions',
-    { config: { auth: 'any' }, schema: { tags: ['Auth'], summary: 'List my sessions', response: { 200: Type.Object({ data: Type.Array(SessionOut) }) } } },
-    async (req) => {
-      const auth = requireAuth(req);
-      const rows = await db
-        .select()
-        .from(s.sessions)
-        .where(and(eq(s.sessions.userType, auth.typ), eq(s.sessions.userId, auth.sub), isNull(s.sessions.revokedAt), sql`${s.sessions.expiresAt} > now()`))
-        .orderBy(desc(s.sessions.lastUsedAt));
-      return {
-        data: rows.map((r) => ({
-          id: r.id,
-          client: r.client,
-          deviceName: r.deviceName,
-          createdAt: r.createdAt.toISOString(),
-          lastUsedAt: r.lastUsedAt.toISOString(),
-          current: r.id === auth.sid,
-        })),
-      };
-    },
-  );
+  app.get('/sessions', { config: { auth: 'any' }, schema: { tags: ['Auth'], summary: 'List my sessions', response: { 200: Type.Object({ data: Type.Array(SessionOut) }) } } }, async (req) => {
+    const auth = requireAuth(req);
+    const rows = await db
+      .select()
+      .from(s.sessions)
+      .where(and(eq(s.sessions.userType, auth.typ), eq(s.sessions.userId, auth.sub), isNull(s.sessions.revokedAt), sql`${s.sessions.expiresAt} > now()`))
+      .orderBy(desc(s.sessions.lastUsedAt));
+    return {
+      data: rows.map((r) => ({
+        id: r.id,
+        client: r.client,
+        deviceName: r.deviceName,
+        createdAt: r.createdAt.toISOString(),
+        lastUsedAt: r.lastUsedAt.toISOString(),
+        current: r.id === auth.sid,
+      })),
+    };
+  });
 
-  app.delete(
-    '/sessions/:sessionId',
-    { config: { auth: 'any' }, schema: { tags: ['Auth'], summary: 'Sign out one device', params: IdParam('sessionId') } },
-    async (req, reply) => {
-      const auth = requireAuth(req);
-      const revoked = await db
-        .update(s.sessions)
-        .set({ revokedAt: app.deps.now() })
-        .where(and(eq(s.sessions.id, req.params.sessionId), eq(s.sessions.userType, auth.typ), eq(s.sessions.userId, auth.sub)))
-        .returning({ id: s.sessions.id });
-      if (revoked.length === 0) throw notFound('Session');
-      await kv.set(revokedKey(req.params.sessionId), '1', ACCESS_TTL_SECONDS);
-      return reply.status(204).send();
-    },
-  );
+  app.delete('/sessions/:sessionId', { config: { auth: 'any' }, schema: { tags: ['Auth'], summary: 'Sign out one device', params: IdParam('sessionId') } }, async (req, reply) => {
+    const auth = requireAuth(req);
+    const revoked = await db
+      .update(s.sessions)
+      .set({ revokedAt: app.deps.now() })
+      .where(and(eq(s.sessions.id, req.params.sessionId), eq(s.sessions.userType, auth.typ), eq(s.sessions.userId, auth.sub)))
+      .returning({ id: s.sessions.id });
+    if (revoked.length === 0) throw notFound('Session');
+    await kv.set(revokedKey(req.params.sessionId), '1', ACCESS_TTL_SECONDS);
+    return reply.status(204).send();
+  });
 
-  app.get(
-    '/.well-known/jwks.json',
-    { config: { auth: 'public' }, schema: { tags: ['Auth'], summary: 'Public keys for our access tokens' } },
-    async () => tokens.jwks(),
-  );
+  app.get('/.well-known/jwks.json', { config: { auth: 'public' }, schema: { tags: ['Auth'], summary: 'Public keys for our access tokens' } }, async () => tokens.jwks());
 }

@@ -15,10 +15,12 @@ export function SignIn({ onSignedIn }: { onSignedIn: () => void }) {
   const [email, setEmail] = useState('');
 
   useEffect(() => {
-    api<{ auth: { googleClientId: string; devSignIn: boolean } }>('/v1/app-config').then((c) => {
+    api<{ auth: { googleClientId: string; devSignIn: boolean } }>('/v1/app-config')
+      .then((c) => {
         setClientId(c.auth.googleClientId);
         setDev(c.auth.devSignIn);
-      }).catch(() => setError('API unreachable'));
+      })
+      .catch(() => setError('API unreachable'));
   }, []);
 
   useEffect(() => {
@@ -67,7 +69,15 @@ export function SignIn({ onSignedIn }: { onSignedIn: () => void }) {
         >
           <p className="text-sm font-semibold">Local testing</p>
           <p className="mt-1 text-xs text-ink-2">Sign in as the owner email you set in SEED_OWNER_EMAIL. This form is off in production.</p>
-          <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="owner@example.com" aria-label="Staff email" className="mt-3 h-10 w-full rounded-3 border border-rule bg-paper px-3 text-sm" />
+          <input
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="owner@example.com"
+            aria-label="Staff email"
+            className="mt-3 h-10 w-full rounded-3 border border-rule bg-paper px-3 text-sm"
+          />
           <button className="mt-2 h-10 w-full rounded-pill bg-forest text-sm font-semibold text-on-forest">Sign in</button>
         </form>
       )}

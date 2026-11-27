@@ -11,3 +11,8 @@ coverage/
 playwright-report/
 test-results/
 *.tsbuildinfo
+
+# Local data and rendered media
+var/
+apps/video/out/
+!.env.*.example

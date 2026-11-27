@@ -22,7 +22,10 @@ export default async function adminMeRoutes(fastify: FastifyInstance) {
       },
     },
     async (req) => {
-      const [m] = await db.select().from(s.staff).where(eq(s.staff.id, requireAuth(req).sub));
+      const [m] = await db
+        .select()
+        .from(s.staff)
+        .where(eq(s.staff.id, requireAuth(req).sub));
       if (!m) throw notFound('Staff member');
       return { id: m.id, name: m.name, email: m.email, role: m.role, permissions: permissionsFor(m.role) };
     },

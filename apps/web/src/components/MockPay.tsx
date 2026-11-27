@@ -12,7 +12,9 @@ export function MockPay({ paymentId }: { paymentId: string }) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   useEffect(() => {
-    api<typeof p>(`/v1/dev/payments/${paymentId}`).then(setP).catch((e) => setError(e instanceof ApiError ? (e.problem.detail ?? e.problem.title) : 'Payment not found'));
+    api<typeof p>(`/v1/dev/payments/${paymentId}`)
+      .then(setP)
+      .catch((e) => setError(e instanceof ApiError ? (e.problem.detail ?? e.problem.title) : 'Payment not found'));
   }, [paymentId]);
 
   async function finish(outcome: 'success' | 'failed') {

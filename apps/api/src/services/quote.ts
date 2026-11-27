@@ -58,11 +58,7 @@ export async function quoteCart(db: DbOrTx, input: CartLineInput[], pincode: str
   for (const l of input) merged.set(l.variantId, (merged.get(l.variantId) ?? 0) + l.quantity);
   const ids = [...merged.keys()];
   const rows = ids.length
-    ? await db
-        .select({ v: s.productVariants, p: s.products })
-        .from(s.productVariants)
-        .innerJoin(s.products, eq(s.products.id, s.productVariants.productId))
-        .where(inArray(s.productVariants.id, ids))
+    ? await db.select({ v: s.productVariants, p: s.products }).from(s.productVariants).innerJoin(s.products, eq(s.products.id, s.productVariants.productId)).where(inArray(s.productVariants.id, ids))
     : [];
   const stock = await availability(db, ids, todayIST(now));
 
@@ -112,7 +108,10 @@ export async function quoteCart(db: DbOrTx, input: CartLineInput[], pincode: str
     } else couponError = check.message;
   }
   // GST is included in prices, so a discount lowers the taxable value of each line in proportion.
-  const shares = allocateDiscount(lines.map((l) => l.totalPaise), discount);
+  const shares = allocateDiscount(
+    lines.map((l) => l.totalPaise),
+    discount,
+  );
   const tax = sumPaise(lines.map((l, i) => splitInclusive(l.totalPaise - shares[i]!, l.gstRateBps).tax));
   const payable = subtotal - discount; // free-shipping thresholds look at what the customer actually pays for products
   let shipping: ShippingQuote | null = null;

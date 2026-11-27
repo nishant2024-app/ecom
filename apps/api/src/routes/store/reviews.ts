@@ -17,7 +17,10 @@ export default async function reviewRoutes(fastify: FastifyInstance) {
   const { db } = app.deps.db;
 
   async function productBySlug(slug: string) {
-    const [p] = await db.select({ id: s.products.id }).from(s.products).where(and(eq(s.products.slug, slug), eq(s.products.status, 'active')));
+    const [p] = await db
+      .select({ id: s.products.id })
+      .from(s.products)
+      .where(and(eq(s.products.slug, slug), eq(s.products.status, 'active')));
     if (!p) throw notFound('Product');
     return p.id;
   }
@@ -47,15 +50,28 @@ export default async function reviewRoutes(fastify: FastifyInstance) {
       const before = decodeCursor<{ id: string }>(req.query.cursor)?.id;
       const approved = and(eq(s.productReviews.productId, productId), eq(s.productReviews.status, 'approved'));
       const [rows, dist] = await Promise.all([
-        db.select().from(s.productReviews).where(and(approved, ...(before ? [lt(s.productReviews.id, before)] : []))).orderBy(desc(s.productReviews.id)).limit(limit + 1),
-        db.select({ rating: s.productReviews.rating, n: sql<number>`count(*)::int` }).from(s.productReviews).where(approved).groupBy(s.productReviews.rating),
+        db
+          .select()
+          .from(s.productReviews)
+          .where(and(approved, ...(before ? [lt(s.productReviews.id, before)] : [])))
+          .orderBy(desc(s.productReviews.id))
+          .limit(limit + 1),
+        db
+          .select({ rating: s.productReviews.rating, n: sql<number>`count(*)::int` })
+          .from(s.productReviews)
+          .where(approved)
+          .groupBy(s.productReviews.rating),
       ]);
       const count = dist.reduce((a, d) => a + Number(d.n), 0);
       const sum = dist.reduce((a, d) => a + d.rating * Number(d.n), 0);
       const page = rows.slice(0, limit);
       reply.header('cache-control', 'public, max-age=60, stale-while-revalidate=300');
       return {
-        summary: { average: count ? Math.round((sum / count) * 10) / 10 : 0, count, breakdown: Object.fromEntries([5, 4, 3, 2, 1].map((r) => [String(r), Number(dist.find((d) => d.rating === r)?.n ?? 0)])) },
+        summary: {
+          average: count ? Math.round((sum / count) * 10) / 10 : 0,
+          count,
+          breakdown: Object.fromEntries([5, 4, 3, 2, 1].map((r) => [String(r), Number(dist.find((d) => d.rating === r)?.n ?? 0)])),
+        },
         data: page.map((r) => ({ id: r.id, rating: r.rating, title: r.title, body: r.body, author: r.authorName, verified: true, createdAt: r.createdAt.toISOString() })),
         page: { nextCursor: rows.length > limit ? encodeCursor({ id: page.at(-1)!.id }) : null, hasMore: rows.length > limit },
       };
@@ -70,13 +86,19 @@ export default async function reviewRoutes(fastify: FastifyInstance) {
         tags: ['Catalog'],
         summary: 'Whether I can review this product (needs a delivered order) and my existing review',
         params: Slug,
-        response: { 200: Type.Object({ eligible: Type.Boolean(), review: Nullable(Type.Object({ rating: Type.Integer(), title: Type.String(), body: Type.String(), status: Type.String() })) }), ...ErrorResponses },
+        response: {
+          200: Type.Object({ eligible: Type.Boolean(), review: Nullable(Type.Object({ rating: Type.Integer(), title: Type.String(), body: Type.String(), status: Type.String() })) }),
+          ...ErrorResponses,
+        },
       },
     },
     async (req) => {
       const customerId = requireAuth(req).sub;
       const productId = await productBySlug(req.params.slug);
-      const [mine] = await db.select().from(s.productReviews).where(and(eq(s.productReviews.productId, productId), eq(s.productReviews.customerId, customerId)));
+      const [mine] = await db
+        .select()
+        .from(s.productReviews)
+        .where(and(eq(s.productReviews.productId, productId), eq(s.productReviews.customerId, customerId)));
       const orderId = await deliveredOrderFor(db, customerId, productId);
       return { eligible: !!orderId, review: mine ? { rating: mine.rating, title: mine.title, body: mine.body, status: mine.status } : null };
     },
@@ -103,7 +125,14 @@ export default async function reviewRoutes(fastify: FastifyInstance) {
       const orderId = await deliveredOrderFor(db, customerId, productId);
       if (!orderId) throw new AppError('REVIEW_NOT_ALLOWED', 403, 'You can review a product after an order with it has been delivered');
       const [customer] = await db.select({ name: s.customers.name }).from(s.customers).where(eq(s.customers.id, customerId));
-      const values = { rating: req.body.rating, title: (req.body.title ?? '').trim(), body: (req.body.body ?? '').trim(), status: 'pending', orderId, authorName: publicName(customer?.name ?? 'Customer') };
+      const values = {
+        rating: req.body.rating,
+        title: (req.body.title ?? '').trim(),
+        body: (req.body.body ?? '').trim(),
+        status: 'pending',
+        orderId,
+        authorName: publicName(customer?.name ?? 'Customer'),
+      };
       await db
         .insert(s.productReviews)
         .values({ id: newId('rvw'), productId, customerId, ...values })

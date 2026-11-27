@@ -26,7 +26,11 @@ function copy(template: OrderEmailTemplate, o: View, webUrl: string): Copy {
       return {
         subject: `Order ${o.number} confirmed`,
         heading: 'Thank you, your order is confirmed',
-        lines: [`We have received your payment of ${rupees(o.total.amount)}.`, `We pack your order the next working day and hand it to the courier. Delivery usually takes ${eta} after dispatch.`, 'You can cancel for a full refund until we pack it.'],
+        lines: [
+          `We have received your payment of ${rupees(o.total.amount)}.`,
+          `We pack your order the next working day and hand it to the courier. Delivery usually takes ${eta} after dispatch.`,
+          'You can cancel for a full refund until we pack it.',
+        ],
         button: { label: 'View your order', url: orderUrl },
         showItems: true,
       };
@@ -45,7 +49,10 @@ function copy(template: OrderEmailTemplate, o: View, webUrl: string): Copy {
       return {
         subject: `Delivered: order ${o.number}`,
         heading: 'Your order was delivered',
-        lines: ['We hope you enjoy it. Check the batch code on the pack at /verify if you like, and tell others what you think: your review helps other customers.', 'Something wrong with your order? Reply to this email within 48 hours with a photo.'],
+        lines: [
+          'We hope you enjoy it. Check the batch code on the pack at /verify if you like, and tell others what you think: your review helps other customers.',
+          'Something wrong with your order? Reply to this email within 48 hours with a photo.',
+        ],
         button: { label: 'Rate your products', url: orderUrl },
         showItems: true,
       };
@@ -56,7 +63,10 @@ function copy(template: OrderEmailTemplate, o: View, webUrl: string): Copy {
       return {
         subject: `Order ${o.number} cancelled`,
         heading: 'Your order was cancelled',
-        lines: [o.cancelReason ? `Reason: ${o.cancelReason}.` : '', refunded ? `A refund of ${rupees(refundAmount)} has been started to your original payment method. Banks usually credit it in 5–7 working days.` : 'You were not charged for this order.'].filter(Boolean),
+        lines: [
+          o.cancelReason ? `Reason: ${o.cancelReason}.` : '',
+          refunded ? `A refund of ${rupees(refundAmount)} has been started to your original payment method. Banks usually credit it in 5–7 working days.` : 'You were not charged for this order.',
+        ].filter(Boolean),
         button: { label: 'View your order', url: orderUrl },
         showItems: false,
       };
@@ -74,7 +84,20 @@ export function renderOrderEmail(template: OrderEmailTemplate, o: View, brand: {
     c.heading,
     '',
     ...c.lines,
-    ...(c.showItems ? ['', ...o.items.map((i) => `${i.quantity} × ${i.name} (${i.packSize})  ${rupees(i.total.amount)}`), '', `Subtotal ${rupees(o.subtotal.amount)}`, ...(o.discount.amount ? [`Discount -${rupees(o.discount.amount)}`] : []), `Shipping ${o.shipping.amount ? rupees(o.shipping.amount) : 'Free'}`, `Total ${rupees(o.total.amount)}`, '', 'Delivering to:', address] : []),
+    ...(c.showItems
+      ? [
+          '',
+          ...o.items.map((i) => `${i.quantity} × ${i.name} (${i.packSize})  ${rupees(i.total.amount)}`),
+          '',
+          `Subtotal ${rupees(o.subtotal.amount)}`,
+          ...(o.discount.amount ? [`Discount -${rupees(o.discount.amount)}`] : []),
+          `Shipping ${o.shipping.amount ? rupees(o.shipping.amount) : 'Free'}`,
+          `Total ${rupees(o.total.amount)}`,
+          '',
+          'Delivering to:',
+          address,
+        ]
+      : []),
     ...(c.button ? ['', `${c.button.label}: ${c.button.url}`] : []),
     '',
     `Order ${o.number}`,
@@ -130,7 +153,11 @@ export async function sendPendingEmails(deps: AppDeps, limit = 20): Promise<{ se
   let failed = 0;
   for (const n of pending) {
     // Claim it: only one worker wins the attempt counter bump.
-    const claimed = await db.update(s.notifications).set({ attempts: n.attempts + 1 }).where(and(eq(s.notifications.id, n.id), eq(s.notifications.attempts, n.attempts), eq(s.notifications.status, 'pending'))).returning({ id: s.notifications.id });
+    const claimed = await db
+      .update(s.notifications)
+      .set({ attempts: n.attempts + 1 })
+      .where(and(eq(s.notifications.id, n.id), eq(s.notifications.attempts, n.attempts), eq(s.notifications.status, 'pending')))
+      .returning({ id: s.notifications.id });
     if (!claimed.length) continue;
     try {
       const orderId = (n.data as { orderId?: string }).orderId;
@@ -140,7 +167,12 @@ export async function sendPendingEmails(deps: AppDeps, limit = 20): Promise<{ se
       const [seller] = await db.select().from(s.sellers).limit(1);
       const settings = await db.select().from(s.settings).where(eq(s.settings.sellerId, seller!.id));
       const setting = (k: string) => String(settings.find((x) => x.key === k)?.value ?? '');
-      const mail = renderOrderEmail(n.template as OrderEmailTemplate, view, { name: seller!.name, supportEmail: setting('support.email'), supportPhone: setting('support.phone') }, deps.config.PUBLIC_WEB_URL);
+      const mail = renderOrderEmail(
+        n.template as OrderEmailTemplate,
+        view,
+        { name: seller!.name, supportEmail: setting('support.email'), supportPhone: setting('support.phone') },
+        deps.config.PUBLIC_WEB_URL,
+      );
       await provider.send({ to: customer.email, ...mail });
       await db.update(s.notifications).set({ status: 'sent', sentAt: new Date(), lastError: null }).where(eq(s.notifications.id, n.id));
       sent++;

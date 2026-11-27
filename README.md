@@ -4,16 +4,16 @@ Online shop for shelf-stable dairy products (ghee, milk powder, UHT and flavoure
 
 ![Storefront](docs/screenshots/home-hero.png)
 
-| | |
-|---|---|
-| Roadmap and status | [PLAN.md](PLAN.md) |
-| Documentation | [docs/README.md](docs/README.md) |
-| API guide · OpenAPI (generated) · rendered reference | [docs/api/README.md](docs/api/README.md) · [openapi.json](docs/api/openapi.json) · [reference.html](docs/api/reference.html) |
-| Design system | [docs/08-design-system.md](docs/08-design-system.md) |
-| **Launching: keys to provide and setup steps** | [docs/14-go-live.md](docs/14-go-live.md) |
-| Competitor research (Amul and others) and feature decisions | [docs/15-competitor-research.md](docs/15-competitor-research.md) |
-| **Put it live on one server** (step by step, with backups) | [docs/17-deploy-single-server.md](docs/17-deploy-single-server.md) |
-| Order emails · Coupons · Delivery location | [18](docs/18-order-emails.md) · [19](docs/19-coupons.md) · [16](docs/16-location-and-delivery.md) |
+|                                                             |                                                                                                                              |
+| ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Roadmap and status                                          | [PLAN.md](PLAN.md)                                                                                                           |
+| Documentation                                               | [docs/README.md](docs/README.md)                                                                                             |
+| API guide · OpenAPI (generated) · rendered reference        | [docs/api/README.md](docs/api/README.md) · [openapi.json](docs/api/openapi.json) · [reference.html](docs/api/reference.html) |
+| Design system                                               | [docs/08-design-system.md](docs/08-design-system.md)                                                                         |
+| **Launching: keys to provide and setup steps**              | [docs/14-go-live.md](docs/14-go-live.md)                                                                                     |
+| Competitor research (Amul and others) and feature decisions | [docs/15-competitor-research.md](docs/15-competitor-research.md)                                                             |
+| **Put it live on one server** (step by step, with backups)  | [docs/17-deploy-single-server.md](docs/17-deploy-single-server.md)                                                           |
+| Order emails · Coupons · Delivery location                  | [18](docs/18-order-emails.md) · [19](docs/19-coupons.md) · [16](docs/16-location-and-delivery.md)                            |
 
 ## Run it on your computer
 
@@ -41,11 +41,11 @@ pnpm dev
 
 The setup installs everything, starts the database and adds sample products. `pnpm dev` starts the shop, admin and API (`Ctrl+C` stops all three). On Google Cloud Shell, see [the development guide](docs/12-development.md#first-run).
 
-| What | Where |
-|---|---|
-| Shop | http://localhost:3000 |
-| Admin (sign in with the email above) | http://localhost:5173 |
-| API docs | http://localhost:4000/docs |
+| What                                 | Where                      |
+| ------------------------------------ | -------------------------- |
+| Shop                                 | http://localhost:3000      |
+| Admin (sign in with the email above) | http://localhost:5173      |
+| API docs                             | http://localhost:4000/docs |
 
 While testing there is a "test sign-in" box instead of Google and a fake payment page instead of Cashfree, so nothing real is charged. Put in your real keys when you go live: [docs/14-go-live.md](docs/14-go-live.md).
 
@@ -90,14 +90,14 @@ pnpm --filter @dairy/api test       # 49 integration tests on real Postgres: pay
 pnpm --filter @dairy/ui contrast    # WCAG contrast for every token pair, light and dark
 ```
 
-| Product page | Mobile |
-|---|---|
+| Product page                      | Mobile                                |
+| --------------------------------- | ------------------------------------- |
 | ![](docs/screenshots/product.png) | ![](docs/screenshots/mobile-home.png) |
 
-| Admin dashboard | Order fulfilment |
-|---|---|
+| Admin dashboard                           | Order fulfilment                      |
+| ----------------------------------------- | ------------------------------------- |
 | ![](docs/screenshots/admin-dashboard.png) | ![](docs/screenshots/admin-order.png) |
 
-| Product editor with photo upload | Storefront editor | Bulk order actions |
-|---|---|---|
+| Product editor with photo upload               | Storefront editor                          | Bulk order actions                          |
+| ---------------------------------------------- | ------------------------------------------ | ------------------------------------------- |
 | ![](docs/screenshots/admin-product-editor.png) | ![](docs/screenshots/admin-storefront.png) | ![](docs/screenshots/admin-orders-bulk.png) |

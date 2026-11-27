@@ -36,9 +36,36 @@ export const DEFAULT_CONTENT: StoreContent = {
     imageId: null,
   },
   banners: [
-    { eyebrow: 'Bilona A2 ghee', title: 'Slow-churned ghee, golden and granular', subtitle: 'Hand-churned from curd and cooked over a wood fire. Keeps 9 months sealed.', ctaLabel: 'Shop ghee', href: '/products?category=ghee', theme: 'ghee', categorySlug: 'ghee', imageId: null },
-    { eyebrow: 'Milk that waits for you', title: 'Milk powder and UHT milk, no fridge needed', subtitle: 'Spray-dried and sealed at our dairy. Real milk in your pantry for months.', ctaLabel: 'Shop milk', href: '/products?category=milk-powder', theme: 'milk', categorySlug: 'milk-powder', imageId: null },
-    { eyebrow: 'Festive boxes', title: 'Peda, milk cake and condensed milk', subtitle: 'Made from khoa in small batches and packed to travel across India.', ctaLabel: 'Shop mithai', href: '/products?category=condensed-sweets', theme: 'sweets', categorySlug: 'condensed-sweets', imageId: null },
+    {
+      eyebrow: 'Bilona A2 ghee',
+      title: 'Slow-churned ghee, golden and granular',
+      subtitle: 'Hand-churned from curd and cooked over a wood fire. Keeps 9 months sealed.',
+      ctaLabel: 'Shop ghee',
+      href: '/products?category=ghee',
+      theme: 'ghee',
+      categorySlug: 'ghee',
+      imageId: null,
+    },
+    {
+      eyebrow: 'Milk that waits for you',
+      title: 'Milk powder and UHT milk, no fridge needed',
+      subtitle: 'Spray-dried and sealed at our dairy. Real milk in your pantry for months.',
+      ctaLabel: 'Shop milk',
+      href: '/products?category=milk-powder',
+      theme: 'milk',
+      categorySlug: 'milk-powder',
+      imageId: null,
+    },
+    {
+      eyebrow: 'Festive boxes',
+      title: 'Peda, milk cake and condensed milk',
+      subtitle: 'Made from khoa in small batches and packed to travel across India.',
+      ctaLabel: 'Shop mithai',
+      href: '/products?category=condensed-sweets',
+      theme: 'sweets',
+      categorySlug: 'condensed-sweets',
+      imageId: null,
+    },
   ],
   story: {
     title: 'Why we make dairy that keeps',
@@ -62,7 +89,10 @@ export const DEFAULT_CONTENT: StoreContent = {
 };
 
 export async function loadContent(db: DbOrTx, sellerId: string): Promise<StoreContent> {
-  const [row] = await db.select().from(s.settings).where(and(eq(s.settings.sellerId, sellerId), eq(s.settings.key, 'storefront.content')));
+  const [row] = await db
+    .select()
+    .from(s.settings)
+    .where(and(eq(s.settings.sellerId, sellerId), eq(s.settings.key, 'storefront.content')));
   const saved = (row?.value ?? {}) as Partial<StoreContent>;
   return {
     ...DEFAULT_CONTENT,

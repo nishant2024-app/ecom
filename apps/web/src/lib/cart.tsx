@@ -107,8 +107,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       open,
       setOpen,
       add,
-      setQuantity: (variantId, quantity) =>
-        setItems((prev) => (quantity <= 0 ? prev.filter((i) => i.variantId !== variantId) : prev.map((i) => (i.variantId === variantId ? { ...i, quantity } : i)))),
+      setQuantity: (variantId, quantity) => setItems((prev) => (quantity <= 0 ? prev.filter((i) => i.variantId !== variantId) : prev.map((i) => (i.variantId === variantId ? { ...i, quantity } : i)))),
       remove: (variantId) => setItems((prev) => prev.filter((i) => i.variantId !== variantId)),
       clear: () => setItems([]),
       pincode,

@@ -3,7 +3,7 @@ import { mkdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { Config } from '../config';
 
-/** Where uploaded images live: Cloudflare R2 in staging/production, a local folder in development. */
+/** Where uploaded images live: Cloudflare R2 (recommended in production) or a local folder (development, or a single server). */
 export interface Storage {
   kind: 'r2' | 'local';
   put(key: string, body: Buffer, contentType: string): Promise<void>;
@@ -37,7 +37,11 @@ export function createStorage(config: Config): Storage {
       url: (key) => `${base}/${key}`,
     };
   }
-  if (config.isProduction) throw new Error('R2 storage settings are required in production');
+  // Production without R2 stores photos on the server's disk. The public URL must then be explicit (https),
+  // and the web server (Nginx) or this API serves the folder at /media.
+  if (config.isProduction && !/^https:\/\//.test(base)) {
+    throw new Error('In production set the R2_* variables, or set R2_PUBLIC_BASE_URL to the public https://…/media address of the local media folder');
+  }
   const root = path.resolve(config.MEDIA_DIR);
   return {
     kind: 'local',

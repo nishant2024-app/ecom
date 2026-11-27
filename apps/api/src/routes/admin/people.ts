@@ -59,7 +59,10 @@ export default async function adminPeopleRoutes(fastify: FastifyInstance) {
       const [c] = await db.select().from(s.customers).where(eq(s.customers.id, req.params.customerId));
       if (!c) throw notFound('Customer');
       const [addresses, orders] = await Promise.all([
-        db.select().from(s.addresses).where(and(eq(s.addresses.customerId, c.id), isNull(s.addresses.archivedAt))),
+        db
+          .select()
+          .from(s.addresses)
+          .where(and(eq(s.addresses.customerId, c.id), isNull(s.addresses.archivedAt))),
         db.select().from(s.orders).where(eq(s.orders.customerId, c.id)).orderBy(desc(s.orders.createdAt)).limit(50),
       ]);
       return {
@@ -134,11 +137,18 @@ export default async function adminPeopleRoutes(fastify: FastifyInstance) {
     '/staff',
     {
       config: { auth: 'staff', permission: 'staff.manage' },
-      schema: { tags: ['Admin'], summary: 'Invite by Google email', body: Type.Object({ email: Type.String({ format: 'email' }), name: Type.String({ minLength: 2, maxLength: 80 }), role: Role }, { additionalProperties: false }) },
+      schema: {
+        tags: ['Admin'],
+        summary: 'Invite by Google email',
+        body: Type.Object({ email: Type.String({ format: 'email' }), name: Type.String({ minLength: 2, maxLength: 80 }), role: Role }, { additionalProperties: false }),
+      },
     },
     async (req, reply) => {
       const email = req.body.email.toLowerCase();
-      const [clash] = await db.select({ id: s.staff.id }).from(s.staff).where(sql`lower(${s.staff.email}) = ${email}`);
+      const [clash] = await db
+        .select({ id: s.staff.id })
+        .from(s.staff)
+        .where(sql`lower(${s.staff.email}) = ${email}`);
       if (clash) throw new AppError('CONFLICT', 409, 'This email is already on the team');
       const id = newId('stf');
       await db.insert(s.staff).values({ id, email, name: req.body.name, role: req.body.role, invitedBy: req.auth!.sub });

@@ -70,7 +70,18 @@ export function PantryReel() {
         {FACTS.map((f, i) => {
           const s = spring({ frame: frame - 150 - i * 12, fps, config: { damping: 14 } });
           return (
-            <div key={f} style={{ background: CREAM, color: FOREST, borderRadius: 999, padding: '14px 26px', fontSize: 30, transform: `translateY(${interpolate(s, [0, 1], [80, 0])}px)`, opacity: s * (1 - outro) }}>
+            <div
+              key={f}
+              style={{
+                background: CREAM,
+                color: FOREST,
+                borderRadius: 999,
+                padding: '14px 26px',
+                fontSize: 30,
+                transform: `translateY(${interpolate(s, [0, 1], [80, 0])}px)`,
+                opacity: s * (1 - outro),
+              }}
+            >
               {f}
             </div>
           );

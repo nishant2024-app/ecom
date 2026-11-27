@@ -39,12 +39,7 @@ export async function nextBatches(db: DbOrTx, variantIds: string[], today: Busin
  * Reserve stock for order items, first-expiry-first-out, with row locks so two checkouts
  * can't sell the same unit. Throws OUT_OF_STOCK if any item can't be fully reserved.
  */
-export async function reserve(
-  tx: DbOrTx,
-  items: { orderItemId: string; variantId: string; quantity: number; name: string }[],
-  today: BusinessDate,
-  orderId: string,
-) {
+export async function reserve(tx: DbOrTx, items: { orderItemId: string; variantId: string; quantity: number; name: string }[], today: BusinessDate, orderId: string) {
   const variantIds = [...new Set(items.map((i) => i.variantId))];
   const rows = await tx
     .select()
@@ -73,7 +68,10 @@ export async function reserve(
   if (short.length) throw new AppError('OUT_OF_STOCK', 422, `Not enough stock for ${short.join(', ')}`);
   for (const p of plan) {
     await tx.insert(s.orderAllocations).values({ orderItemId: p.orderItemId, batchId: p.batchId, quantity: p.quantity, status: 'reserved' });
-    await tx.update(s.batches).set({ reserved: sql`${s.batches.reserved} + ${p.quantity}` }).where(eq(s.batches.id, p.batchId));
+    await tx
+      .update(s.batches)
+      .set({ reserved: sql`${s.batches.reserved} + ${p.quantity}` })
+      .where(eq(s.batches.id, p.batchId));
     await tx.insert(s.stockMovements).values({ id: newId('stm'), batchId: p.batchId, kind: 'reserved', quantity: p.quantity, referenceType: 'order', referenceId: orderId });
   }
 }
@@ -89,12 +87,17 @@ async function allocationsFor(tx: DbOrTx, orderId: string, status: 'reserved' | 
 /** Give reserved stock back (cancel, expiry). */
 export async function release(tx: DbOrTx, orderId: string, actor: { type: string; id?: string | null } = { type: 'system' }) {
   for (const a of await allocationsFor(tx, orderId, 'reserved')) {
-    await tx.update(s.batches).set({ reserved: sql`${s.batches.reserved} - ${a.quantity}` }).where(eq(s.batches.id, a.batchId));
+    await tx
+      .update(s.batches)
+      .set({ reserved: sql`${s.batches.reserved} - ${a.quantity}` })
+      .where(eq(s.batches.id, a.batchId));
     await tx
       .update(s.orderAllocations)
       .set({ status: 'released' })
       .where(and(eq(s.orderAllocations.orderItemId, a.orderItemId), eq(s.orderAllocations.batchId, a.batchId)));
-    await tx.insert(s.stockMovements).values({ id: newId('stm'), batchId: a.batchId, kind: 'released', quantity: a.quantity, referenceType: 'order', referenceId: orderId, createdByType: actor.type, createdById: actor.id ?? null });
+    await tx
+      .insert(s.stockMovements)
+      .values({ id: newId('stm'), batchId: a.batchId, kind: 'released', quantity: a.quantity, referenceType: 'order', referenceId: orderId, createdByType: actor.type, createdById: actor.id ?? null });
   }
 }
 
@@ -109,6 +112,8 @@ export async function ship(tx: DbOrTx, orderId: string, actor: { type: string; i
       .update(s.orderAllocations)
       .set({ status: 'shipped' })
       .where(and(eq(s.orderAllocations.orderItemId, a.orderItemId), eq(s.orderAllocations.batchId, a.batchId)));
-    await tx.insert(s.stockMovements).values({ id: newId('stm'), batchId: a.batchId, kind: 'shipped', quantity: a.quantity, referenceType: 'order', referenceId: orderId, createdByType: actor.type, createdById: actor.id ?? null });
+    await tx
+      .insert(s.stockMovements)
+      .values({ id: newId('stm'), batchId: a.batchId, kind: 'shipped', quantity: a.quantity, referenceType: 'order', referenceId: orderId, createdByType: actor.type, createdById: actor.id ?? null });
   }
 }

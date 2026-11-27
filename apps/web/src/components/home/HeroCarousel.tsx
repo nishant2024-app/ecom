@@ -25,7 +25,10 @@ const THEMES: Record<Banner['theme'], { bg: string; ink: string; sub: string; ch
     deco: (id) => (
       <svg className="absolute inset-x-0 bottom-0 h-[38%] w-full" viewBox="0 0 1200 300" preserveAspectRatio="none" aria-hidden>
         <defs>
-          <linearGradient id={`g${id}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#e9ad2b" /><stop offset="1" stopColor="#c98a12" /></linearGradient>
+          <linearGradient id={`g${id}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#e9ad2b" />
+            <stop offset="1" stopColor="#c98a12" />
+          </linearGradient>
         </defs>
         <path d="M0 120 C 180 60 300 170 480 110 S 800 40 960 100 S 1140 150 1200 90 V300 H0Z" fill={`url(#g${id})`} opacity=".55" />
         <path d="M0 180 C 200 130 360 230 560 170 S 900 110 1060 170 S 1170 200 1200 160 V300 H0Z" fill={`url(#g${id})`} />
@@ -154,21 +157,39 @@ export function HeroCarousel({ banners, images, packsFor }: { banners: Banner[];
             <div className="relative grid h-full grid-cols-1 content-start gap-4 p-6 pt-8 md:grid-cols-[1.05fr_1fr] md:content-center md:px-20 md:py-12">
               <div className="min-w-0 max-w-[540px]" style={{ color: img ? '#fff' : theme.ink }}>
                 {b.eyebrow && (
-                  <motion.p initial={reduce ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className={`inline-flex rounded-pill px-3 py-1 text-[13px] font-bold ${img ? 'bg-[#ffffff26] text-[#fff] backdrop-blur' : theme.chip}`}>
+                  <motion.p
+                    initial={reduce ? false : { opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.25 }}
+                    className={`inline-flex rounded-pill px-3 py-1 text-[13px] font-bold ${img ? 'bg-[#ffffff26] text-[#fff] backdrop-blur' : theme.chip}`}
+                  >
                     {b.eyebrow}
                   </motion.p>
                 )}
-                <motion.h2 initial={reduce ? false : { opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.32, duration: 0.6 }} className="mt-3 text-[clamp(28px,4.6vw,54px)] font-extrabold leading-[1.05] tracking-[-0.035em]">
+                <motion.h2
+                  initial={reduce ? false : { opacity: 0, y: 18 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.32, duration: 0.6 }}
+                  className="mt-3 text-[clamp(28px,4.6vw,54px)] font-extrabold leading-[1.05] tracking-[-0.035em]"
+                >
                   {index === 0 ? <span className="sr-only">Mulshi Dairy: </span> : null}
                   {b.title}
                 </motion.h2>
-                <motion.p initial={reduce ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.42 }} className="mt-3 max-w-[460px] text-[15px] leading-relaxed md:text-[17px]" style={{ color: img ? '#ffffffd9' : theme.sub }}>
+                <motion.p
+                  initial={reduce ? false : { opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.42 }}
+                  className="mt-3 max-w-[460px] text-[15px] leading-relaxed md:text-[17px]"
+                  style={{ color: img ? '#ffffffd9' : theme.sub }}
+                >
                   {b.subtitle}
                 </motion.p>
                 <motion.div initial={reduce ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="mt-6">
                   <Link href={b.href} className="group inline-flex h-12 items-center gap-2 rounded-pill bg-forest px-6 font-semibold text-on-forest shadow-float hover:bg-forest-2">
                     {b.ctaLabel}
-                    <span className="transition-transform group-hover:translate-x-0.5"><ArrowIcon /></span>
+                    <span className="transition-transform group-hover:translate-x-0.5">
+                      <ArrowIcon />
+                    </span>
                   </Link>
                 </motion.div>
               </div>
@@ -183,7 +204,14 @@ export function HeroCarousel({ banners, images, packsFor }: { banners: Banner[];
                       className={`flex min-w-0 max-w-[32%] items-end ${i === 1 ? 'z-10 h-full' : 'h-[74%]'}`}
                     >
                       <Link href={`/p/${p.slug}`} aria-label={p.name} className="flex h-full max-w-full items-end transition-transform duration-300 hover:-translate-y-2">
-                        <PackShot kind={p.pack.kind} color={p.pack.color} accent={p.pack.accent} label={p.name} size={p.size} className="h-full w-auto max-w-full drop-shadow-[0_22px_20px_rgba(40,25,0,0.28)]" />
+                        <PackShot
+                          kind={p.pack.kind}
+                          color={p.pack.color}
+                          accent={p.pack.accent}
+                          label={p.name}
+                          size={p.size}
+                          className="h-full w-auto max-w-full drop-shadow-[0_22px_20px_rgba(40,25,0,0.28)]"
+                        />
                       </Link>
                     </motion.div>
                   ))}
@@ -195,17 +223,45 @@ export function HeroCarousel({ banners, images, packsFor }: { banners: Banner[];
 
         {count > 1 && (
           <>
-            <button type="button" aria-label="Previous slide" onClick={() => go(index - 1)} className="absolute left-3 top-1/2 z-20 hidden h-11 w-11 -translate-y-1/2 place-items-center rounded-pill bg-[#ffffffd9] text-ink shadow-card hover:bg-[#fff] md:grid">
-              <span className="rotate-180"><ArrowIcon /></span>
+            <button
+              type="button"
+              aria-label="Previous slide"
+              onClick={() => go(index - 1)}
+              className="absolute left-3 top-1/2 z-20 hidden h-11 w-11 -translate-y-1/2 place-items-center rounded-pill bg-[#ffffffd9] text-ink shadow-card hover:bg-[#fff] md:grid"
+            >
+              <span className="rotate-180">
+                <ArrowIcon />
+              </span>
             </button>
-            <button type="button" aria-label="Next slide" onClick={() => go(index + 1)} className="absolute right-3 top-1/2 z-20 hidden h-11 w-11 -translate-y-1/2 place-items-center rounded-pill bg-[#ffffffd9] text-ink shadow-card hover:bg-[#fff] md:grid">
+            <button
+              type="button"
+              aria-label="Next slide"
+              onClick={() => go(index + 1)}
+              className="absolute right-3 top-1/2 z-20 hidden h-11 w-11 -translate-y-1/2 place-items-center rounded-pill bg-[#ffffffd9] text-ink shadow-card hover:bg-[#fff] md:grid"
+            >
               <ArrowIcon />
             </button>
             <div className="absolute bottom-1 left-1/2 z-20 flex -translate-x-1/2" role="tablist" aria-label="Choose slide">
               {banners.map((x, i) => (
-                <button key={i} type="button" role="tab" aria-selected={i === index} aria-label={`Slide ${i + 1}: ${x.title}`} onClick={() => go(i)} className="grid h-11 min-w-[28px] place-items-center px-1">
+                <button
+                  key={i}
+                  type="button"
+                  role="tab"
+                  aria-selected={i === index}
+                  aria-label={`Slide ${i + 1}: ${x.title}`}
+                  onClick={() => go(i)}
+                  className="grid h-11 min-w-[28px] place-items-center px-1"
+                >
                   <span className="relative block h-2 overflow-hidden rounded-pill bg-[#10201633] transition-all" style={{ width: i === index ? 36 : 8 }}>
-                    {i === index && !reduce && !paused && <motion.span key={`p${index}`} className="absolute inset-y-0 left-0 bg-forest" initial={{ width: 0 }} animate={{ width: '100%' }} transition={{ duration: INTERVAL / 1000, ease: 'linear' }} />}
+                    {i === index && !reduce && !paused && (
+                      <motion.span
+                        key={`p${index}`}
+                        className="absolute inset-y-0 left-0 bg-forest"
+                        initial={{ width: 0 }}
+                        animate={{ width: '100%' }}
+                        transition={{ duration: INTERVAL / 1000, ease: 'linear' }}
+                      />
+                    )}
                     {i === index && (reduce || paused) && <span className="absolute inset-0 bg-forest" />}
                   </span>
                 </button>

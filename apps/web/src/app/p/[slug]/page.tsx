@@ -19,7 +19,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const product = await getProduct((await params).slug);
   if (!product) return { title: 'Not found', robots: { index: false } };
   const v = product.variants[0];
-  const description = `${product.tagline}. ${v ? `From ₹${(product.fromPrice.amount / 100).toLocaleString('en-IN')}, keeps ${shelfLife(v.shelfLifeDays)} sealed.` : ''} Shipped across India.`.slice(0, 165);
+  const description = `${product.tagline}. ${v ? `From ₹${(product.fromPrice.amount / 100).toLocaleString('en-IN')}, keeps ${shelfLife(v.shelfLifeDays)} sealed.` : ''} Shipped across India.`.slice(
+    0,
+    165,
+  );
   const images = product.gallery.length ? product.gallery.slice(0, 1).map((g) => ({ url: g.url, width: g.width, height: g.height, alt: g.alt })) : undefined;
   return {
     title: `${product.name} (${product.variants.map((x) => x.packSize).join(', ')})`,
@@ -59,7 +62,13 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         ...(reviews && reviews.summary.count > 0
           ? {
               aggregateRating: { '@type': 'AggregateRating', ratingValue: reviews.summary.average, reviewCount: reviews.summary.count, bestRating: 5, worstRating: 1 },
-              review: reviews.data.slice(0, 5).map((r) => ({ '@type': 'Review', reviewRating: { '@type': 'Rating', ratingValue: r.rating, bestRating: 5 }, author: { '@type': 'Person', name: r.author }, datePublished: r.createdAt.slice(0, 10), ...(r.body ? { reviewBody: r.body } : {}) })),
+              review: reviews.data.slice(0, 5).map((r) => ({
+                '@type': 'Review',
+                reviewRating: { '@type': 'Rating', ratingValue: r.rating, bestRating: 5 },
+                author: { '@type': 'Person', name: r.author },
+                datePublished: r.createdAt.slice(0, 10),
+                ...(r.body ? { reviewBody: r.body } : {}),
+              })),
             }
           : {}),
         offers: product.variants.map((v) => ({
@@ -89,8 +98,14 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     <div className="mx-auto max-w-[1280px] px-4 pb-10 pt-5 md:px-6">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <nav aria-label="Breadcrumb" className="text-[13px] text-ink-2 [&_a]:inline-block [&_a]:py-2">
-        <Link href="/" className="hover:text-forest">Home</Link> /{' '}
-        <Link href={`/products?category=${product.category.slug}`} className="hover:text-forest">{product.category.name}</Link> / <span className="text-ink-2">{product.name}</span>
+        <Link href="/" className="hover:text-forest">
+          Home
+        </Link>{' '}
+        /{' '}
+        <Link href={`/products?category=${product.category.slug}`} className="hover:text-forest">
+          {product.category.name}
+        </Link>{' '}
+        / <span className="text-ink-2">{product.name}</span>
       </nav>
 
       <ProductBuy product={product}>
@@ -98,9 +113,13 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         <h1 className="mt-1 text-[28px] font-extrabold leading-tight tracking-[-0.03em] md:text-[36px]">{product.name}</h1>
         {product.rating && (
           <a href="#reviews" className="mt-2 inline-flex items-center gap-1.5 text-[14px] hover:underline">
-            <span className="text-[#e3a008]" aria-hidden>★</span>
+            <span className="text-[#e3a008]" aria-hidden>
+              ★
+            </span>
             <span className="font-semibold">{product.rating.average.toFixed(1)}</span>
-            <span className="text-ink-2">({product.rating.count} review{product.rating.count === 1 ? '' : 's'})</span>
+            <span className="text-ink-2">
+              ({product.rating.count} review{product.rating.count === 1 ? '' : 's'})
+            </span>
           </a>
         )}
         <p className="mt-2 flex items-center gap-2 text-[16px] text-ink-2">
@@ -117,7 +136,9 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         {/* Styled like the back-of-pack label: what's in it, how to keep it, the legal numbers. */}
         <Reveal className="lg:col-span-5" delay={0.08}>
           <section aria-labelledby="label-h" className="rounded-5 border border-rule bg-paper p-6">
-            <h2 id="label-h" className="text-[22px] font-extrabold tracking-[-0.02em]">Product details</h2>
+            <h2 id="label-h" className="text-[22px] font-extrabold tracking-[-0.02em]">
+              Product details
+            </h2>
             <dl className="mt-3">
               {label.map(([k, v]) => (
                 <div key={k} className="grid grid-cols-[9rem_1fr] gap-4 border-b border-rule py-2.5 text-[14px]">
@@ -161,7 +182,9 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         <section className="mt-14">
           <div className="mb-4 flex items-end justify-between">
             <h2 className="text-[22px] font-extrabold tracking-[-0.025em] md:text-[28px]">You may also like</h2>
-            <Link href={`/products?category=${product.category.slug}`} className="inline-flex min-h-[44px] items-center text-[14px] font-semibold text-forest hover:underline">See all →</Link>
+            <Link href={`/products?category=${product.category.slug}`} className="inline-flex min-h-[44px] items-center text-[14px] font-semibold text-forest hover:underline">
+              See all →
+            </Link>
           </div>
           <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
             {product.related.map((p, i) => (

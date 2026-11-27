@@ -85,7 +85,15 @@ export function DashboardPage() {
           </div>
 
           <div className="grid gap-4 xl:grid-cols-3">
-            <Card title="Recent orders" className="xl:col-span-2" action={<Btn variant="ghost" onClick={() => go('#/orders')}>All orders →</Btn>}>
+            <Card
+              title="Recent orders"
+              className="xl:col-span-2"
+              action={
+                <Btn variant="ghost" onClick={() => go('#/orders')}>
+                  All orders →
+                </Btn>
+              }
+            >
               <table className="w-full">
                 <thead>
                   <tr className="rule-b">
@@ -115,7 +123,14 @@ export function DashboardPage() {
               </table>
             </Card>
             <div className="space-y-4">
-              <Card title="Low stock" action={<Btn variant="ghost" onClick={() => go('#/inventory')}>Inventory →</Btn>}>
+              <Card
+                title="Low stock"
+                action={
+                  <Btn variant="ghost" onClick={() => go('#/inventory')}>
+                    Inventory →
+                  </Btn>
+                }
+              >
                 {d.lowStock.length === 0 ? (
                   <p className="text-ink-2">Everything is above its reorder level.</p>
                 ) : (

@@ -151,9 +151,7 @@ export default async function meRoutes(fastify: FastifyInstance) {
     return { latitude: roundCoord(loc.lat), longitude: roundCoord(loc.lng), locationAccuracyM: loc.accuracyM ?? null, locationSource: loc.source };
   }
 
-  app.get('/me', { config: customerCfg, schema: { tags: ['Profile'], summary: 'My profile', response: { 200: CustomerOut } } }, async (req) =>
-    customerOut(await loadCustomer(requireAuth(req).sub)),
-  );
+  app.get('/me', { config: customerCfg, schema: { tags: ['Profile'], summary: 'My profile', response: { 200: CustomerOut } } }, async (req) => customerOut(await loadCustomer(requireAuth(req).sub)));
 
   app.patch(
     '/me',
@@ -218,14 +216,10 @@ export default async function meRoutes(fastify: FastifyInstance) {
     },
   );
 
-  app.get(
-    '/me/addresses',
-    { config: customerCfg, schema: { tags: ['Profile'], summary: 'List addresses', response: { 200: Type.Object({ data: Type.Array(AddressOut) }) } } },
-    async (req) => {
-      const c = await loadCustomer(requireAuth(req).sub);
-      return { data: await listAddresses(c.id, c.defaultAddressId) };
-    },
-  );
+  app.get('/me/addresses', { config: customerCfg, schema: { tags: ['Profile'], summary: 'List addresses', response: { 200: Type.Object({ data: Type.Array(AddressOut) }) } } }, async (req) => {
+    const c = await loadCustomer(requireAuth(req).sub);
+    return { data: await listAddresses(c.id, c.defaultAddressId) };
+  });
 
   app.post(
     '/me/addresses',
@@ -269,24 +263,20 @@ export default async function meRoutes(fastify: FastifyInstance) {
     },
   );
 
-  app.delete(
-    '/me/addresses/:addressId',
-    { config: customerCfg, schema: { tags: ['Profile'], summary: 'Remove address', params: IdParam('addressId') } },
-    async (req, reply) => {
-      const customerId = requireAuth(req).sub;
-      const archived = await db
-        .update(s.addresses)
-        .set({ archivedAt: app.deps.now() })
-        .where(and(eq(s.addresses.id, req.params.addressId), eq(s.addresses.customerId, customerId), isNull(s.addresses.archivedAt)))
-        .returning({ id: s.addresses.id });
-      if (archived.length === 0) throw notFound('Address');
-      await db
-        .update(s.customers)
-        .set({ defaultAddressId: null })
-        .where(and(eq(s.customers.id, customerId), eq(s.customers.defaultAddressId, req.params.addressId)));
-      return reply.status(204).send();
-    },
-  );
+  app.delete('/me/addresses/:addressId', { config: customerCfg, schema: { tags: ['Profile'], summary: 'Remove address', params: IdParam('addressId') } }, async (req, reply) => {
+    const customerId = requireAuth(req).sub;
+    const archived = await db
+      .update(s.addresses)
+      .set({ archivedAt: app.deps.now() })
+      .where(and(eq(s.addresses.id, req.params.addressId), eq(s.addresses.customerId, customerId), isNull(s.addresses.archivedAt)))
+      .returning({ id: s.addresses.id });
+    if (archived.length === 0) throw notFound('Address');
+    await db
+      .update(s.customers)
+      .set({ defaultAddressId: null })
+      .where(and(eq(s.customers.id, customerId), eq(s.customers.defaultAddressId, req.params.addressId)));
+    return reply.status(204).send();
+  });
 
   app.post(
     '/me/devices',
@@ -318,14 +308,10 @@ export default async function meRoutes(fastify: FastifyInstance) {
     },
   );
 
-  app.delete(
-    '/me/devices/:deviceId',
-    { config: customerCfg, schema: { tags: ['Profile'], summary: 'Remove a push token', params: IdParam('deviceId') } },
-    async (req, reply) => {
-      await db.delete(s.devices).where(and(eq(s.devices.id, req.params.deviceId), eq(s.devices.customerId, requireAuth(req).sub)));
-      return reply.status(204).send();
-    },
-  );
+  app.delete('/me/devices/:deviceId', { config: customerCfg, schema: { tags: ['Profile'], summary: 'Remove a push token', params: IdParam('deviceId') } }, async (req, reply) => {
+    await db.delete(s.devices).where(and(eq(s.devices.id, req.params.deviceId), eq(s.devices.customerId, requireAuth(req).sub)));
+    return reply.status(204).send();
+  });
 
   app.get(
     '/me/notification-preferences',
@@ -333,14 +319,10 @@ export default async function meRoutes(fastify: FastifyInstance) {
     async (req) => (await loadCustomer(requireAuth(req).sub)).notificationPrefs,
   );
 
-  app.put(
-    '/me/notification-preferences',
-    { config: customerCfg, schema: { tags: ['Profile'], summary: 'Set notification preferences', body: Prefs, response: { 200: Prefs } } },
-    async (req) => {
-      const c = await loadCustomer(requireAuth(req).sub);
-      const prefs = { ...c.notificationPrefs, ...req.body };
-      await db.update(s.customers).set({ notificationPrefs: prefs }).where(eq(s.customers.id, c.id));
-      return prefs;
-    },
-  );
+  app.put('/me/notification-preferences', { config: customerCfg, schema: { tags: ['Profile'], summary: 'Set notification preferences', body: Prefs, response: { 200: Prefs } } }, async (req) => {
+    const c = await loadCustomer(requireAuth(req).sub);
+    const prefs = { ...c.notificationPrefs, ...req.body };
+    await db.update(s.customers).set({ notificationPrefs: prefs }).where(eq(s.customers.id, c.id));
+    return prefs;
+  });
 }

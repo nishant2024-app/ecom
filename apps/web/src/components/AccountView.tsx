@@ -86,7 +86,11 @@ export function AccountView() {
         <h2 className="text-xl font-bold">Orders</h2>
         {orders.length === 0 ? (
           <p className="mt-3 text-ink-2">
-            No orders yet. <Link href="/products" className="underline">Start with a jar of ghee</Link>.
+            No orders yet.{' '}
+            <Link href="/products" className="underline">
+              Start with a jar of ghee
+            </Link>
+            .
           </p>
         ) : (
           <ul className="mt-4 space-y-3">
@@ -131,20 +135,31 @@ export function AccountView() {
               <p>
                 {a.name} {a.isDefault && <span className="ml-2 bg-meadow px-2 py-0.5 text-xs rounded-4">Default</span>}
               </p>
-              <p className="text-sm text-ink-2">{[a.line1, a.line2, a.city, a.state].filter(Boolean).join(', ')} – <span className="num">{a.pincode}</span></p>
+              <p className="text-sm text-ink-2">
+                {[a.line1, a.line2, a.city, a.state].filter(Boolean).join(', ')} – <span className="num">{a.pincode}</span>
+              </p>
               <p className="num text-sm text-ink-2">{a.phone}</p>
             </div>
           ))}
         </div>
         {adding && (
           <div className="mt-4 bg-paper-2 p-5 rounded-4">
-            <AddressForm defaultName={me.name} onCancel={() => setAdding(false)} onSaved={(a) => { setAddresses((l) => [...l.map((x) => ({ ...x, isDefault: false })), a]); setAdding(false); }} />
+            <AddressForm
+              defaultName={me.name}
+              onCancel={() => setAdding(false)}
+              onSaved={(a) => {
+                setAddresses((l) => [...l.map((x) => ({ ...x, isDefault: false })), a]);
+                setAdding(false);
+              }}
+            />
           </div>
         )}
       </section>
 
       <p className="mt-12 text-sm text-ink-2">
-        <Link href="/account/delete" className="underline">Delete my account</Link>
+        <Link href="/account/delete" className="underline">
+          Delete my account
+        </Link>
       </p>
     </div>
   );

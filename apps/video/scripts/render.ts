@@ -1,7 +1,7 @@
 /**
  * Render compositions with the Chromium already installed on the machine (no Remotion Lambda,
  * no AWS). Usage:
- *   pnpm --filter @dairy/video render                      # PantryReel → storefront public/video
+ *   pnpm --filter @dairy/video render                      # PantryReel → apps/video/out/
  *   pnpm --filter @dairy/video render ProductReel out.mp4 '{"name":"...",...}'
  * Remotion is free for companies of up to 3 people; see docs/09-video.md for licensing.
  */
@@ -13,10 +13,9 @@ import { fileURLToPath } from 'node:url';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const [id = 'PantryReel', outArg, propsArg] = process.argv.slice(2);
-const out = outArg ?? path.resolve(here, '../../web/public/video/pantry-reel.mp4');
+const out = outArg ?? path.resolve(here, '../out/pantry-reel.mp4');
 const inputProps = propsArg ? JSON.parse(propsArg) : {};
-const browserExecutable =
-  process.env.CHROME_PATH ?? ['/opt/pw-browsers/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell'].find((p) => existsSync(p)) ?? null;
+const browserExecutable = process.env.CHROME_PATH ?? ['/opt/pw-browsers/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell'].find((p) => existsSync(p)) ?? null;
 
 mkdirSync(path.dirname(out), { recursive: true });
 const serveUrl = await bundle({ entryPoint: path.resolve(here, '../src/index.ts') });

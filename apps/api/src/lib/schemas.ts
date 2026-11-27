@@ -2,10 +2,7 @@ import { Type, type Static, type TSchema, type TString } from '@sinclair/typebox
 
 /** Shared TypeBox schemas. They mirror components/schemas in docs/api/openapi.yaml. */
 
-export const MoneySchema = Type.Object(
-  { amount: Type.Integer({ description: 'Paise' }), currency: Type.Literal('INR') },
-  { $id: 'Money' },
-);
+export const MoneySchema = Type.Object({ amount: Type.Integer({ description: 'Paise' }), currency: Type.Literal('INR') }, { $id: 'Money' });
 export type MoneyT = Static<typeof MoneySchema>;
 export const Money = Type.Ref(MoneySchema);
 
@@ -30,8 +27,7 @@ export const BusinessDate = Type.String({ format: 'date', pattern: '^\\d{4}-\\d{
 export const Month = Type.String({ pattern: '^\\d{4}-(0[1-9]|1[0-2])$' });
 export const Nullable = <T extends TSchema>(t: T) => Type.Union([t, Type.Null()]);
 
-export const IdParam = <K extends string>(name: K) =>
-  Type.Object({ [name]: Type.String({ minLength: 4, maxLength: 40 }) } as { [P in K]: TString });
+export const IdParam = <K extends string>(name: K) => Type.Object({ [name]: Type.String({ minLength: 4, maxLength: 40 }) } as { [P in K]: TString });
 
 export const ErrorResponses = {
   400: Type.Ref(Problem),

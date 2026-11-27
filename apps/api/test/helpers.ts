@@ -57,7 +57,17 @@ export async function createTestApp(now = new Date(), payments: PaymentProvider 
     { logger: false },
   );
   await app.ready();
-  return { app, db: handle.db, now, payments, emails, close: async () => { await app.close(); await handle.close(); } };
+  return {
+    app,
+    db: handle.db,
+    now,
+    payments,
+    emails,
+    close: async () => {
+      await app.close();
+      await handle.close();
+    },
+  };
 }
 
 export const uniq = () => newId('req').slice(-10).toLowerCase();

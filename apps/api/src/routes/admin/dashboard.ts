@@ -18,7 +18,11 @@ export default async function dashboardRoutes(fastify: FastifyInstance) {
     '/dashboard',
     {
       config: { auth: 'staff', permission: 'dashboard.read' },
-      schema: { tags: ['Admin'], summary: 'Sales, fulfilment queue, low stock and recent orders', querystring: Type.Object({ days: Type.Optional(Type.Integer({ minimum: 1, maximum: 90, default: 7 })) }) },
+      schema: {
+        tags: ['Admin'],
+        summary: 'Sales, fulfilment queue, low stock and recent orders',
+        querystring: Type.Object({ days: Type.Optional(Type.Integer({ minimum: 1, maximum: 90, default: 7 })) }),
+      },
     },
     async (req) => {
       const days = req.query.days ?? 7;
@@ -44,7 +48,10 @@ export default async function dashboardRoutes(fastify: FastifyInstance) {
       }
       for (const r of daily) if (r.date < from) prevRevenue += Number(r.revenue);
 
-      const byStatus = await db.select({ status: s.orders.status, n: sql<number>`count(*)::int` }).from(s.orders).groupBy(s.orders.status);
+      const byStatus = await db
+        .select({ status: s.orders.status, n: sql<number>`count(*)::int` })
+        .from(s.orders)
+        .groupBy(s.orders.status);
       const top = await db.execute<{ name: string; pack_size: string; units: number; revenue: number }>(sql`
         select oi.name_snapshot as name, oi.pack_size, sum(oi.quantity)::int as units, sum(oi.line_total_paise)::bigint as revenue
         from order_items oi join orders o on o.id = oi.order_id
@@ -63,7 +70,10 @@ export default async function dashboardRoutes(fastify: FastifyInstance) {
         where b.status = 'active' and b.on_hand > b.reserved and b.expires_on < ${addDays(today, 30)}
         order by b.expires_on limit 10`);
       const recent = await db.select().from(s.orders).orderBy(desc(s.orders.createdAt)).limit(8);
-      const summaries = await orderSummaries(db, recent.map((o) => o.id));
+      const summaries = await orderSummaries(
+        db,
+        recent.map((o) => o.id),
+      );
 
       return {
         range: { from, to: today, days },

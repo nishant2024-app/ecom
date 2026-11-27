@@ -3,7 +3,6 @@ export * from './time';
 export * from './ids';
 export * from './gst';
 export * from './fefo';
-export * from './pricing';
 export * from './phone';
 export * from './shipping';
 export * from './orders';

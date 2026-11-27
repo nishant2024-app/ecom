@@ -4,9 +4,15 @@ import { AnimatePresence, motion } from 'motion/react';
 import { useState } from 'react';
 
 const QA = [
-  ['How long does ghee keep?', 'Nine months sealed, at room temperature, away from sunlight. Once opened, use a dry spoon and it stays good for months more. The expiry date and batch code are printed on every jar.'],
+  [
+    'How long does ghee keep?',
+    'Nine months sealed, at room temperature, away from sunlight. Once opened, use a dry spoon and it stays good for months more. The expiry date and batch code are printed on every jar.',
+  ],
   ['Does UHT milk need a fridge?', 'Not until you open it. The carton is sterile and sealed, so it keeps for six months on a shelf. After opening, refrigerate and finish within two days.'],
-  ['Where do you ship, and how much does it cost?', 'Anywhere in India except army post offices. Pune pincodes get delivery in 1–2 days and free shipping above ₹499; the rest of Maharashtra in 2–4 days; most of India in 3–6 days. You see the exact fee and date at checkout.'],
+  [
+    'Where do you ship, and how much does it cost?',
+    'Anywhere in India except army post offices. Pune pincodes get delivery in 1–2 days and free shipping above ₹499; the rest of Maharashtra in 2–4 days; most of India in 3–6 days. You see the exact fee and date at checkout.',
+  ],
   ['Can I cancel an order?', 'Yes, from your account until we pack it. The full amount goes back to your original payment method automatically.'],
   ['How fresh will my products be?', 'We never ship stock with less than a week of shelf life left, and we always send the oldest safe batch first, so stock never sits until it expires.'],
   ['Which payment methods do you take?', 'UPI, debit and credit cards, net banking and wallets through Cashfree. Cash on delivery is not available yet.'],
@@ -19,7 +25,12 @@ export function Faq() {
       {QA.map(([q, a], i) => (
         <li key={q} className="rounded-4 border border-rule bg-paper px-4 md:px-5">
           <h3>
-            <button type="button" aria-expanded={open === i} onClick={() => setOpen(open === i ? null : i)} className="flex w-full items-center justify-between gap-6 py-4 text-left text-[16px] font-bold leading-snug hover:text-forest">
+            <button
+              type="button"
+              aria-expanded={open === i}
+              onClick={() => setOpen(open === i ? null : i)}
+              className="flex w-full items-center justify-between gap-6 py-4 text-left text-[16px] font-bold leading-snug hover:text-forest"
+            >
               {q}
               <motion.span animate={{ rotate: open === i ? 45 : 0 }} className="grid h-8 w-8 shrink-0 place-items-center rounded-pill bg-paper-2 text-xl font-normal text-forest" aria-hidden>
                 +

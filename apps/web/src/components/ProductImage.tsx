@@ -22,7 +22,23 @@ export function Photo({ img, sizes, className = '', priority = false }: { img: I
   );
 }
 
-export function ProductImage({ image, pack, name, size, sizes, priority, className = '' }: { image: Img | null; pack: Pack; name: string; size?: string; sizes: string; priority?: boolean; className?: string }) {
+export function ProductImage({
+  image,
+  pack,
+  name,
+  size,
+  sizes,
+  priority,
+  className = '',
+}: {
+  image: Img | null;
+  pack: Pack;
+  name: string;
+  size?: string;
+  sizes: string;
+  priority?: boolean;
+  className?: string;
+}) {
   if (image) return <Photo img={image} sizes={sizes} priority={priority} className={`h-full w-full object-cover ${className}`} />;
   return (
     <div className={`flex h-full w-full items-end justify-center px-[18%] pb-[8%] pt-[10%] ${className}`}>

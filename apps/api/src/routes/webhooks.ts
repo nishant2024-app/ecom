@@ -38,7 +38,9 @@ export default async function webhookRoutes(app: FastifyInstance) {
     }
     const event = req.body as CashfreeEvent;
     const paymentRef = event.data?.order?.order_id;
-    const eventKey = createHash('sha256').update(`${event.type}|${paymentRef}|${event.data?.payment?.cf_payment_id ?? ''}|${event.data?.payment?.payment_status ?? ''}`).digest('hex');
+    const eventKey = createHash('sha256')
+      .update(`${event.type}|${paymentRef}|${event.data?.payment?.cf_payment_id ?? ''}|${event.data?.payment?.payment_status ?? ''}`)
+      .digest('hex');
     const { db } = app.deps.db;
     const inserted = await db
       .insert(s.webhookEvents)
@@ -64,7 +66,10 @@ export default async function webhookRoutes(app: FastifyInstance) {
       await db.update(s.webhookEvents).set({ processedAt: new Date() }).where(eq(s.webhookEvents.id, inserted[0]!.id));
       return reply.status(200).send({ status: 'processed' });
     } catch (err) {
-      await db.update(s.webhookEvents).set({ error: err instanceof Error ? err.message : String(err) }).where(eq(s.webhookEvents.id, inserted[0]!.id));
+      await db
+        .update(s.webhookEvents)
+        .set({ error: err instanceof Error ? err.message : String(err) })
+        .where(eq(s.webhookEvents.id, inserted[0]!.id));
       throw err; // 500 → Cashfree retries
     }
   });

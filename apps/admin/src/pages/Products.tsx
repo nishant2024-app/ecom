@@ -51,7 +51,19 @@ interface ProductForm {
   variants: VariantForm[];
 }
 
-const blankVariant = (): VariantForm => ({ sku: '', packSize: '', pricePaise: 10000, mrpPaise: 10000, weightGrams: 500, hsnCode: '0405', gstRateBps: 500, shelfLifeDays: 180, storage: 'ambient', lowStockThreshold: 20, maxPerOrder: 10 });
+const blankVariant = (): VariantForm => ({
+  sku: '',
+  packSize: '',
+  pricePaise: 10000,
+  mrpPaise: 10000,
+  weightGrams: 500,
+  hsnCode: '0405',
+  gstRateBps: 500,
+  shelfLifeDays: 180,
+  storage: 'ambient',
+  lowStockThreshold: 20,
+  maxPerOrder: 10,
+});
 
 export function ProductsPage({ permissions }: { permissions: string[] }) {
   const [rows, setRows] = useState<Row[]>([]);
@@ -70,23 +82,64 @@ export function ProductsPage({ permissions }: { permissions: string[] }) {
 
   async function open(id?: string) {
     if (!id) {
-      setEditing({ slug: '', categoryId: categories[0]?.id ?? '', nameEn: '', nameHi: '', tagline: '', descriptionEn: '', searchTerms: '', pack: { kind: 'jar', color: '#E9B44C', accent: '#14432F' }, featured: false, status: 'draft', variants: [blankVariant()] });
+      setEditing({
+        slug: '',
+        categoryId: categories[0]?.id ?? '',
+        nameEn: '',
+        nameHi: '',
+        tagline: '',
+        descriptionEn: '',
+        searchTerms: '',
+        pack: { kind: 'jar', color: '#E9B44C', accent: '#14432F' },
+        featured: false,
+        status: 'draft',
+        variants: [blankVariant()],
+      });
       return;
     }
     const p = await api<Omit<ProductForm, 'variants'> & { variants: (VariantForm & { status: string })[] }>(`/v1/admin/products/${id}`);
     const pick = (v: VariantForm & { status: string }): VariantForm => ({
-      id: v.id, sku: v.sku, packSize: v.packSize, pricePaise: v.pricePaise, mrpPaise: v.mrpPaise, weightGrams: v.weightGrams, hsnCode: v.hsnCode,
-      gstRateBps: v.gstRateBps, shelfLifeDays: v.shelfLifeDays, storage: v.storage, lowStockThreshold: v.lowStockThreshold, maxPerOrder: v.maxPerOrder,
+      id: v.id,
+      sku: v.sku,
+      packSize: v.packSize,
+      pricePaise: v.pricePaise,
+      mrpPaise: v.mrpPaise,
+      weightGrams: v.weightGrams,
+      hsnCode: v.hsnCode,
+      gstRateBps: v.gstRateBps,
+      shelfLifeDays: v.shelfLifeDays,
+      storage: v.storage,
+      lowStockThreshold: v.lowStockThreshold,
+      maxPerOrder: v.maxPerOrder,
     });
     setEditing({
-      id: p.id, slug: p.slug, categoryId: p.categoryId, nameEn: p.nameEn, nameHi: p.nameHi, tagline: p.tagline, descriptionEn: p.descriptionEn,
-      searchTerms: p.searchTerms, pack: p.pack, featured: p.featured, status: p.status,
+      id: p.id,
+      slug: p.slug,
+      categoryId: p.categoryId,
+      nameEn: p.nameEn,
+      nameHi: p.nameHi,
+      tagline: p.tagline,
+      descriptionEn: p.descriptionEn,
+      searchTerms: p.searchTerms,
+      pack: p.pack,
+      featured: p.featured,
+      status: p.status,
       variants: p.variants.filter((v) => v.status === 'active').map(pick),
     });
   }
 
   return (
-    <Page title="Products" subtitle={`${rows.length} products`} actions={canWrite && <Btn variant="primary" onClick={() => open()}>+ New product</Btn>}>
+    <Page
+      title="Products"
+      subtitle={`${rows.length} products`}
+      actions={
+        canWrite && (
+          <Btn variant="primary" onClick={() => open()}>
+            + New product
+          </Btn>
+        )
+      }
+    >
       <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search products" aria-label="Search products" className={`${input} mb-4 max-w-xs`} />
       <div tabIndex={0} className="overflow-x-auto rounded-4 border border-rule bg-paper">
         <table className="w-full min-w-[760px]">
@@ -157,7 +210,17 @@ export function ProductsPage({ permissions }: { permissions: string[] }) {
   );
 }
 
-function ProductEditor({ initial, categories, onSaved, readOnly }: { initial: ProductForm; categories: { id: string; nameEn: string }[]; onSaved: (id: string, created: boolean) => void; readOnly: boolean }) {
+function ProductEditor({
+  initial,
+  categories,
+  onSaved,
+  readOnly,
+}: {
+  initial: ProductForm;
+  categories: { id: string; nameEn: string }[];
+  onSaved: (id: string, created: boolean) => void;
+  readOnly: boolean;
+}) {
   const [f, setF] = useState<ProductForm>(initial);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -188,17 +251,39 @@ function ProductEditor({ initial, categories, onSaved, readOnly }: { initial: Pr
     <fieldset disabled={readOnly || busy} className="space-y-5">
       <div className="grid gap-5 md:grid-cols-[1fr_160px]">
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Name (English)"><input value={f.nameEn} onChange={(e) => set('nameEn', e.target.value)} className={input} /></Field>
-          <Field label="Name (Hindi)"><input value={f.nameHi} onChange={(e) => set('nameHi', e.target.value)} className={input} lang="hi" /></Field>
-          <Field label="URL slug" hint="Lowercase letters, numbers, dashes"><input value={f.slug} onChange={(e) => set('slug', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))} className={`${input} num`} /></Field>
+          <Field label="Name (English)">
+            <input value={f.nameEn} onChange={(e) => set('nameEn', e.target.value)} className={input} />
+          </Field>
+          <Field label="Name (Hindi)">
+            <input value={f.nameHi} onChange={(e) => set('nameHi', e.target.value)} className={input} lang="hi" />
+          </Field>
+          <Field label="URL slug" hint="Lowercase letters, numbers, dashes">
+            <input value={f.slug} onChange={(e) => set('slug', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))} className={`${input} num`} />
+          </Field>
           <Field label="Category">
             <select value={f.categoryId} onChange={(e) => set('categoryId', e.target.value)} className={input}>
-              {categories.map((c) => <option key={c.id} value={c.id}>{c.nameEn}</option>)}
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.nameEn}
+                </option>
+              ))}
             </select>
           </Field>
-          <div className="sm:col-span-2"><Field label="Tagline"><input value={f.tagline} onChange={(e) => set('tagline', e.target.value)} className={input} /></Field></div>
-          <div className="sm:col-span-2"><Field label="Description"><textarea value={f.descriptionEn} onChange={(e) => set('descriptionEn', e.target.value)} rows={3} className={`${input} h-auto py-2`} /></Field></div>
-          <div className="sm:col-span-2"><Field label="Search words" hint="Hindi/Hinglish spellings people type: ghi, doodh, pedha"><input value={f.searchTerms} onChange={(e) => set('searchTerms', e.target.value)} className={input} /></Field></div>
+          <div className="sm:col-span-2">
+            <Field label="Tagline">
+              <input value={f.tagline} onChange={(e) => set('tagline', e.target.value)} className={input} />
+            </Field>
+          </div>
+          <div className="sm:col-span-2">
+            <Field label="Description">
+              <textarea value={f.descriptionEn} onChange={(e) => set('descriptionEn', e.target.value)} rows={3} className={`${input} h-auto py-2`} />
+            </Field>
+          </div>
+          <div className="sm:col-span-2">
+            <Field label="Search words" hint="Hindi/Hinglish spellings people type: ghi, doodh, pedha">
+              <input value={f.searchTerms} onChange={(e) => set('searchTerms', e.target.value)} className={input} />
+            </Field>
+          </div>
         </div>
         <div>
           <div className="rounded-4 bg-paper-2 p-3">
@@ -207,20 +292,24 @@ function ProductEditor({ initial, categories, onSaved, readOnly }: { initial: Pr
           <div className="mt-3 space-y-2">
             <Field label="Pack">
               <select value={f.pack.kind} onChange={(e) => set('pack', { ...f.pack, kind: e.target.value })} className={input}>
-                {['jar', 'tin', 'tetra', 'can', 'box', 'pouch'].map((k) => <option key={k}>{k}</option>)}
+                {['jar', 'tin', 'tetra', 'can', 'box', 'pouch'].map((k) => (
+                  <option key={k}>{k}</option>
+                ))}
               </select>
             </Field>
             <div className="flex gap-2">
-              <Field label="Colour"><input type="color" value={f.pack.color} onChange={(e) => set('pack', { ...f.pack, color: e.target.value.toUpperCase() })} className="h-9 w-full rounded-2" /></Field>
-              <Field label="Label"><input type="color" value={f.pack.accent} onChange={(e) => set('pack', { ...f.pack, accent: e.target.value.toUpperCase() })} className="h-9 w-full rounded-2" /></Field>
+              <Field label="Colour">
+                <input type="color" value={f.pack.color} onChange={(e) => set('pack', { ...f.pack, color: e.target.value.toUpperCase() })} className="h-9 w-full rounded-2" />
+              </Field>
+              <Field label="Label">
+                <input type="color" value={f.pack.accent} onChange={(e) => set('pack', { ...f.pack, accent: e.target.value.toUpperCase() })} className="h-9 w-full rounded-2" />
+              </Field>
             </div>
           </div>
         </div>
       </div>
 
-      <Card title="Photos">
-        {f.id ? <PhotoManager productId={f.id} readOnly={readOnly} /> : <p className="text-sm text-ink-2">Save the product first, then add photos.</p>}
-      </Card>
+      <Card title="Photos">{f.id ? <PhotoManager productId={f.id} readOnly={readOnly} /> : <p className="text-sm text-ink-2">Save the product first, then add photos.</p>}</Card>
 
       <div className="flex flex-wrap gap-4">
         <Field label="Status">
@@ -235,17 +324,34 @@ function ProductEditor({ initial, categories, onSaved, readOnly }: { initial: Pr
         </label>
       </div>
 
-      <Card title="Sizes" action={<Btn variant="ghost" onClick={() => set('variants', [...f.variants, blankVariant()])}>+ Add size</Btn>}>
+      <Card
+        title="Sizes"
+        action={
+          <Btn variant="ghost" onClick={() => set('variants', [...f.variants, blankVariant()])}>
+            + Add size
+          </Btn>
+        }
+      >
         <div className="space-y-4">
           {f.variants.map((v, i) => (
             <div key={v.id ?? i} className="grid gap-2 rounded-3 bg-paper-2 p-3 sm:grid-cols-4">
-              <Field label="SKU"><input value={v.sku} onChange={(e) => setV(i, { sku: e.target.value.toUpperCase() })} className={`${input} num`} /></Field>
-              <Field label="Pack size"><input value={v.packSize} onChange={(e) => setV(i, { packSize: e.target.value })} placeholder="500 ml" className={input} /></Field>
+              <Field label="SKU">
+                <input value={v.sku} onChange={(e) => setV(i, { sku: e.target.value.toUpperCase() })} className={`${input} num`} />
+              </Field>
+              <Field label="Pack size">
+                <input value={v.packSize} onChange={(e) => setV(i, { packSize: e.target.value })} placeholder="500 ml" className={input} />
+              </Field>
               {rupeeInput(v.pricePaise, (p) => setV(i, { pricePaise: p }), 'Price ₹')}
               {rupeeInput(v.mrpPaise, (p) => setV(i, { mrpPaise: p }), 'MRP ₹')}
-              <Field label="Shipping weight (g)"><input type="number" value={v.weightGrams} onChange={(e) => setV(i, { weightGrams: Number(e.target.value) })} className={`${input} num`} /></Field>
-              <Field label="Shelf life (days)"><input type="number" value={v.shelfLifeDays} onChange={(e) => setV(i, { shelfLifeDays: Number(e.target.value) })} className={`${input} num`} /></Field>
-              <Field label="HSN"><input value={v.hsnCode} onChange={(e) => setV(i, { hsnCode: e.target.value })} className={`${input} num`} /></Field>
+              <Field label="Shipping weight (g)">
+                <input type="number" value={v.weightGrams} onChange={(e) => setV(i, { weightGrams: Number(e.target.value) })} className={`${input} num`} />
+              </Field>
+              <Field label="Shelf life (days)">
+                <input type="number" value={v.shelfLifeDays} onChange={(e) => setV(i, { shelfLifeDays: Number(e.target.value) })} className={`${input} num`} />
+              </Field>
+              <Field label="HSN">
+                <input value={v.hsnCode} onChange={(e) => setV(i, { hsnCode: e.target.value })} className={`${input} num`} />
+              </Field>
               <Field label="GST %" hint="Confirm with your CA">
                 <input type="number" step="0.01" value={v.gstRateBps / 100} onChange={(e) => setV(i, { gstRateBps: Math.round(Number(e.target.value) * 100) })} className={`${input} num`} />
               </Field>
@@ -256,17 +362,42 @@ function ProductEditor({ initial, categories, onSaved, readOnly }: { initial: Pr
                   <option value="chilled">Chilled</option>
                 </select>
               </Field>
-              <Field label="Reorder at"><input type="number" value={v.lowStockThreshold} onChange={(e) => setV(i, { lowStockThreshold: Number(e.target.value) })} className={`${input} num`} /></Field>
-              <Field label="Max per order"><input type="number" value={v.maxPerOrder} onChange={(e) => setV(i, { maxPerOrder: Number(e.target.value) })} className={`${input} num`} /></Field>
+              <Field label="Reorder at">
+                <input type="number" value={v.lowStockThreshold} onChange={(e) => setV(i, { lowStockThreshold: Number(e.target.value) })} className={`${input} num`} />
+              </Field>
+              <Field label="Max per order">
+                <input type="number" value={v.maxPerOrder} onChange={(e) => setV(i, { maxPerOrder: Number(e.target.value) })} className={`${input} num`} />
+              </Field>
               <div className="flex items-end">
-                {f.variants.length > 1 && <Btn variant="ghost" className="text-alert" onClick={() => set('variants', f.variants.filter((_, j) => j !== i))}>Remove size</Btn>}
+                {f.variants.length > 1 && (
+                  <Btn
+                    variant="ghost"
+                    className="text-alert"
+                    onClick={() =>
+                      set(
+                        'variants',
+                        f.variants.filter((_, j) => j !== i),
+                      )
+                    }
+                  >
+                    Remove size
+                  </Btn>
+                )}
               </div>
             </div>
           ))}
         </div>
       </Card>
-      {error && <p role="alert" className="text-alert">{error}</p>}
-      {!readOnly && <Btn variant="primary" onClick={save} disabled={busy}>{busy ? 'Saving…' : 'Save product'}</Btn>}
+      {error && (
+        <p role="alert" className="text-alert">
+          {error}
+        </p>
+      )}
+      {!readOnly && (
+        <Btn variant="primary" onClick={save} disabled={busy}>
+          {busy ? 'Saving…' : 'Save product'}
+        </Btn>
+      )}
       {readOnly && <p className="text-ink-2">Your role can view products but not change them.</p>}
     </fieldset>
   );

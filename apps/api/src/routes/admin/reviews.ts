@@ -29,8 +29,23 @@ export default async function adminReviewRoutes(fastify: FastifyInstance) {
         .limit(200);
       const counts = await db.select({ status: s.productReviews.status }).from(s.productReviews);
       return {
-        data: rows.map(({ r, p, c, o }) => ({ id: r.id, rating: r.rating, title: r.title, body: r.body, author: r.authorName, status: r.status, createdAt: r.createdAt.toISOString(), product: p, customer: c, orderNumber: o.number })),
-        counts: { pending: counts.filter((x) => x.status === 'pending').length, approved: counts.filter((x) => x.status === 'approved').length, rejected: counts.filter((x) => x.status === 'rejected').length },
+        data: rows.map(({ r, p, c, o }) => ({
+          id: r.id,
+          rating: r.rating,
+          title: r.title,
+          body: r.body,
+          author: r.authorName,
+          status: r.status,
+          createdAt: r.createdAt.toISOString(),
+          product: p,
+          customer: c,
+          orderNumber: o.number,
+        })),
+        counts: {
+          pending: counts.filter((x) => x.status === 'pending').length,
+          approved: counts.filter((x) => x.status === 'approved').length,
+          rejected: counts.filter((x) => x.status === 'rejected').length,
+        },
       };
     },
   );

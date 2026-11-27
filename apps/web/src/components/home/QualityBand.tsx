@@ -10,7 +10,9 @@ const ITEMS = [
 export function QualityBand() {
   return (
     <section aria-labelledby="quality-h">
-      <h2 id="quality-h" className="text-[22px] font-extrabold tracking-[-0.025em] md:text-[28px]">Buy with confidence</h2>
+      <h2 id="quality-h" className="text-[22px] font-extrabold tracking-[-0.025em] md:text-[28px]">
+        Buy with confidence
+      </h2>
       <ul className="mt-4 grid gap-3 md:grid-cols-3">
         {ITEMS.map((it) => (
           <li key={it.title}>
@@ -19,7 +21,10 @@ export function QualityBand() {
               <span className="mt-4 text-[17px] font-bold">{it.title}</span>
               <span className="mt-1 flex-1 text-[14px] leading-relaxed text-ink-2">{it.body}</span>
               <span className="mt-4 inline-flex items-center gap-1 text-[14px] font-semibold text-forest">
-                {it.cta} <span className="transition-transform group-hover:translate-x-0.5"><ArrowIcon size={16} /></span>
+                {it.cta}{' '}
+                <span className="transition-transform group-hover:translate-x-0.5">
+                  <ArrowIcon size={16} />
+                </span>
               </span>
             </Link>
           </li>

@@ -61,13 +61,21 @@ export default async function adminCatalogRoutes(fastify: FastifyInstance) {
     const [p] = await db.select().from(s.products).where(eq(s.products.id, id));
     if (!p) throw notFound('Product');
     const variants = await db.select().from(s.productVariants).where(eq(s.productVariants.productId, id)).orderBy(asc(s.productVariants.sort));
-    const stock = await availability(db, variants.map((v) => v.id), todayIST(app.deps.now()));
+    const stock = await availability(
+      db,
+      variants.map((v) => v.id),
+      todayIST(app.deps.now()),
+    );
     return { ...p, variants: variants.map((v) => ({ ...v, available: stock.get(v.id) ?? 0 })) };
   }
 
   app.get('/categories', { config: { auth: 'staff', permission: 'catalog.read' }, schema: { tags: ['Admin'], summary: 'Categories with product counts' } }, async () => {
     const rows = await db.select().from(s.categories).orderBy(asc(s.categories.sort));
-    const counts = await db.select({ id: s.products.categoryId, n: sql<number>`count(*)::int` }).from(s.products).where(ne(s.products.status, 'archived')).groupBy(s.products.categoryId);
+    const counts = await db
+      .select({ id: s.products.categoryId, n: sql<number>`count(*)::int` })
+      .from(s.products)
+      .where(ne(s.products.status, 'archived'))
+      .groupBy(s.products.categoryId);
     const byId = new Map(counts.map((c) => [c.id, Number(c.n)]));
     return { data: rows.map((c) => ({ ...c, productCount: byId.get(c.id) ?? 0 })) };
   });
@@ -84,51 +92,104 @@ export default async function adminCatalogRoutes(fastify: FastifyInstance) {
   );
 
   async function slugFree(slug: string, id?: string) {
-    const [clash] = await db.select({ id: s.categories.id }).from(s.categories).where(and(eq(s.categories.slug, slug), ...(id ? [ne(s.categories.id, id)] : [])));
+    const [clash] = await db
+      .select({ id: s.categories.id })
+      .from(s.categories)
+      .where(and(eq(s.categories.slug, slug), ...(id ? [ne(s.categories.id, id)] : [])));
     if (clash) throw new AppError('CONFLICT', 409, `Slug ${slug} is already used`);
   }
 
   app.post('/categories', { config: { auth: 'staff', permission: 'catalog.write' }, schema: { tags: ['Admin'], summary: 'Create a category', body: CategoryInput } }, async (req, reply) => {
     await slugFree(req.body.slug);
     const [{ top } = { top: 0 }] = await db.select({ top: sql<number>`coalesce(max(${s.categories.sort}), 0)::int` }).from(s.categories);
-    const [row] = await db.insert(s.categories).values({ id: newId('cat'), ...req.body, blurb: req.body.blurb ?? '', sort: req.body.sort ?? Number(top) + 1 }).returning();
+    const [row] = await db
+      .insert(s.categories)
+      .values({ id: newId('cat'), ...req.body, blurb: req.body.blurb ?? '', sort: req.body.sort ?? Number(top) + 1 })
+      .returning();
     await audit(db, req, 'category.create', 'category', row!.id, null, row);
     return reply.status(201).send(row);
   });
 
-  app.put('/categories/:categoryId', { config: { auth: 'staff', permission: 'catalog.write' }, schema: { tags: ['Admin'], summary: 'Update a category', params: IdParam('categoryId'), body: CategoryInput } }, async (req) => {
-    await slugFree(req.body.slug, req.params.categoryId);
-    const [before] = await db.select().from(s.categories).where(eq(s.categories.id, req.params.categoryId));
-    if (!before) throw notFound('Category');
-    const [row] = await db.update(s.categories).set({ ...req.body, blurb: req.body.blurb ?? before.blurb, sort: req.body.sort ?? before.sort }).where(eq(s.categories.id, before.id)).returning();
-    await audit(db, req, 'category.update', 'category', before.id, before, row);
-    return row;
-  });
+  app.put(
+    '/categories/:categoryId',
+    { config: { auth: 'staff', permission: 'catalog.write' }, schema: { tags: ['Admin'], summary: 'Update a category', params: IdParam('categoryId'), body: CategoryInput } },
+    async (req) => {
+      await slugFree(req.body.slug, req.params.categoryId);
+      const [before] = await db.select().from(s.categories).where(eq(s.categories.id, req.params.categoryId));
+      if (!before) throw notFound('Category');
+      const [row] = await db
+        .update(s.categories)
+        .set({ ...req.body, blurb: req.body.blurb ?? before.blurb, sort: req.body.sort ?? before.sort })
+        .where(eq(s.categories.id, before.id))
+        .returning();
+      await audit(db, req, 'category.update', 'category', before.id, before, row);
+      return row;
+    },
+  );
 
-  app.delete('/categories/:categoryId', { config: { auth: 'staff', permission: 'catalog.write' }, schema: { tags: ['Admin'], summary: 'Delete an empty category', params: IdParam('categoryId') } }, async (req, reply) => {
-    const [used] = await db.select({ id: s.products.id }).from(s.products).where(eq(s.products.categoryId, req.params.categoryId)).limit(1);
-    if (used) throw new AppError('CONFLICT', 409, 'Move or archive the products in this category first');
-    const [row] = await db.delete(s.categories).where(eq(s.categories.id, req.params.categoryId)).returning();
-    if (!row) throw notFound('Category');
-    await audit(db, req, 'category.delete', 'category', row.id, row, null);
-    return reply.status(204).send(null);
-  });
+  app.delete(
+    '/categories/:categoryId',
+    { config: { auth: 'staff', permission: 'catalog.write' }, schema: { tags: ['Admin'], summary: 'Delete an empty category', params: IdParam('categoryId') } },
+    async (req, reply) => {
+      const [used] = await db.select({ id: s.products.id }).from(s.products).where(eq(s.products.categoryId, req.params.categoryId)).limit(1);
+      if (used) throw new AppError('CONFLICT', 409, 'Move or archive the products in this category first');
+      const [row] = await db.delete(s.categories).where(eq(s.categories.id, req.params.categoryId)).returning();
+      if (!row) throw notFound('Category');
+      await audit(db, req, 'category.delete', 'category', row.id, row, null);
+      return reply.status(204).send(null);
+    },
+  );
 
   app.get(
     '/products',
     {
       config: { auth: 'staff', permission: 'catalog.read' },
-      schema: { tags: ['Admin'], summary: 'Products with variants and stock', querystring: Type.Object({ q: Type.Optional(Type.String()), status: Type.Optional(Type.String()), category: Type.Optional(Type.String()) }) },
+      schema: {
+        tags: ['Admin'],
+        summary: 'Products with variants and stock',
+        querystring: Type.Object({ q: Type.Optional(Type.String()), status: Type.Optional(Type.String()), category: Type.Optional(Type.String()) }),
+      },
     },
     async (req) => {
       const where: SQL[] = [];
       if (req.query.status) where.push(eq(s.products.status, req.query.status));
       if (req.query.category) where.push(eq(s.products.categoryId, req.query.category));
       if (req.query.q) where.push(or(ilike(s.products.nameEn, `%${req.query.q}%`), ilike(s.products.slug, `%${req.query.q}%`))!);
-      const rows = await db.select({ p: s.products, c: s.categories }).from(s.products).innerJoin(s.categories, eq(s.categories.id, s.products.categoryId)).where(and(...where)).orderBy(asc(s.categories.sort), asc(s.products.sort));
-      const variants = rows.length ? await db.select().from(s.productVariants).where(inArray(s.productVariants.productId, rows.map((r) => r.p.id))).orderBy(asc(s.productVariants.sort)) : [];
-      const stock = await availability(db, variants.map((v) => v.id), todayIST(app.deps.now()));
-      const media = rows.length ? await db.select().from(s.productMedia).where(inArray(s.productMedia.productId, rows.map((r) => r.p.id))).orderBy(asc(s.productMedia.sort)) : [];
+      const rows = await db
+        .select({ p: s.products, c: s.categories })
+        .from(s.products)
+        .innerJoin(s.categories, eq(s.categories.id, s.products.categoryId))
+        .where(and(...where))
+        .orderBy(asc(s.categories.sort), asc(s.products.sort));
+      const variants = rows.length
+        ? await db
+            .select()
+            .from(s.productVariants)
+            .where(
+              inArray(
+                s.productVariants.productId,
+                rows.map((r) => r.p.id),
+              ),
+            )
+            .orderBy(asc(s.productVariants.sort))
+        : [];
+      const stock = await availability(
+        db,
+        variants.map((v) => v.id),
+        todayIST(app.deps.now()),
+      );
+      const media = rows.length
+        ? await db
+            .select()
+            .from(s.productMedia)
+            .where(
+              inArray(
+                s.productMedia.productId,
+                rows.map((r) => r.p.id),
+              ),
+            )
+            .orderBy(asc(s.productMedia.sort))
+        : [];
       const thumb = (id: string) => {
         const m = media.filter((x) => x.productId === id);
         const v = m[0]?.variants[0];
@@ -146,15 +207,26 @@ export default async function adminCatalogRoutes(fastify: FastifyInstance) {
           pack: p.pack,
           variants: variants
             .filter((v) => v.productId === p.id)
-            .map((v) => ({ id: v.id, sku: v.sku, packSize: v.packSize, price: money(v.pricePaise), mrp: money(v.mrpPaise), status: v.status, available: stock.get(v.id) ?? 0, lowStockThreshold: v.lowStockThreshold })),
+            .map((v) => ({
+              id: v.id,
+              sku: v.sku,
+              packSize: v.packSize,
+              price: money(v.pricePaise),
+              mrp: money(v.mrpPaise),
+              status: v.status,
+              available: stock.get(v.id) ?? 0,
+              lowStockThreshold: v.lowStockThreshold,
+            })),
         })),
       };
     },
   );
 
-  app.get('/products/:productId', { config: { auth: 'staff', permission: 'catalog.read' }, schema: { tags: ['Admin'], summary: 'Product', params: IdParam('productId') } }, async (req) => productOut(req.params.productId));
+  app.get('/products/:productId', { config: { auth: 'staff', permission: 'catalog.read' }, schema: { tags: ['Admin'], summary: 'Product', params: IdParam('productId') } }, async (req) =>
+    productOut(req.params.productId),
+  );
 
-  async function checkPricing(req: Parameters<typeof audit>[1], variants: typeof VariantInput.static[], existing: (typeof s.productVariants.$inferSelect)[]) {
+  async function checkPricing(req: Parameters<typeof audit>[1], variants: (typeof VariantInput.static)[], existing: (typeof s.productVariants.$inferSelect)[]) {
     for (const v of variants) {
       if (v.pricePaise > v.mrpPaise) throw new AppError('VALIDATION_FAILED', 400, `Price of ${v.sku} is above its MRP`);
       const old = existing.find((e) => e.id === v.id);
@@ -164,10 +236,16 @@ export default async function adminCatalogRoutes(fastify: FastifyInstance) {
   }
 
   async function assertUnique(slug: string, skus: string[], productId?: string) {
-    const [slugClash] = await db.select({ id: s.products.id }).from(s.products).where(and(eq(s.products.slug, slug), ...(productId ? [ne(s.products.id, productId)] : [])));
+    const [slugClash] = await db
+      .select({ id: s.products.id })
+      .from(s.products)
+      .where(and(eq(s.products.slug, slug), ...(productId ? [ne(s.products.id, productId)] : [])));
     if (slugClash) throw new AppError('CONFLICT', 409, `Slug ${slug} is already used`);
     if (new Set(skus).size !== skus.length) throw new AppError('VALIDATION_FAILED', 400, 'Each variant needs a different SKU');
-    const skuClash = await db.select({ sku: s.productVariants.sku }).from(s.productVariants).where(and(inArray(s.productVariants.sku, skus), ...(productId ? [ne(s.productVariants.productId, productId)] : [])));
+    const skuClash = await db
+      .select({ sku: s.productVariants.sku })
+      .from(s.productVariants)
+      .where(and(inArray(s.productVariants.sku, skus), ...(productId ? [ne(s.productVariants.productId, productId)] : [])));
     if (skuClash.length) throw new AppError('CONFLICT', 409, `SKU ${skuClash[0]!.sku} is already used`);
   }
 
@@ -187,49 +265,55 @@ export default async function adminCatalogRoutes(fastify: FastifyInstance) {
     status: 'active',
   });
 
-  app.post(
-    '/products',
-    { config: { auth: 'staff', permission: 'catalog.write' }, schema: { tags: ['Admin'], summary: 'Create a product with variants', body: ProductInput } },
-    async (req, reply) => {
-      const b = req.body;
-      await checkPricing(req, b.variants, []);
-      await assertUnique(b.slug, b.variants.map((v) => v.sku));
-      const sellerId = await defaultSellerId(db);
-      const id = newId('prd');
-      await db.transaction(async (tx) => {
-        await tx.insert(s.products).values({
-          id,
-          sellerId,
-          categoryId: b.categoryId,
-          slug: b.slug,
-          nameEn: b.nameEn,
-          nameHi: b.nameHi,
-          tagline: b.tagline ?? '',
-          descriptionEn: b.descriptionEn ?? '',
-          descriptionHi: b.descriptionHi ?? '',
-          searchTerms: b.searchTerms ?? '',
-          attributes: b.attributes ?? {},
-          nutrition: b.nutrition ?? [],
-          ...(b.pack ? { pack: b.pack as s.PackVisual } : {}),
-          featured: b.featured ?? false,
-          status: b.status ?? 'draft',
-        });
-        await tx.insert(s.productVariants).values(b.variants.map((v, i) => ({ id: newId('var'), productId: id, sellerId, ...variantValues(v, i) })));
+  app.post('/products', { config: { auth: 'staff', permission: 'catalog.write' }, schema: { tags: ['Admin'], summary: 'Create a product with variants', body: ProductInput } }, async (req, reply) => {
+    const b = req.body;
+    await checkPricing(req, b.variants, []);
+    await assertUnique(
+      b.slug,
+      b.variants.map((v) => v.sku),
+    );
+    const sellerId = await defaultSellerId(db);
+    const id = newId('prd');
+    await db.transaction(async (tx) => {
+      await tx.insert(s.products).values({
+        id,
+        sellerId,
+        categoryId: b.categoryId,
+        slug: b.slug,
+        nameEn: b.nameEn,
+        nameHi: b.nameHi,
+        tagline: b.tagline ?? '',
+        descriptionEn: b.descriptionEn ?? '',
+        descriptionHi: b.descriptionHi ?? '',
+        searchTerms: b.searchTerms ?? '',
+        attributes: b.attributes ?? {},
+        nutrition: b.nutrition ?? [],
+        ...(b.pack ? { pack: b.pack as s.PackVisual } : {}),
+        featured: b.featured ?? false,
+        status: b.status ?? 'draft',
       });
-      const out = await productOut(id);
-      await audit(db, req, 'product.create', 'product', id, null, out);
-      return reply.status(201).send(out);
-    },
-  );
+      await tx.insert(s.productVariants).values(b.variants.map((v, i) => ({ id: newId('var'), productId: id, sellerId, ...variantValues(v, i) })));
+    });
+    const out = await productOut(id);
+    await audit(db, req, 'product.create', 'product', id, null, out);
+    return reply.status(201).send(out);
+  });
 
   app.put(
     '/products/:productId',
-    { config: { auth: 'staff', permission: 'catalog.write' }, schema: { tags: ['Admin'], summary: 'Update a product; variants not listed are archived', params: IdParam('productId'), body: ProductInput } },
+    {
+      config: { auth: 'staff', permission: 'catalog.write' },
+      schema: { tags: ['Admin'], summary: 'Update a product; variants not listed are archived', params: IdParam('productId'), body: ProductInput },
+    },
     async (req) => {
       const before = await productOut(req.params.productId);
       const b = req.body;
       await checkPricing(req, b.variants, before.variants);
-      await assertUnique(b.slug, b.variants.map((v) => v.sku), before.id);
+      await assertUnique(
+        b.slug,
+        b.variants.map((v) => v.sku),
+        before.id,
+      );
       await db.transaction(async (tx) => {
         await tx
           .update(s.products)

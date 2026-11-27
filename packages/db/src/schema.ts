@@ -68,10 +68,7 @@ export const customers = pgTable(
     status: text('status').notNull().default('active'),
     defaultAddressId: text('default_address_id'),
     deletionRequestedAt: ts('deletion_requested_at'),
-    notificationPrefs: jsonb('notification_prefs')
-      .$type<Record<string, boolean>>()
-      .notNull()
-      .default({ marketingEmail: false, orderUpdates: true }),
+    notificationPrefs: jsonb('notification_prefs').$type<Record<string, boolean>>().notNull().default({ marketingEmail: false, orderUpdates: true }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
@@ -94,10 +91,7 @@ export const authIdentities = pgTable(
     email: text('email').notNull(),
     createdAt: createdAt(),
   },
-  (t) => [
-    uniqueIndex('auth_identities_subject_uq').on(t.provider, t.subject, t.userType),
-    index('auth_identities_user_idx').on(t.userType, t.userId),
-  ],
+  (t) => [uniqueIndex('auth_identities_subject_uq').on(t.provider, t.subject, t.userType), index('auth_identities_user_idx').on(t.userType, t.userId)],
 );
 
 export const sessions = pgTable(
@@ -384,7 +378,9 @@ export const orders = pgTable(
     uniqueIndex('orders_number_uq').on(t.number),
     index('orders_customer_idx').on(t.customerId, t.createdAt),
     index('orders_status_idx').on(t.status, t.createdAt),
-    index('orders_expiry_idx').on(t.expiresAt).where(sql`${t.status} = 'pending_payment'`),
+    index('orders_expiry_idx')
+      .on(t.expiresAt)
+      .where(sql`${t.status} = 'pending_payment'`),
     check('orders_status_ck', sql`${t.status} in ('pending_payment','confirmed','packed','shipped','delivered','cancelled','refunded')`),
     check('orders_total_ck', sql`${t.totalPaise} = ${t.subtotalPaise} + ${t.shippingPaise} - ${t.discountPaise}`),
   ],
@@ -464,10 +460,7 @@ export const orderAllocations = pgTable(
     quantity: integer('quantity').notNull(),
     status: text('status').notNull().default('reserved'),
   },
-  (t) => [
-    primaryKey({ columns: [t.orderItemId, t.batchId] }),
-    check('order_allocations_status_ck', sql`${t.status} in ('reserved','shipped','released')`),
-  ],
+  (t) => [primaryKey({ columns: [t.orderItemId, t.batchId] }), check('order_allocations_status_ck', sql`${t.status} in ('reserved','shipped','released')`)],
 );
 
 export const counters = pgTable('counters', {
@@ -525,10 +518,7 @@ export const refunds = pgTable(
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  (t) => [
-    index('refunds_order_idx').on(t.orderId),
-    check('refunds_status_ck', sql`${t.status} in ('pending','success','failed')`),
-  ],
+  (t) => [index('refunds_order_idx').on(t.orderId), check('refunds_status_ck', sql`${t.status} in ('pending','success','failed')`)],
 );
 
 export const webhookEvents = pgTable(
@@ -570,7 +560,9 @@ export const batches = pgTable(
   },
   (t) => [
     uniqueIndex('batches_code_uq').on(t.sellerId, t.code),
-    index('batches_fefo_idx').on(t.variantId, t.expiresOn).where(sql`${t.status} = 'active'`),
+    index('batches_fefo_idx')
+      .on(t.variantId, t.expiresOn)
+      .where(sql`${t.status} = 'active'`),
     check('batches_qty_ck', sql`${t.onHand} >= 0 and ${t.reserved} >= 0 and ${t.reserved} <= ${t.onHand}`),
     check('batches_dates_ck', sql`${t.expiresOn} > ${t.manufacturedOn}`),
   ],
@@ -669,7 +661,9 @@ export const notifications = pgTable(
   (t) => [
     index('notifications_customer_idx').on(t.customerId, t.createdAt),
     uniqueIndex('notifications_dedupe_uq').on(t.dedupeKey),
-    index('notifications_pending_idx').on(t.status, t.createdAt).where(sql`${t.status} = 'pending'`),
+    index('notifications_pending_idx')
+      .on(t.status, t.createdAt)
+      .where(sql`${t.status} = 'pending'`),
   ],
 );
 
@@ -730,7 +724,10 @@ export const coupons = pgTable(
   },
   (t) => [
     uniqueIndex('coupons_code_uq').on(t.sellerId, t.code),
-    check('coupons_kind_ck', sql`(${t.kind} = 'percent' and ${t.percentBps} between 1 and 10000 and ${t.amountPaise} is null) or (${t.kind} = 'fixed' and ${t.amountPaise} > 0 and ${t.percentBps} is null)`),
+    check(
+      'coupons_kind_ck',
+      sql`(${t.kind} = 'percent' and ${t.percentBps} between 1 and 10000 and ${t.amountPaise} is null) or (${t.kind} = 'fixed' and ${t.amountPaise} > 0 and ${t.percentBps} is null)`,
+    ),
     check('coupons_status_ck', sql`${t.status} in ('active','paused')`),
   ],
 );

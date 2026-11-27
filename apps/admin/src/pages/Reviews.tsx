@@ -50,7 +50,11 @@ export function ReviewsPage({ permissions }: { permissions: string[] }) {
           </button>
         ))}
       </div>
-      {msg && <p role="alert" className="mt-3 text-alert">{msg}</p>}
+      {msg && (
+        <p role="alert" className="mt-3 text-alert">
+          {msg}
+        </p>
+      )}
       <ul className="mt-4 space-y-3">
         {data?.data.map((r) => (
           <li key={r.id} className="rounded-4 border border-rule bg-paper p-4 shadow-card">
@@ -68,15 +72,27 @@ export function ReviewsPage({ permissions }: { permissions: string[] }) {
               </div>
               {canWrite && (
                 <div className="flex gap-2">
-                  {r.status !== 'approved' && <Btn variant="primary" onClick={() => set(r.id, 'approved')}>Publish</Btn>}
-                  {r.status !== 'rejected' && <Btn variant="outline" onClick={() => set(r.id, 'rejected')}>Reject</Btn>}
+                  {r.status !== 'approved' && (
+                    <Btn variant="primary" onClick={() => set(r.id, 'approved')}>
+                      Publish
+                    </Btn>
+                  )}
+                  {r.status !== 'rejected' && (
+                    <Btn variant="outline" onClick={() => set(r.id, 'rejected')}>
+                      Reject
+                    </Btn>
+                  )}
                 </div>
               )}
             </div>
           </li>
         ))}
       </ul>
-      {data && data.data.length === 0 && <div className="mt-4"><Empty>{status === 'pending' ? 'No reviews waiting. New ones appear here after customers receive their orders.' : 'Nothing here.'}</Empty></div>}
+      {data && data.data.length === 0 && (
+        <div className="mt-4">
+          <Empty>{status === 'pending' ? 'No reviews waiting. New ones appear here after customers receive their orders.' : 'Nothing here.'}</Empty>
+        </div>
+      )}
     </Page>
   );
 }

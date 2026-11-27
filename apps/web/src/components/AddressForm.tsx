@@ -95,7 +95,9 @@ export function AddressForm({ defaultName, onSaved, onCancel }: { defaultName?: 
         <LocationPicker value={loc} onChange={setLoc} />
         {loc && (
           <p className="mt-2 flex items-start gap-2 rounded-3 bg-meadow px-3 py-2 text-[13px]">
-            <span className="text-forest" aria-hidden>●</span>
+            <span className="text-forest" aria-hidden>
+              ●
+            </span>
             <span>
               <span className="font-semibold">{loc.source === 'device' ? 'Location from your phone' : 'Pinned on map'}</span>
               {hint?.label ? <span className="text-ink-2"> · near {hint.label.split(',').slice(0, 3).join(',')}</span> : null}
@@ -114,7 +116,16 @@ export function AddressForm({ defaultName, onSaved, onCancel }: { defaultName?: 
       </label>
       <label>
         <span className="text-sm text-ink-2">Pincode</span>
-        <input required value={v.pincode} onChange={(e) => set('pincode', e.target.value.replace(/\D/g, '').slice(0, 6))} inputMode="numeric" pattern="[1-9][0-9]{5}" maxLength={6} autoComplete="postal-code" className={`${field} num`} />
+        <input
+          required
+          value={v.pincode}
+          onChange={(e) => set('pincode', e.target.value.replace(/\D/g, '').slice(0, 6))}
+          inputMode="numeric"
+          pattern="[1-9][0-9]{5}"
+          maxLength={6}
+          autoComplete="postal-code"
+          className={`${field} num`}
+        />
         {pinMismatch && <span className="mt-1 block text-[12px] text-alert">The map suggests {hint!.pincode}. Please check your pincode.</span>}
       </label>
       <label>
@@ -137,7 +148,13 @@ export function AddressForm({ defaultName, onSaved, onCancel }: { defaultName?: 
         <legend className="text-sm text-ink-2">Save as</legend>
         <div className="mt-1 flex gap-2">
           {['Home', 'Work', 'Other'].map((l) => (
-            <button key={l} type="button" aria-pressed={label === l} onClick={() => setLabel(l)} className={`rounded-pill border px-4 py-2 text-[14px] font-semibold ${label === l ? 'border-forest bg-meadow text-forest' : 'border-rule'}`}>
+            <button
+              key={l}
+              type="button"
+              aria-pressed={label === l}
+              onClick={() => setLabel(l)}
+              className={`rounded-pill border px-4 py-2 text-[14px] font-semibold ${label === l ? 'border-forest bg-meadow text-forest' : 'border-rule'}`}
+            >
               {l}
             </button>
           ))}

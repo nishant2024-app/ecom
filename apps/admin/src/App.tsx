@@ -82,13 +82,17 @@ export function App() {
       {/* Phone and tablet: a top bar with a menu button; the sidebar slides over the page. */}
       <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-rule bg-paper px-4 py-2.5 md:hidden">
         <button type="button" onClick={() => setMenu(true)} aria-label="Open menu" aria-expanded={menu} className="grid h-11 w-11 place-items-center rounded-pill hover:bg-paper-2">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden><path d="M4 7h16M4 12h16M4 17h16" /></svg>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
+            <path d="M4 7h16M4 12h16M4 17h16" />
+          </svg>
         </button>
         <span className="text-lg font-extrabold tracking-[-0.03em]">Mulshi Dairy</span>
         <span className="text-xs uppercase tracking-[0.14em] text-ink-3">Admin</span>
       </header>
       {menu && <div className="fixed inset-0 z-40 bg-ink/40 md:hidden" onClick={() => setMenu(false)} aria-hidden />}
-      <aside className={`fixed inset-y-0 left-0 z-50 flex w-[260px] flex-col border-r border-rule bg-paper transition-transform duration-200 md:sticky md:top-0 md:z-auto md:h-dvh md:w-auto md:translate-x-0 ${menu ? 'translate-x-0' : '-translate-x-full'}`}>
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 flex w-[260px] flex-col border-r border-rule bg-paper transition-transform duration-200 md:sticky md:top-0 md:z-auto md:h-dvh md:w-auto md:translate-x-0 ${menu ? 'translate-x-0' : '-translate-x-full'}`}
+      >
         <div className="flex items-center gap-2 px-5 py-5">
           <svg width="28" height="28" viewBox="0 0 40 40" aria-hidden>
             <rect width="40" height="40" rx="12" fill="var(--forest)" />
@@ -129,7 +133,8 @@ export function App() {
       </aside>
       <main className="min-w-0">
         {section === 'dashboard' && <DashboardPage />}
-        {section === 'orders' && (route.id ? <OrderDetailPage id={route.id} permissions={perms} /> : <OrdersPage key={route.params.get('status') ?? ''} status={route.params.get('status') ?? ''} permissions={perms} />)}
+        {section === 'orders' &&
+          (route.id ? <OrderDetailPage id={route.id} permissions={perms} /> : <OrdersPage key={route.params.get('status') ?? ''} status={route.params.get('status') ?? ''} permissions={perms} />)}
         {section === 'products' && <ProductsPage permissions={perms} />}
         {section === 'categories' && <CategoriesPage permissions={perms} />}
         {section === 'coupons' && <CouponsPage permissions={perms} />}

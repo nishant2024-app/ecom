@@ -22,7 +22,12 @@ const code = (p: string) => `${p}${uniq().toUpperCase().slice(0, 6)}`;
 const quote = (lines: { variantId: string; quantity: number }[], couponCode?: string, headers: Record<string, string> = {}) =>
   t.app.inject({ method: 'POST', url: '/v1/store/checkout/quote', headers, payload: { lines, pincode: '411045', ...(couponCode ? { couponCode } : {}) } });
 const place = (c: { headers: Record<string, string>; addressId: string }, lines: { variantId: string; quantity: number }[], couponCode?: string) =>
-  t.app.inject({ method: 'POST', url: '/v1/store/orders', headers: { ...c.headers, 'idempotency-key': crypto.randomUUID() }, payload: { lines, addressId: c.addressId, ...(couponCode ? { couponCode } : {}) } });
+  t.app.inject({
+    method: 'POST',
+    url: '/v1/store/orders',
+    headers: { ...c.headers, 'idempotency-key': crypto.randomUUID() },
+    payload: { lines, addressId: c.addressId, ...(couponCode ? { couponCode } : {}) },
+  });
 
 describe('coupons', () => {
   it('takes a percentage off the products, caps it, and keeps GST and shipping correct', async () => {

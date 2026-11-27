@@ -11,7 +11,9 @@ beforeAll(async () => {
 afterAll(() => t.close());
 
 const photo = (width: number, height: number) =>
-  sharp({ create: { width, height, channels: 3, background: { r: 230, g: 176, b: 75 } } }).jpeg().toBuffer();
+  sharp({ create: { width, height, channels: 3, background: { r: 230, g: 176, b: 75 } } })
+    .jpeg()
+    .toBuffer();
 
 function multipart(files: { name: string; data: Buffer; type: string }[], fields: Record<string, string> = {}) {
   const boundary = '----dairytest' + Math.random().toString(16).slice(2);
@@ -28,7 +30,13 @@ describe('product photos', () => {
   it('uploads, resizes, serves, reorders and deletes photos; the storefront shows them', async () => {
     const headers = await staffHeaders(t, 'content');
     const [product] = await t.db.select().from(s.products).where(eq(s.products.slug, 'a2-gir-cow-ghee'));
-    const body = multipart([{ name: 'jar.jpg', data: await photo(2400, 1800), type: 'image/jpeg' }, { name: 'side.jpg', data: await photo(800, 800), type: 'image/jpeg' }], { alt: 'Glass jar of A2 ghee' });
+    const body = multipart(
+      [
+        { name: 'jar.jpg', data: await photo(2400, 1800), type: 'image/jpeg' },
+        { name: 'side.jpg', data: await photo(800, 800), type: 'image/jpeg' },
+      ],
+      { alt: 'Glass jar of A2 ghee' },
+    );
     const up = await t.app.inject({ method: 'POST', url: `/v1/admin/products/${product!.id}/media`, headers: { ...headers, 'content-type': body.contentType }, payload: body.payload });
     expect(up.statusCode, up.body).toBe(201);
     const photos = up.json().data;
@@ -88,7 +96,12 @@ describe('storefront content', () => {
     const imageId = up.json().data[0].id;
 
     const { images: _i, ...content } = def;
-    const save = await t.app.inject({ method: 'PUT', url: '/v1/admin/storefront', headers, payload: { ...content, announcement: 'Diwali orders ship till 28 Oct', hero: { ...content.hero, imageId } } });
+    const save = await t.app.inject({
+      method: 'PUT',
+      url: '/v1/admin/storefront',
+      headers,
+      payload: { ...content, announcement: 'Diwali orders ship till 28 Oct', hero: { ...content.hero, imageId } },
+    });
     expect(save.statusCode, save.body).toBe(200);
 
     const after = (await t.app.inject({ method: 'GET', url: '/v1/store/content' })).json();

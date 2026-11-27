@@ -20,7 +20,9 @@ export function WhyUs({ content }: { content: StoreContent }) {
         <ul className="mt-6 space-y-3">
           {POINTS.map((p) => (
             <li key={p} className="flex items-start gap-3 text-[15px]">
-              <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-pill bg-forest text-on-forest"><CheckIcon size={14} /></span>
+              <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-pill bg-forest text-on-forest">
+                <CheckIcon size={14} />
+              </span>
               {p}
             </li>
           ))}
@@ -35,8 +37,16 @@ export function WhyUs({ content }: { content: StoreContent }) {
             <div className="w-full max-w-[320px] rotate-[-2deg] rounded-4 bg-paper p-5 shadow-card">
               <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-forest">Printed on every pack</p>
               <dl className="num mt-3 space-y-2 text-[14px]">
-                {[['Batch', 'GHE-A2-261117'], ['Made on', '17 Nov 2026'], ['Best before', '18 Aug 2027'], ['Net qty', '500 ml']].map(([k, v]) => (
-                  <div key={k} className="flex justify-between border-b border-dashed border-rule pb-2"><dt className="text-ink-2">{k}</dt><dd className="font-semibold">{v}</dd></div>
+                {[
+                  ['Batch', 'GHE-A2-261117'],
+                  ['Made on', '17 Nov 2026'],
+                  ['Best before', '18 Aug 2027'],
+                  ['Net qty', '500 ml'],
+                ].map(([k, v]) => (
+                  <div key={k} className="flex justify-between border-b border-dashed border-rule pb-2">
+                    <dt className="text-ink-2">{k}</dt>
+                    <dd className="font-semibold">{v}</dd>
+                  </div>
                 ))}
               </dl>
             </div>

@@ -43,7 +43,10 @@ export async function transition(tx: DbOrTx, orderId: string, action: OrderActio
     expire: { cancelledAt: now, cancelReason: 'Payment not completed in time' },
     refund: {},
   }[action];
-  await tx.update(s.orders).set({ status: to, ...stamps, ...extra }).where(eq(s.orders.id, orderId));
+  await tx
+    .update(s.orders)
+    .set({ status: to, ...stamps, ...extra })
+    .where(eq(s.orders.id, orderId));
   await tx.insert(s.orderEvents).values({ id: newId('oev'), orderId, type: action, fromStatus: order.status, toStatus: to, actorType: actor.type, actorId: actor.id ?? null, data });
   await enqueueOrderEmail(tx, order, action);
   return { from: order.status as OrderStatus, to, order };
@@ -63,7 +66,10 @@ export async function placeOrder(deps: AppDeps, input: PlaceOrderInput) {
   const today = todayIST(now);
   const [customer] = await db.select().from(s.customers).where(eq(s.customers.id, input.customerId));
   if (!customer) throw notFound('Customer');
-  const [address] = await db.select().from(s.addresses).where(and(eq(s.addresses.id, input.addressId), eq(s.addresses.customerId, input.customerId)));
+  const [address] = await db
+    .select()
+    .from(s.addresses)
+    .where(and(eq(s.addresses.id, input.addressId), eq(s.addresses.customerId, input.customerId)));
   if (!address || address.archivedAt) throw new AppError('VALIDATION_FAILED', 400, 'Choose a delivery address');
 
   const quote = await quoteCart(db, input.lines, address.pincode, now, { couponCode: input.couponCode, customerId: customer.id });
@@ -149,7 +155,12 @@ export async function placeOrder(deps: AppDeps, input: PlaceOrderInput) {
     const bySeller = new Map<string, number>();
     for (const l of items) bySeller.set(l.sellerId, (bySeller.get(l.sellerId) ?? 0) + l.totalPaise);
     for (const [sid, subtotal] of bySeller) await tx.insert(s.sellerOrders).values({ id: newId('ord'), orderId, sellerId: sid, subtotalPaise: subtotal });
-    await reserve(tx, items.map((l) => ({ orderItemId: l.orderItemId, variantId: l.variantId, quantity: l.quantity, name: `${l.name} ${l.packSize}` })), today, orderId);
+    await reserve(
+      tx,
+      items.map((l) => ({ orderItemId: l.orderItemId, variantId: l.variantId, quantity: l.quantity, name: `${l.name} ${l.packSize}` })),
+      today,
+      orderId,
+    );
     await tx.insert(s.payments).values({
       id: paymentId,
       orderId,
@@ -181,7 +192,10 @@ async function startPayment(deps: AppDeps, orderId: string, paymentId: string, c
     await db.update(s.payments).set({ providerOrderId: created.providerOrderId, paymentSessionId: created.paymentSessionId }).where(eq(s.payments.id, paymentId));
   } catch (err) {
     await db.transaction(async (tx) => {
-      await tx.update(s.payments).set({ status: 'failed', raw: { error: String(err) } }).where(eq(s.payments.id, paymentId));
+      await tx
+        .update(s.payments)
+        .set({ status: 'failed', raw: { error: String(err) } })
+        .where(eq(s.payments.id, paymentId));
       const [order] = await tx.select({ status: s.orders.status }).from(s.orders).where(eq(s.orders.id, orderId));
       if (order?.status === 'pending_payment') {
         await transition(tx, orderId, 'cancel', { type: 'system' }, { reason: 'payment_start_failed' }, { cancelReason: 'Payment could not be started' });
@@ -195,7 +209,10 @@ async function startPayment(deps: AppDeps, orderId: string, paymentId: string, c
 /** Start a fresh payment attempt for an unpaid order (e.g. the customer closed the payment page). */
 export async function retryPayment(deps: AppDeps, orderId: string, customerId: string) {
   const { db } = deps.db;
-  const [order] = await db.select().from(s.orders).where(and(eq(s.orders.id, orderId), eq(s.orders.customerId, customerId)));
+  const [order] = await db
+    .select()
+    .from(s.orders)
+    .where(and(eq(s.orders.id, orderId), eq(s.orders.customerId, customerId)));
   if (!order) throw notFound('Order');
   if (order.status !== 'pending_payment') throw new AppError('CONFLICT', 409, 'This order no longer needs payment');
   const now = deps.now();
@@ -265,7 +282,10 @@ export async function cancelOrder(deps: AppDeps, orderId: string, reason: string
     await transition(tx, orderId, 'cancel', actor, { reason }, { cancelReason: reason });
     await release(tx, orderId, actor);
   });
-  const paid = await db.select().from(s.payments).where(and(eq(s.payments.orderId, orderId), eq(s.payments.status, 'success')));
+  const paid = await db
+    .select()
+    .from(s.payments)
+    .where(and(eq(s.payments.orderId, orderId), eq(s.payments.status, 'success')));
   for (const p of paid) await refundPayment(deps, p.id, `Order cancelled: ${reason}`, actor);
 }
 
@@ -308,7 +328,10 @@ export async function expireUnpaidOrders(deps: AppDeps): Promise<{ expired: numb
       if (fresh?.status !== 'pending_payment') return;
       await transition(tx, order.id, 'expire', { type: 'system' });
       await release(tx, order.id);
-      await tx.update(s.payments).set({ status: 'expired' }).where(and(eq(s.payments.orderId, order.id), eq(s.payments.status, 'created')));
+      await tx
+        .update(s.payments)
+        .set({ status: 'expired' })
+        .where(and(eq(s.payments.orderId, order.id), eq(s.payments.status, 'created')));
     });
     expired++;
   }
@@ -320,7 +343,12 @@ export async function orderView(db: DbOrTx | Db, orderId: string) {
   const [order] = await db.select().from(s.orders).where(eq(s.orders.id, orderId));
   if (!order) throw notFound('Order');
   const [items, events, payments, refunds] = await Promise.all([
-    db.select({ i: s.orderItems, p: s.products }).from(s.orderItems).innerJoin(s.productVariants, eq(s.productVariants.id, s.orderItems.variantId)).innerJoin(s.products, eq(s.products.id, s.productVariants.productId)).where(eq(s.orderItems.orderId, orderId)),
+    db
+      .select({ i: s.orderItems, p: s.products })
+      .from(s.orderItems)
+      .innerJoin(s.productVariants, eq(s.productVariants.id, s.orderItems.variantId))
+      .innerJoin(s.products, eq(s.products.id, s.productVariants.productId))
+      .where(eq(s.orderItems.orderId, orderId)),
     db.select().from(s.orderEvents).where(eq(s.orderEvents.orderId, orderId)).orderBy(asc(s.orderEvents.at)),
     db.select().from(s.payments).where(eq(s.payments.orderId, orderId)).orderBy(desc(s.payments.createdAt)),
     db.select().from(s.refunds).where(eq(s.refunds.orderId, orderId)),
@@ -350,7 +378,10 @@ export async function orderView(db: DbOrTx | Db, orderId: string) {
     discount: m(order.discountPaise),
     taxIncluded: m(order.taxPaise),
     total: m(order.totalPaise),
-    shippingAddress: { ...order.shippingAddress, location: order.shippingAddress.location ? { ...order.shippingAddress.location, directionsUrl: directionsUrl(order.shippingAddress.location.lat, order.shippingAddress.location.lng) } : null },
+    shippingAddress: {
+      ...order.shippingAddress,
+      location: order.shippingAddress.location ? { ...order.shippingAddress.location, directionsUrl: directionsUrl(order.shippingAddress.location.lat, order.shippingAddress.location.lng) } : null,
+    },
     delivery: {
       zone: order.shippingZone,
       etaMinDays: order.etaMinDays,

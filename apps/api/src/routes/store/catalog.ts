@@ -11,7 +11,11 @@ import { ratings } from '../../services/reviews';
 import { availability, nextBatches } from '../../services/stock';
 
 export const lang = (req: FastifyRequest): 'en' | 'hi' =>
-  String(req.headers['accept-language'] ?? '').toLowerCase().startsWith('hi') ? 'hi' : 'en';
+  String(req.headers['accept-language'] ?? '')
+    .toLowerCase()
+    .startsWith('hi')
+    ? 'hi'
+    : 'en';
 
 export const PackSchema = Type.Object({ kind: Type.String(), color: Type.String(), accent: Type.String() });
 const Image = Type.Object({
@@ -98,13 +102,31 @@ export default async function catalogRoutes(fastify: FastifyInstance) {
       db.select().from(s.productMedia).where(inArray(s.productMedia.productId, ids)).orderBy(asc(s.productMedia.sort)),
     ]);
     const today = todayIST(app.deps.now());
-    const [stock, fresh, stars] = await Promise.all([availability(db, variants.map((v) => v.id), today), nextBatches(db, variants.map((v) => v.id), today), ratings(db, ids)]);
+    const [stock, fresh, stars] = await Promise.all([
+      availability(
+        db,
+        variants.map((v) => v.id),
+        today,
+      ),
+      nextBatches(
+        db,
+        variants.map((v) => v.id),
+        today,
+      ),
+      ratings(db, ids),
+    ]);
     return rows.map(({ p, c }) => {
       const vs = variants.filter((v) => v.productId === p.id);
       const gallery = media
         .filter((m) => m.productId === p.id && m.kind === 'image')
         .map((m) => {
-          const { id: _id, ...img } = imageOut(storage, { id: m.id, width: m.width, height: m.height, variants: m.variants.length ? m.variants : [{ key: m.r2Key, width: m.width ?? 0, height: m.height ?? 0 }], alt: m.altEn });
+          const { id: _id, ...img } = imageOut(storage, {
+            id: m.id,
+            width: m.width,
+            height: m.height,
+            variants: m.variants.length ? m.variants : [{ key: m.r2Key, width: m.width ?? 0, height: m.height ?? 0 }],
+            alt: m.altEn,
+          });
           return img;
         });
       return {
@@ -169,11 +191,7 @@ export default async function catalogRoutes(fastify: FastifyInstance) {
     async (req, reply) => {
       const language = lang(req);
       const rows = await db.select().from(s.categories).orderBy(asc(s.categories.sort));
-      const products = await db
-        .select({ categoryId: s.products.categoryId, pack: s.products.pack })
-        .from(s.products)
-        .where(eq(s.products.status, 'active'))
-        .orderBy(asc(s.products.sort));
+      const products = await db.select({ categoryId: s.products.categoryId, pack: s.products.pack }).from(s.products).where(eq(s.products.status, 'active')).orderBy(asc(s.products.sort));
       reply.header('cache-control', 'public, max-age=60, stale-while-revalidate=300');
       return {
         data: rows.map((c) => {
@@ -250,7 +268,15 @@ export default async function catalogRoutes(fastify: FastifyInstance) {
       const seen = new Set<string>();
       const picks = rows.filter((r) => (seen.has(r.productId) ? false : (seen.add(r.productId), true))).slice(0, 8);
       if (!picks.length) return { data: [] };
-      const products = await loadProducts([inArray(s.products.id, picks.map((p) => p.productId))], lang(req));
+      const products = await loadProducts(
+        [
+          inArray(
+            s.products.id,
+            picks.map((p) => p.productId),
+          ),
+        ],
+        lang(req),
+      );
       reply.header('cache-control', 'public, max-age=300, stale-while-revalidate=600');
       return {
         data: picks

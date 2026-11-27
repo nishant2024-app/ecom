@@ -1,16 +1,5 @@
 import { createHash, randomBytes } from 'node:crypto';
-import {
-  exportJWK,
-  exportPKCS8,
-  generateKeyPair,
-  importPKCS8,
-  jwtVerify,
-  SignJWT,
-  createLocalJWKSet,
-  type JWK,
-  type JWTPayload,
-  errors as joseErrors,
-} from 'jose';
+import { exportJWK, exportPKCS8, generateKeyPair, importPKCS8, jwtVerify, SignJWT, createLocalJWKSet, type JWK, type JWTPayload, errors as joseErrors } from 'jose';
 import { AppError } from '../lib/errors';
 
 export type Audience = 'store' | 'admin';

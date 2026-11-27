@@ -9,7 +9,14 @@ afterAll(() => t.close());
 
 async function paidOrder(variantId: string, quantity = 1) {
   const c = await readyCustomer(t);
-  const { order, payment } = (await t.app.inject({ method: 'POST', url: '/v1/store/orders', headers: { ...c.headers, 'idempotency-key': crypto.randomUUID() }, payload: { lines: [{ variantId, quantity }], addressId: c.addressId } })).json();
+  const { order, payment } = (
+    await t.app.inject({
+      method: 'POST',
+      url: '/v1/store/orders',
+      headers: { ...c.headers, 'idempotency-key': crypto.randomUUID() },
+      payload: { lines: [{ variantId, quantity }], addressId: c.addressId },
+    })
+  ).json();
   await t.app.inject({ method: 'POST', url: `/v1/dev/payments/${payment.id}/simulate`, headers: c.headers, payload: { outcome: 'success' } });
   return { order, customer: c };
 }
@@ -24,7 +31,9 @@ describe('admin: fulfilment', () => {
 
     const list = (await t.app.inject({ url: '/v1/admin/orders?status=confirmed', headers: warehouse })).json();
     expect(list.data.some((o: { id: string }) => o.id === order.id)).toBe(true);
-    expect((await t.app.inject({ method: 'POST', url: `/v1/admin/orders/${order.id}/ship`, headers: warehouse, payload: { courier: 'Delhivery', trackingNumber: 'DLV123' } })).json().code).toBe('CONFLICT');
+    expect((await t.app.inject({ method: 'POST', url: `/v1/admin/orders/${order.id}/ship`, headers: warehouse, payload: { courier: 'Delhivery', trackingNumber: 'DLV123' } })).json().code).toBe(
+      'CONFLICT',
+    );
     expect((await t.app.inject({ method: 'POST', url: `/v1/admin/orders/${order.id}/pack`, headers: warehouse })).json().status).toBe('packed');
     const shipped = (await t.app.inject({ method: 'POST', url: `/v1/admin/orders/${order.id}/ship`, headers: warehouse, payload: { courier: 'Delhivery', trackingNumber: 'DLV123' } })).json();
     expect(shipped).toMatchObject({ status: 'shipped', delivery: { courier: 'Delhivery', trackingNumber: 'DLV123' } });
@@ -80,14 +89,29 @@ describe('admin: catalog and inventory', () => {
 
     const content = await staffHeaders(t, 'content');
     const v = product.variants[0];
-    const priceChange = await t.app.inject({ method: 'PUT', url: `/v1/admin/products/${product.id}`, headers: content, payload: { ...body, variants: [{ ...body.variants[0], id: v.id, pricePaise: 25000 }] } });
+    const priceChange = await t.app.inject({
+      method: 'PUT',
+      url: `/v1/admin/products/${product.id}`,
+      headers: content,
+      payload: { ...body, variants: [{ ...body.variants[0], id: v.id, pricePaise: 25000 }] },
+    });
     expect(priceChange.json().code).toBe('FORBIDDEN');
-    const copyChange = await t.app.inject({ method: 'PUT', url: `/v1/admin/products/${product.id}`, headers: content, payload: { ...body, tagline: 'Six-month shelf life', variants: [{ ...body.variants[0], id: v.id }] } });
+    const copyChange = await t.app.inject({
+      method: 'PUT',
+      url: `/v1/admin/products/${product.id}`,
+      headers: content,
+      payload: { ...body, tagline: 'Six-month shelf life', variants: [{ ...body.variants[0], id: v.id }] },
+    });
     expect(copyChange.json().tagline).toBe('Six-month shelf life');
 
     // New product has no stock until a batch is recorded.
     expect((await t.app.inject('/v1/store/products/khoa-mawa-tin')).json().variants[0].inStock).toBe(false);
-    const batch = await t.app.inject({ method: 'POST', url: '/v1/admin/batches', headers: owner, payload: { variantId: v.id, code: 'KH-400-001', manufacturedOn: '2026-11-01', expiresOn: '2027-05-01', quantity: 50 } });
+    const batch = await t.app.inject({
+      method: 'POST',
+      url: '/v1/admin/batches',
+      headers: owner,
+      payload: { variantId: v.id, code: 'KH-400-001', manufacturedOn: '2026-11-01', expiresOn: '2027-05-01', quantity: 50 },
+    });
     expect(batch.statusCode).toBe(201);
     expect(await stockOf(t, v.id)).toBe(50);
     const adj = await t.app.inject({ method: 'POST', url: '/v1/admin/stock/adjustments', headers: owner, payload: { batchId: batch.json().id, delta: -5, kind: 'wasted', reason: 'Dented tins' } });

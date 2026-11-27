@@ -1,5 +1,10 @@
 pnpm-lock.yaml
-docs/api/reference.html
-**/drizzle/meta/
+docs/
+PLAN.md
+CLAUDE.md
+**/drizzle/
 .next/
 dist/
+var/
+.turbo/
+next-env.d.ts

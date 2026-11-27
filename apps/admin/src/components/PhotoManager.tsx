@@ -46,7 +46,9 @@ export function PhotoManager({ productId, readOnly }: { productId: string; readO
   const base = `/v1/admin/products/${productId}/media`;
 
   useEffect(() => {
-    api<{ data: Image[] }>(base).then((r) => setPhotos(r.data)).catch((e) => setError(errorText(e)));
+    api<{ data: Image[] }>(base)
+      .then((r) => setPhotos(r.data))
+      .catch((e) => setError(errorText(e)));
   }, [base]);
 
   async function run(fn: () => Promise<void>) {
@@ -81,13 +83,7 @@ export function PhotoManager({ productId, readOnly }: { productId: string; readO
   return (
     <div className="space-y-3">
       {photos && photos.length > 0 && (
-        <Reorder.Group
-          axis="x"
-          values={photos}
-          onReorder={setPhotos}
-          className="flex gap-3 overflow-x-auto pb-1"
-          aria-label="Photos, drag to reorder. The first photo is the main image."
-        >
+        <Reorder.Group axis="x" values={photos} onReorder={setPhotos} className="flex gap-3 overflow-x-auto pb-1" aria-label="Photos, drag to reorder. The first photo is the main image.">
           {photos.map((p, i) => (
             <Reorder.Item
               key={p.id}
@@ -100,7 +96,14 @@ export function PhotoManager({ productId, readOnly }: { productId: string; readO
                 <img src={thumb(p)} alt={p.alt} draggable={false} className="aspect-square w-full rounded-2 object-cover" />
                 {i === 0 && <span className="absolute left-1 top-1 rounded-1 bg-forest px-1.5 py-0.5 text-[11px] text-on-forest">Main</span>}
               </div>
-              <input defaultValue={p.alt} disabled={readOnly} onBlur={(e) => saveAlt(p, e.target.value)} aria-label="Describe this photo" placeholder="Describe the photo" className={`${input} mt-2 h-8 text-xs`} />
+              <input
+                defaultValue={p.alt}
+                disabled={readOnly}
+                onBlur={(e) => saveAlt(p, e.target.value)}
+                aria-label="Describe this photo"
+                placeholder="Describe the photo"
+                className={`${input} mt-2 h-8 text-xs`}
+              />
               {!readOnly && (
                 <div className="mt-1 flex justify-between text-xs">
                   <button type="button" disabled={i === 0} className="underline disabled:opacity-30" onClick={() => saveOrder([p, ...photos.filter((x) => x.id !== p.id)])}>
@@ -111,14 +114,20 @@ export function PhotoManager({ productId, readOnly }: { productId: string; readO
                   </button>
                 </div>
               )}
-              <p className="num mt-1 text-[11px] text-ink-3">{p.width}×{p.height}</p>
+              <p className="num mt-1 text-[11px] text-ink-3">
+                {p.width}×{p.height}
+              </p>
             </Reorder.Item>
           ))}
         </Reorder.Group>
       )}
       {photos?.length === 0 && <p className="text-sm text-ink-2">No photos yet. The shop shows a drawn pack until you add one.</p>}
       {!readOnly && <DropZone onFiles={add} busy={busy} label="Drop product photos here. Use a plain background and good daylight." />}
-      {error && <p role="alert" className="text-sm text-alert">{error}</p>}
+      {error && (
+        <p role="alert" className="text-sm text-alert">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

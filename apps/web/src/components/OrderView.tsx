@@ -25,9 +25,39 @@ function Parcel({ done }: { done: boolean }) {
     <svg viewBox="0 0 120 100" className="h-24 w-28" aria-hidden>
       <path d="M20 40 h80 v50 H20 Z" fill="#f2c45a" />
       <path d="M20 40 h80 v50 H20 Z" fill="none" stroke="#0b3a1d" strokeWidth="3" strokeLinejoin="round" />
-      <motion.path d="M20 40 L8 22 L60 22 L60 40 Z" fill="#e0a73a" stroke="#0b3a1d" strokeWidth="3" strokeLinejoin="round" style={{ originX: '20px', originY: '40px' }} initial={reduce ? false : { rotate: -70 }} animate={{ rotate: done ? 0 : -70 }} transition={{ delay: 0.3, type: 'spring', stiffness: 120, damping: 12 }} />
-      <motion.path d="M100 40 L112 22 L60 22 L60 40 Z" fill="#d29a2e" stroke="#0b3a1d" strokeWidth="3" strokeLinejoin="round" style={{ originX: '100px', originY: '40px' }} initial={reduce ? false : { rotate: 70 }} animate={{ rotate: done ? 0 : 70 }} transition={{ delay: 0.5, type: 'spring', stiffness: 120, damping: 12 }} />
-      <motion.path d="M48 64 l9 9 l17 -19" fill="none" stroke="#0b3a1d" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" initial={reduce ? false : { pathLength: 0 }} animate={{ pathLength: done ? 1 : 0 }} transition={{ delay: 0.9, duration: 0.5 }} />
+      <motion.path
+        d="M20 40 L8 22 L60 22 L60 40 Z"
+        fill="#e0a73a"
+        stroke="#0b3a1d"
+        strokeWidth="3"
+        strokeLinejoin="round"
+        style={{ originX: '20px', originY: '40px' }}
+        initial={reduce ? false : { rotate: -70 }}
+        animate={{ rotate: done ? 0 : -70 }}
+        transition={{ delay: 0.3, type: 'spring', stiffness: 120, damping: 12 }}
+      />
+      <motion.path
+        d="M100 40 L112 22 L60 22 L60 40 Z"
+        fill="#d29a2e"
+        stroke="#0b3a1d"
+        strokeWidth="3"
+        strokeLinejoin="round"
+        style={{ originX: '100px', originY: '40px' }}
+        initial={reduce ? false : { rotate: 70 }}
+        animate={{ rotate: done ? 0 : 70 }}
+        transition={{ delay: 0.5, type: 'spring', stiffness: 120, damping: 12 }}
+      />
+      <motion.path
+        d="M48 64 l9 9 l17 -19"
+        fill="none"
+        stroke="#0b3a1d"
+        strokeWidth="5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        initial={reduce ? false : { pathLength: 0 }}
+        animate={{ pathLength: done ? 1 : 0 }}
+        transition={{ delay: 0.9, duration: 0.5 }}
+      />
     </svg>
   );
 }
@@ -59,13 +89,20 @@ export function OrderView({ id }: { id: string }) {
     return (
       <div className="mx-auto max-w-xl px-4 py-24 text-center">
         <h1 className="text-3xl font-extrabold tracking-[-0.03em]">Your order</h1>
-        <p role="alert" className="mt-3 text-lg text-ink-2">{error}</p>
+        <p role="alert" className="mt-3 text-lg text-ink-2">
+          {error}
+        </p>
         <Link href={`/signin?next=/orders/${id}`} className="mt-6 inline-flex h-12 items-center rounded-pill bg-forest px-6 font-semibold text-on-forest hover:bg-forest-2">
           Sign in
         </Link>
       </div>
     );
-  if (!order) return <div role="status" className="mx-auto max-w-xl px-4 py-24 text-center text-ink-2"><h1 className="sr-only">Your order</h1>Loading your order…</div>;
+  if (!order)
+    return (
+      <div role="status" className="mx-auto max-w-xl px-4 py-24 text-center text-ink-2">
+        <h1 className="sr-only">Your order</h1>Loading your order…
+      </div>
+    );
 
   const done = ['confirmed', 'packed', 'shipped', 'delivered'].includes(order.status);
   const reached = STEPS.filter((s) => order.timeline[s.key]).length;
@@ -112,7 +149,11 @@ export function OrderView({ id }: { id: string }) {
           </h1>
           <p className="mt-2 text-on-forest/80">
             {order.status === 'pending_payment' && order.expiresAt && <>We&rsquo;re holding your items until {dateTime(order.expiresAt)}.</>}
-            {done && order.status !== 'delivered' && <>Arrives in {order.delivery.etaMinDays}–{order.delivery.etaMaxDays} days from dispatch. We email you when it ships, and the tracking link appears on this page.</>}
+            {done && order.status !== 'delivered' && (
+              <>
+                Arrives in {order.delivery.etaMinDays}–{order.delivery.etaMaxDays} days from dispatch. We email you when it ships, and the tracking link appears on this page.
+              </>
+            )}
             {cancelled && order.cancelReason}
           </p>
         </div>
@@ -163,7 +204,10 @@ export function OrderView({ id }: { id: string }) {
                   </p>
                   {order.status === 'delivered' && (
                     <Link href={`/p/${i.slug}#reviews`} className="mt-1 inline-flex items-center gap-1 text-[13px] font-semibold text-forest hover:underline">
-                      <span className="text-[#e3a008]" aria-hidden>★</span> Rate this product
+                      <span className="text-[#e3a008]" aria-hidden>
+                        ★
+                      </span>{' '}
+                      Rate this product
                     </Link>
                   )}
                 </div>
@@ -174,12 +218,16 @@ export function OrderView({ id }: { id: string }) {
           <dl className="mt-4 space-y-1 px-1">
             <div className="flex justify-between">
               <dt className="text-ink-2">Subtotal</dt>
-              <dd><Money paise={order.subtotal.amount} /></dd>
+              <dd>
+                <Money paise={order.subtotal.amount} />
+              </dd>
             </div>
             {order.discount && order.discount.amount > 0 && (
               <div className="flex justify-between text-forest">
                 <dt>Coupon {order.couponCode}</dt>
-                <dd>−<Money paise={order.discount.amount} /></dd>
+                <dd>
+                  −<Money paise={order.discount.amount} />
+                </dd>
               </div>
             )}
             <div className="flex justify-between">
@@ -188,7 +236,9 @@ export function OrderView({ id }: { id: string }) {
             </div>
             <div className="flex justify-between text-xl">
               <dt>Total</dt>
-              <dd><Money paise={order.total.amount} /></dd>
+              <dd>
+                <Money paise={order.total.amount} />
+              </dd>
             </div>
           </dl>
         </section>
@@ -197,7 +247,8 @@ export function OrderView({ id }: { id: string }) {
             <h2 className="text-sm uppercase tracking-[0.12em] text-ink-2">Delivering to</h2>
             <p className="mt-2">{order.shippingAddress.name}</p>
             <p className="text-ink-2">
-              {[order.shippingAddress.line1, order.shippingAddress.line2, order.shippingAddress.landmark, order.shippingAddress.city, order.shippingAddress.state].filter(Boolean).join(', ')} – <span className="num">{order.shippingAddress.pincode}</span>
+              {[order.shippingAddress.line1, order.shippingAddress.line2, order.shippingAddress.landmark, order.shippingAddress.city, order.shippingAddress.state].filter(Boolean).join(', ')} –{' '}
+              <span className="num">{order.shippingAddress.pincode}</span>
             </p>
           </div>
           {order.delivery.trackingNumber && (
@@ -215,7 +266,11 @@ export function OrderView({ id }: { id: string }) {
           )}
           <div className="bg-paper-2 p-5 rounded-4">
             <h2 className="text-sm uppercase tracking-[0.12em] text-ink-2">Payment</h2>
-            <p className="mt-2">{order.payment ? `${order.payment.status === 'success' ? 'Paid' : order.payment.status === 'refunded' ? 'Refunded' : 'Not paid yet'}${order.payment.method ? ` · ${order.payment.method.toUpperCase()}` : ''}` : '—'}</p>
+            <p className="mt-2">
+              {order.payment
+                ? `${order.payment.status === 'success' ? 'Paid' : order.payment.status === 'refunded' ? 'Refunded' : 'Not paid yet'}${order.payment.method ? ` · ${order.payment.method.toUpperCase()}` : ''}`
+                : '—'}
+            </p>
             {order.refunds.map((r) => (
               <p key={r.id} className="mt-1 text-sm text-ink-2">
                 Refund <Money paise={r.amount.amount} /> · {r.status}

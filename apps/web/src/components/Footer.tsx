@@ -12,7 +12,11 @@ export function Footer({ fssai, phone, email }: { fssai?: string; phone?: string
             <p className="text-xl font-extrabold tracking-[-0.03em]">Mulshi Dairy</p>
           </div>
           <p className="mt-3 max-w-xs text-[14px] leading-relaxed text-ink-2">Ghee, milk powder, long-life milk and mithai from our farm in Mulshi, Pune. Shipped across India.</p>
-          {fssai && <p className="mt-4 text-[13px] text-ink-2">FSSAI Lic. No. <span className="num">{fssai}</span></p>}
+          {fssai && (
+            <p className="mt-4 text-[13px] text-ink-2">
+              FSSAI Lic. No. <span className="num">{fssai}</span>
+            </p>
+          )}
         </div>
         <Col title="Shop">
           <Link href="/products?category=ghee">Ghee</Link>
@@ -28,7 +32,11 @@ export function Footer({ fssai, phone, email }: { fssai?: string; phone?: string
           <Link href="/contact">Contact us</Link>
         </Col>
         <Col title="Contact">
-          {phone && <a href={`tel:${phone.replace(/\s/g, '')}`} className="num">{phone}</a>}
+          {phone && (
+            <a href={`tel:${phone.replace(/\s/g, '')}`} className="num">
+              {phone}
+            </a>
+          )}
           {email && <a href={`mailto:${email}`}>{email}</a>}
           <Link href="/terms">Terms & conditions</Link>
           <Link href="/privacy">Privacy policy</Link>

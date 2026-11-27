@@ -18,7 +18,14 @@ export default async function geoRoutes(fastify: FastifyInstance) {
         description: 'Signed-in customers only, 15/min. Results are suggestions: the customer confirms or edits them. Returns all nulls when the provider has no answer.',
         querystring: Type.Object({ lat: Type.Number({ minimum: -90, maximum: 90 }), lng: Type.Number({ minimum: -180, maximum: 180 }) }),
         response: {
-          200: Type.Object({ area: Nullable(Type.String()), city: Nullable(Type.String()), state: Nullable(Type.String()), pincode: Nullable(Type.String()), label: Nullable(Type.String()), provider: Type.String() }),
+          200: Type.Object({
+            area: Nullable(Type.String()),
+            city: Nullable(Type.String()),
+            state: Nullable(Type.String()),
+            pincode: Nullable(Type.String()),
+            label: Nullable(Type.String()),
+            provider: Type.String(),
+          }),
           ...ErrorResponses,
         },
       },

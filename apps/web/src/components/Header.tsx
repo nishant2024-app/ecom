@@ -23,9 +23,19 @@ function SearchBox({ className = '' }: { className?: string }) {
         router.push(q.trim() ? `/products?q=${encodeURIComponent(q.trim())}` : '/products');
       }}
     >
-      <span className="text-ink-3"><SearchIcon /></span>
-      <label htmlFor="site-search" className="sr-only">Search products</label>
-      <input id="site-search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search ghee, milk powder, peda…" className="h-full w-full bg-transparent text-[15px] outline-none placeholder:text-ink-3" />
+      <span className="text-ink-3">
+        <SearchIcon />
+      </span>
+      <label htmlFor="site-search" className="sr-only">
+        Search products
+      </label>
+      <input
+        id="site-search"
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        placeholder="Search ghee, milk powder, peda…"
+        className="h-full w-full bg-transparent text-[15px] outline-none placeholder:text-ink-3"
+      />
     </form>
   );
 }
@@ -38,7 +48,9 @@ export function Header() {
   return (
     <>
       <header className="sticky top-0 z-40 border-b border-rule bg-paper/95 backdrop-blur">
-        <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:rounded-2 focus:bg-paper focus:p-2">Skip to content</a>
+        <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:rounded-2 focus:bg-paper focus:p-2">
+          Skip to content
+        </a>
         <div className="mx-auto flex max-w-[1280px] items-center gap-3 px-4 py-3 md:gap-6 md:px-6">
           <Link href="/" className="flex shrink-0 items-center gap-2" aria-label="Mulshi Dairy home">
             <Logo />
@@ -48,8 +60,15 @@ export function Header() {
             <SearchBox className="hidden max-w-[560px] flex-1 md:flex" />
           </Suspense>
           <div className="ml-auto flex items-center gap-1 md:gap-2">
-            <button type="button" onClick={() => setPinOpen(true)} className="flex items-center gap-2 rounded-pill px-2 py-1.5 text-left hover:bg-paper-2 md:px-3" aria-label={pincode ? `Delivering to ${pincode}. Change pincode` : 'Enter delivery pincode'}>
-              <span className="text-forest"><PinIcon /></span>
+            <button
+              type="button"
+              onClick={() => setPinOpen(true)}
+              className="flex items-center gap-2 rounded-pill px-2 py-1.5 text-left hover:bg-paper-2 md:px-3"
+              aria-label={pincode ? `Delivering to ${pincode}. Change pincode` : 'Enter delivery pincode'}
+            >
+              <span className="text-forest">
+                <PinIcon />
+              </span>
               <span className="hidden leading-tight lg:block">
                 <span className="block text-[11px] text-ink-3">Deliver to</span>
                 <span className="num block text-[13px] font-semibold">{pincode || 'Enter pincode'}</span>
@@ -58,11 +77,25 @@ export function Header() {
             <Link href="/account" className="hidden items-center gap-2 rounded-pill px-3 py-2 text-[15px] font-medium hover:bg-paper-2 md:flex">
               <UserIcon /> Account
             </Link>
-            <Link href="/account" className="grid h-10 w-10 place-items-center rounded-pill hover:bg-paper-2 md:hidden" aria-label="Account"><UserIcon /></Link>
-            <button type="button" id="cart-button" onClick={() => setOpen(true)} aria-label={`Cart, ${count} item${count === 1 ? '' : 's'}`} className="relative flex h-11 items-center gap-2 rounded-pill bg-forest pl-3 pr-4 text-on-forest hover:bg-forest-2">
+            <Link href="/account" className="grid h-10 w-10 place-items-center rounded-pill hover:bg-paper-2 md:hidden" aria-label="Account">
+              <UserIcon />
+            </Link>
+            <button
+              type="button"
+              id="cart-button"
+              onClick={() => setOpen(true)}
+              aria-label={`Cart, ${count} item${count === 1 ? '' : 's'}`}
+              className="relative flex h-11 items-center gap-2 rounded-pill bg-forest pl-3 pr-4 text-on-forest hover:bg-forest-2"
+            >
               <BagIcon />
               <motion.span key={bump} initial={{ scale: bump ? 1.35 : 1 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 500, damping: 15 }} className="text-[15px] font-semibold">
-                {count ? <span className="num">{count} · {rupees(subtotal)}</span> : 'Cart'}
+                {count ? (
+                  <span className="num">
+                    {count} · {rupees(subtotal)}
+                  </span>
+                ) : (
+                  'Cart'
+                )}
               </motion.span>
             </button>
           </div>
@@ -91,9 +124,17 @@ function BottomNav({ count, subtotal, onCart }: { count: number; subtotal: numbe
   return (
     <div className="fixed inset-x-0 bottom-0 z-40 md:hidden">
       {count > 0 && !pathname.startsWith('/p/') && (
-        <motion.button initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} type="button" onClick={onCart} className="mx-3 mb-2 flex w-[calc(100%-24px)] items-center justify-between rounded-4 bg-forest px-4 py-3 text-on-forest shadow-float">
+        <motion.button
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          type="button"
+          onClick={onCart}
+          className="mx-3 mb-2 flex w-[calc(100%-24px)] items-center justify-between rounded-4 bg-forest px-4 py-3 text-on-forest shadow-float"
+        >
           <span className="text-left leading-tight">
-            <span className="num block text-[13px] opacity-90">{count} item{count === 1 ? '' : 's'}</span>
+            <span className="num block text-[13px] opacity-90">
+              {count} item{count === 1 ? '' : 's'}
+            </span>
             <span className="num block font-bold">{rupees(subtotal)}</span>
           </span>
           <span className="font-semibold">View cart →</span>
@@ -101,7 +142,12 @@ function BottomNav({ count, subtotal, onCart }: { count: number; subtotal: numbe
       )}
       <nav aria-label="Main" className="grid grid-cols-4 border-t border-rule bg-paper pb-[env(safe-area-inset-bottom)]">
         {tabs.map((t) => (
-          <Link key={t.label} href={t.href} aria-current={t.active ? 'page' : undefined} className={`flex flex-col items-center gap-0.5 py-2 text-[11px] font-medium ${t.active ? 'text-forest' : 'text-ink-2'}`}>
+          <Link
+            key={t.label}
+            href={t.href}
+            aria-current={t.active ? 'page' : undefined}
+            className={`flex flex-col items-center gap-0.5 py-2 text-[11px] font-medium ${t.active ? 'text-forest' : 'text-ink-2'}`}
+          >
             {t.icon}
             {t.label}
           </Link>

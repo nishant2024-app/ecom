@@ -44,7 +44,6 @@ export async function api<T>(path: string, init: RequestInit & { idempotencyKey?
   throw new ApiError(body ?? { code: 'INTERNAL', title: 'Network error', status: res.status, requestId: '' });
 }
 
-
 /** Download a file from an authenticated endpoint (e.g. CSV export). */
 export async function download(path: string, fallbackName: string) {
   const res = await fetch(`${API_URL}${path}`, { credentials: 'include', headers: { 'x-client': 'admin/0.1.0' } });
