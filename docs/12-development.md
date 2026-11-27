@@ -12,7 +12,7 @@
 
 ## First run
 
-Shortcut: `./scripts/local-setup.sh you@gmail.com` does everything below (checks tools, creates `.env`, starts Docker, installs, migrates, seeds). Then run `pnpm dev`. The admin has a "Local testing" email box when `AUTH_TEST_MODE=true`.
+Shortcut: on Windows run `scripts\local-setup.cmd you@gmail.com`, on macOS/Linux `./scripts/local-setup.sh you@gmail.com`. It does everything below (checks tools, creates `.env`, starts Docker, installs, migrates, seeds). Then run `pnpm dev`. The admin has a "Local testing" email box when `AUTH_TEST_MODE=true`.
 
 Step by step:
 

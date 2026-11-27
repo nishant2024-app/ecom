@@ -15,15 +15,29 @@ Online shop for shelf-stable dairy products (ghee, milk powder, UHT and flavoure
 
 ## Run it on your computer
 
-You need **Node 22.12+**, **Docker Desktop** (running) and **git**. Windows: use WSL or Git Bash.
+You need **Node 22.12+**, **Docker Desktop** (running) and **git**.
+
+**Windows** (Command Prompt or PowerShell):
+
+```bat
+git clone https://github.com/nishant2024-app/ecom.git
+cd ecom
+git checkout claude/ecommerce-admin-panel-35t392
+scripts\local-setup.cmd you@gmail.com
+pnpm dev
+```
+
+**macOS / Linux** (or WSL):
 
 ```bash
 git clone https://github.com/nishant2024-app/ecom.git
 cd ecom
 git checkout claude/ecommerce-admin-panel-35t392
-./scripts/local-setup.sh you@gmail.com     # installs, starts the database, adds sample products
-pnpm dev                                   # starts the shop, admin and API
+./scripts/local-setup.sh you@gmail.com
+pnpm dev
 ```
+
+The setup installs everything, starts the database and adds sample products. `pnpm dev` starts the shop, admin and API.
 
 | What | Where |
 |---|---|
