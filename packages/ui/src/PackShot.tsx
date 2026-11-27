@@ -76,7 +76,7 @@ export function PackShot({ kind, color, accent, label, size, brand = 'Mulshi', c
   );
 
   return (
-    <svg viewBox="0 0 200 260" role="img" aria-label={title ?? `${label}${size ? `, ${size}` : ''}`} className={className}>
+    <svg viewBox="0 0 200 260" {...(label || title ? { role: 'img', 'aria-label': title ?? `${label}${size ? `, ${size}` : ''}` } : { 'aria-hidden': true })} className={className}>
       <defs>
         <linearGradient id={g('body')} x1="0" x2="1">
           <stop offset="0" stopColor={shade(color, -0.12)} />

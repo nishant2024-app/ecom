@@ -52,19 +52,15 @@ say "Creating tables and sample data"
 pnpm db:migrate
 pnpm db:seed
 
+printf '\n\033[1;32m✓ Ready.\033[0m Start everything with:\n\n    pnpm dev\n\n'
 cat <<MSG
-
-\033[1;32m✓ Ready.\033[0m Start everything with:
-
-    pnpm dev
-
 Then open:
     Shop         http://localhost:3000
     Admin        http://localhost:5173      (sign in with: $OWNER_EMAIL)
     API docs     http://localhost:4000/docs
-    Test emails  http://localhost:8025
 
 While testing, the shop shows a "test sign-in" box instead of Google, and payment uses a fake
 test checkout page (no real money). Add real keys later: see docs/14-go-live.md.
+Using Google Cloud Shell? Open the shop and admin with "Web Preview" on ports 3000 and 5173.
 To stop the database: docker compose -f infra/compose/dev.yml down
 MSG

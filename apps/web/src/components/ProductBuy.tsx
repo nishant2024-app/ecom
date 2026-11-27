@@ -73,7 +73,7 @@ export function ProductBuy({ product, children }: { product: ProductDetail; chil
             <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-pill bg-forest text-[15px] text-on-forest" aria-hidden>✓</span>
             <p className="text-[14px] leading-snug">
               <span className="font-bold">Fresh batch:</span> made on <span className="num font-semibold">{longDate(v.nextBatch.manufacturedOn)}</span>, best before <span className="num font-semibold">{monthYear(v.nextBatch.bestBefore)}</span>.
-              <span className="block text-ink-2">We ship the oldest safe batch first and print its code on the pack. <Link href="/verify" className="font-semibold text-forest underline underline-offset-2">Verify a pack</Link></span>
+              <span className="block text-ink-2">We ship the oldest safe batch first and print its code on the pack. <Link href="/verify" className="inline-block py-1.5 font-semibold text-forest underline underline-offset-2">Verify a pack</Link></span>
             </p>
           </div>
         )}

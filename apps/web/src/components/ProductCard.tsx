@@ -42,7 +42,7 @@ export function ProductCard({ product, priority = false, sizes = '(min-width: 10
           )}
         </p>
         <h3 className="mt-0.5 flex items-start gap-1.5 text-[15px] font-bold leading-snug md:text-base">
-          <Link href={`/p/${product.slug}`} className="line-clamp-2 hover:text-forest">{product.name}</Link>
+          <Link href={`/p/${product.slug}`} className="line-clamp-2 py-0.5 hover:text-forest">{product.name}</Link>
           {product.isVeg && <span className="mt-1 shrink-0"><VegMark /></span>}
         </h3>
         {product.variants.length > 1 ? (
@@ -54,7 +54,7 @@ export function ProductCard({ product, priority = false, sizes = '(min-width: 10
                 role="radio"
                 aria-checked={x.id === v.id}
                 onClick={() => setVariantId(x.id)}
-                className={`rounded-2 border px-2 py-0.5 text-[12px] font-medium transition-colors ${x.id === v.id ? 'border-forest bg-meadow text-forest' : 'border-rule text-ink-2 hover:border-ink-3'} ${x.inStock ? '' : 'line-through opacity-60'}`}
+                className={`min-h-[32px] rounded-2 border px-2.5 py-1 text-[12px] font-medium transition-colors ${x.id === v.id ? 'border-forest bg-meadow text-forest' : 'border-rule text-ink-2 hover:border-ink-3'} ${x.inStock ? '' : 'line-through opacity-60'}`}
               >
                 {x.packSize}
               </button>

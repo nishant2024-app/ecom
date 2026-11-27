@@ -34,7 +34,7 @@ export default async function Products({ searchParams }: { searchParams: Promise
 
   return (
     <div className="mx-auto max-w-[1280px] px-4 pb-10 pt-6 md:px-6">
-      <nav aria-label="Breadcrumb" className="text-[13px] text-ink-3">
+      <nav aria-label="Breadcrumb" className="text-[13px] text-ink-2 [&_a]:inline-block [&_a]:py-2">
         <Link href="/" className="hover:text-forest">Home</Link> / <span className="text-ink-2">{q ? 'Search' : (current?.name ?? 'All products')}</span>
       </nav>
       <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
@@ -59,6 +59,7 @@ export default async function Products({ searchParams }: { searchParams: Promise
         ))}
       </nav>
 
+      <h2 className="sr-only">{list.length} product{list.length === 1 ? '' : 's'}</h2>
       {list.length === 0 ? (
         <div className="mt-12 rounded-5 bg-paper-2 p-10 text-center">
           <p className="text-lg font-bold">No products found</p>

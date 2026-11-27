@@ -59,7 +59,7 @@ export function InventoryPage({ permissions }: { permissions: string[] }) {
         </>
       }
     >
-      <div className="overflow-x-auto rounded-4 border border-rule bg-paper">
+      <div tabIndex={0} className="overflow-x-auto rounded-4 border border-rule bg-paper">
         <table className="w-full min-w-[760px]">
           <thead>
             <tr className="rule-b">
@@ -154,7 +154,7 @@ function Batches({ row, canWrite, onChanged }: { row: Row; canWrite: boolean; on
               <th className={th}>Expires</th>
               <th className={`${th} text-right`}>On hand</th>
               <th className={`${th} text-right`}>Reserved</th>
-              <th className={th} />
+              <th className={th}><span className="sr-only">Actions</span></th>
             </tr>
           </thead>
           <tbody>

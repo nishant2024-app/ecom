@@ -88,7 +88,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   return (
     <div className="mx-auto max-w-[1280px] px-4 pb-10 pt-5 md:px-6">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <nav aria-label="Breadcrumb" className="text-[13px] text-ink-3">
+      <nav aria-label="Breadcrumb" className="text-[13px] text-ink-2 [&_a]:inline-block [&_a]:py-2">
         <Link href="/" className="hover:text-forest">Home</Link> /{' '}
         <Link href={`/products?category=${product.category.slug}`} className="hover:text-forest">{product.category.name}</Link> / <span className="text-ink-2">{product.name}</span>
       </nav>
@@ -161,7 +161,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         <section className="mt-14">
           <div className="mb-4 flex items-end justify-between">
             <h2 className="text-[22px] font-extrabold tracking-[-0.025em] md:text-[28px]">You may also like</h2>
-            <Link href={`/products?category=${product.category.slug}`} className="text-[14px] font-semibold text-forest hover:underline">See all →</Link>
+            <Link href={`/products?category=${product.category.slug}`} className="inline-flex min-h-[44px] items-center text-[14px] font-semibold text-forest hover:underline">See all →</Link>
           </div>
           <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
             {product.related.map((p, i) => (

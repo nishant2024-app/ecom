@@ -41,6 +41,7 @@ function parseHash() {
 export function App() {
   const [me, setMe] = useState<StaffMe | null | 'signed-out'>(null);
   const [route, setRoute] = useState(parseHash());
+  const [menu, setMenu] = useState(false);
 
   const load = useCallback(() => {
     api<StaffMe>('/v1/admin/me')
@@ -50,9 +51,13 @@ export function App() {
   useEffect(load, [load]);
 
   useEffect(() => {
-    const onHash = () => setRoute(parseHash());
+    const onHash = () => {
+      setRoute(parseHash());
+      setMenu(false);
+    };
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement;
+      if (e.key === 'Escape') setMenu(false);
       if (['INPUT', 'SELECT', 'TEXTAREA'].includes(t.tagName) || e.metaKey || e.ctrlKey || e.altKey) return;
       const item = NAV.find((n) => n.key === e.key);
       if (item) location.hash = `#/${item.id}`;
@@ -73,8 +78,17 @@ export function App() {
   const perms = me.permissions;
 
   return (
-    <div className="grid min-h-dvh grid-cols-[220px_1fr] bg-paper-2">
-      <aside className="sticky top-0 flex h-dvh flex-col border-r border-rule bg-paper">
+    <div className="min-h-dvh bg-paper-2 md:grid md:grid-cols-[220px_1fr]">
+      {/* Phone and tablet: a top bar with a menu button; the sidebar slides over the page. */}
+      <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-rule bg-paper px-4 py-2.5 md:hidden">
+        <button type="button" onClick={() => setMenu(true)} aria-label="Open menu" aria-expanded={menu} className="grid h-11 w-11 place-items-center rounded-pill hover:bg-paper-2">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden><path d="M4 7h16M4 12h16M4 17h16" /></svg>
+        </button>
+        <span className="text-lg font-extrabold tracking-[-0.03em]">Mulshi Dairy</span>
+        <span className="text-xs uppercase tracking-[0.14em] text-ink-3">Admin</span>
+      </header>
+      {menu && <div className="fixed inset-0 z-40 bg-ink/40 md:hidden" onClick={() => setMenu(false)} aria-hidden />}
+      <aside className={`fixed inset-y-0 left-0 z-50 flex w-[260px] flex-col border-r border-rule bg-paper transition-transform duration-200 md:sticky md:top-0 md:z-auto md:h-dvh md:w-auto md:translate-x-0 ${menu ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="flex items-center gap-2 px-5 py-5">
           <svg width="28" height="28" viewBox="0 0 40 40" aria-hidden>
             <rect width="40" height="40" rx="12" fill="var(--forest)" />
@@ -91,7 +105,7 @@ export function App() {
               key={n.id}
               href={`#/${n.id}`}
               aria-current={section === n.id ? 'page' : undefined}
-              className={`flex items-center justify-between rounded-pill px-3 py-2 transition-colors ${section === n.id ? 'bg-meadow font-semibold text-forest' : 'text-ink-2 hover:bg-paper-2 hover:text-ink'}`}
+              className={`flex min-h-[44px] items-center justify-between rounded-pill px-3 py-2 transition-colors ${section === n.id ? 'bg-meadow font-semibold text-forest' : 'text-ink-2 hover:bg-paper-2 hover:text-ink'}`}
             >
               {n.label}
               <kbd className={`num rounded-1 px-1 text-xs ${section === n.id ? 'text-forest/60' : 'text-ink-3'}`}>{n.key}</kbd>

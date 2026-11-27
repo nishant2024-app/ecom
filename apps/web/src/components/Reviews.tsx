@@ -115,7 +115,7 @@ export function Reviews({ slug, initial }: { slug: string; initial: ReviewPage |
           )}
           {mine === 'signed-out' && (
             <p className="mb-6 rounded-4 bg-paper-2 p-4 text-[14px] text-ink-2">
-              Bought this before? <Link href={`/signin?next=/p/${slug}%23reviews`} className="font-semibold text-forest underline underline-offset-2">Sign in</Link> to write a review.
+              Bought this before? <Link href={`/signin?next=/p/${slug}%23reviews`} className="inline-block py-1.5 font-semibold text-forest underline underline-offset-2">Sign in</Link> to write a review.
             </p>
           )}
           <ul className="space-y-4">

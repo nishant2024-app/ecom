@@ -201,11 +201,13 @@ export function HeroCarousel({ banners, images, packsFor }: { banners: Banner[];
             <button type="button" aria-label="Next slide" onClick={() => go(index + 1)} className="absolute right-3 top-1/2 z-20 hidden h-11 w-11 -translate-y-1/2 place-items-center rounded-pill bg-[#ffffffd9] text-ink shadow-card hover:bg-[#fff] md:grid">
               <ArrowIcon />
             </button>
-            <div className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 gap-2" role="tablist" aria-label="Choose slide">
+            <div className="absolute bottom-1 left-1/2 z-20 flex -translate-x-1/2" role="tablist" aria-label="Choose slide">
               {banners.map((x, i) => (
-                <button key={i} type="button" role="tab" aria-selected={i === index} aria-label={`Slide ${i + 1}: ${x.title}`} onClick={() => go(i)} className="relative h-2 overflow-hidden rounded-pill bg-[#10201633] transition-all" style={{ width: i === index ? 36 : 8 }}>
-                  {i === index && !reduce && !paused && <motion.span key={`p${index}`} className="absolute inset-y-0 left-0 bg-forest" initial={{ width: 0 }} animate={{ width: '100%' }} transition={{ duration: INTERVAL / 1000, ease: 'linear' }} />}
-                  {i === index && (reduce || paused) && <span className="absolute inset-0 bg-forest" />}
+                <button key={i} type="button" role="tab" aria-selected={i === index} aria-label={`Slide ${i + 1}: ${x.title}`} onClick={() => go(i)} className="grid h-11 min-w-[28px] place-items-center px-1">
+                  <span className="relative block h-2 overflow-hidden rounded-pill bg-[#10201633] transition-all" style={{ width: i === index ? 36 : 8 }}>
+                    {i === index && !reduce && !paused && <motion.span key={`p${index}`} className="absolute inset-y-0 left-0 bg-forest" initial={{ width: 0 }} animate={{ width: '100%' }} transition={{ duration: INTERVAL / 1000, ease: 'linear' }} />}
+                    {i === index && (reduce || paused) && <span className="absolute inset-0 bg-forest" />}
+                  </span>
                 </button>
               ))}
             </div>

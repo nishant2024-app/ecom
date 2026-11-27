@@ -22,7 +22,7 @@ interface OrderRow {
 }
 
 const tone: Record<string, string> = {
-  pending_payment: 'bg-signal/30',
+  pending_payment: 'bg-[#fdecc8] text-[#7a4b00]',
   confirmed: 'bg-meadow',
   packed: 'bg-meadow',
   shipped: 'bg-meadow',

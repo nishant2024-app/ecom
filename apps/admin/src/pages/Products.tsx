@@ -88,7 +88,7 @@ export function ProductsPage({ permissions }: { permissions: string[] }) {
   return (
     <Page title="Products" subtitle={`${rows.length} products`} actions={canWrite && <Btn variant="primary" onClick={() => open()}>+ New product</Btn>}>
       <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search products" aria-label="Search products" className={`${input} mb-4 max-w-xs`} />
-      <div className="overflow-x-auto rounded-4 border border-rule bg-paper">
+      <div tabIndex={0} className="overflow-x-auto rounded-4 border border-rule bg-paper">
         <table className="w-full min-w-[760px]">
           <thead>
             <tr className="rule-b">

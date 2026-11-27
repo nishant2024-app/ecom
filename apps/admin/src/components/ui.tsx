@@ -4,7 +4,7 @@ import { STATUS } from '../lib/format';
 
 export function Page({ title, subtitle, actions, children }: { title: string; subtitle?: ReactNode; actions?: ReactNode; children: ReactNode }) {
   return (
-    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }} className="p-6">
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }} className="p-4 md:p-6">
       <header className="flex flex-wrap items-end justify-between gap-4 pb-5">
         <div>
           <h1 className="text-3xl font-extrabold tracking-[-0.03em]">{title}</h1>
@@ -79,7 +79,7 @@ export function Drawer({ open, onClose, title, children, wide = false }: { open:
       {open && (
         <div className="fixed inset-0 z-40">
           <motion.div className="absolute inset-0 bg-ink/30" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} />
-          <motion.aside
+          <motion.div
             role="dialog"
             aria-modal="true"
             aria-label={title}
@@ -96,7 +96,7 @@ export function Drawer({ open, onClose, title, children, wide = false }: { open:
               </Btn>
             </div>
             <div className="flex-1 overflow-y-auto p-5">{children}</div>
-          </motion.aside>
+          </motion.div>
         </div>
       )}
     </AnimatePresence>

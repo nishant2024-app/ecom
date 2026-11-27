@@ -115,7 +115,7 @@ export function CouponsPage({ permissions }: { permissions: string[] }) {
 
   return (
     <Page title="Coupons" subtitle="Discount codes customers type in the cart. The discount comes off the products, not shipping." actions={canWrite && <Btn variant="primary" onClick={() => setForm({ ...blank })}>+ New coupon</Btn>}>
-      <div className="overflow-x-auto rounded-4 border border-rule bg-paper">
+      <div tabIndex={0} className="overflow-x-auto rounded-4 border border-rule bg-paper">
         <table className="w-full min-w-[780px]">
           <thead>
             <tr className="rule-b">

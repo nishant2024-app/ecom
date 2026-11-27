@@ -23,11 +23,11 @@ function Parcel({ done }: { done: boolean }) {
   const reduce = useReducedMotion();
   return (
     <svg viewBox="0 0 120 100" className="h-24 w-28" aria-hidden>
-      <path d="M20 40 h80 v50 H20 Z" fill="var(--signal)" />
-      <path d="M20 40 h80 v50 H20 Z" fill="none" stroke="var(--forest)" strokeWidth="3" strokeLinejoin="round" />
-      <motion.path d="M20 40 L8 22 L60 22 L60 40 Z" fill="#d79a2e" stroke="var(--forest)" strokeWidth="3" strokeLinejoin="round" style={{ originX: '20px', originY: '40px' }} initial={reduce ? false : { rotate: -70 }} animate={{ rotate: done ? 0 : -70 }} transition={{ delay: 0.3, type: 'spring', stiffness: 120, damping: 12 }} />
-      <motion.path d="M100 40 L112 22 L60 22 L60 40 Z" fill="#c98a2b" stroke="var(--forest)" strokeWidth="3" strokeLinejoin="round" style={{ originX: '100px', originY: '40px' }} initial={reduce ? false : { rotate: 70 }} animate={{ rotate: done ? 0 : 70 }} transition={{ delay: 0.5, type: 'spring', stiffness: 120, damping: 12 }} />
-      <motion.path d="M48 64 l9 9 l17 -19" fill="none" stroke="var(--forest)" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" initial={reduce ? false : { pathLength: 0 }} animate={{ pathLength: done ? 1 : 0 }} transition={{ delay: 0.9, duration: 0.5 }} />
+      <path d="M20 40 h80 v50 H20 Z" fill="#f2c45a" />
+      <path d="M20 40 h80 v50 H20 Z" fill="none" stroke="#0b3a1d" strokeWidth="3" strokeLinejoin="round" />
+      <motion.path d="M20 40 L8 22 L60 22 L60 40 Z" fill="#e0a73a" stroke="#0b3a1d" strokeWidth="3" strokeLinejoin="round" style={{ originX: '20px', originY: '40px' }} initial={reduce ? false : { rotate: -70 }} animate={{ rotate: done ? 0 : -70 }} transition={{ delay: 0.3, type: 'spring', stiffness: 120, damping: 12 }} />
+      <motion.path d="M100 40 L112 22 L60 22 L60 40 Z" fill="#d29a2e" stroke="#0b3a1d" strokeWidth="3" strokeLinejoin="round" style={{ originX: '100px', originY: '40px' }} initial={reduce ? false : { rotate: 70 }} animate={{ rotate: done ? 0 : 70 }} transition={{ delay: 0.5, type: 'spring', stiffness: 120, damping: 12 }} />
+      <motion.path d="M48 64 l9 9 l17 -19" fill="none" stroke="#0b3a1d" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" initial={reduce ? false : { pathLength: 0 }} animate={{ pathLength: done ? 1 : 0 }} transition={{ delay: 0.9, duration: 0.5 }} />
     </svg>
   );
 }
@@ -58,13 +58,14 @@ export function OrderView({ id }: { id: string }) {
   if (error)
     return (
       <div className="mx-auto max-w-xl px-4 py-24 text-center">
-        <p className="text-lg">{error}</p>
-        <Link href={`/signin?next=/orders/${id}`} className="mt-4 inline-block underline">
+        <h1 className="text-3xl font-extrabold tracking-[-0.03em]">Your order</h1>
+        <p role="alert" className="mt-3 text-lg text-ink-2">{error}</p>
+        <Link href={`/signin?next=/orders/${id}`} className="mt-6 inline-flex h-12 items-center rounded-pill bg-forest px-6 font-semibold text-on-forest hover:bg-forest-2">
           Sign in
         </Link>
       </div>
     );
-  if (!order) return <div className="mx-auto max-w-xl px-4 py-24 text-center text-ink-2">Loading your order…</div>;
+  if (!order) return <div role="status" className="mx-auto max-w-xl px-4 py-24 text-center text-ink-2"><h1 className="sr-only">Your order</h1>Loading your order…</div>;
 
   const done = ['confirmed', 'packed', 'shipped', 'delivered'].includes(order.status);
   const reached = STEPS.filter((s) => order.timeline[s.key]).length;
@@ -111,13 +112,13 @@ export function OrderView({ id }: { id: string }) {
           </h1>
           <p className="mt-2 text-on-forest/80">
             {order.status === 'pending_payment' && order.expiresAt && <>We&rsquo;re holding your items until {dateTime(order.expiresAt)}.</>}
-            {done && order.status !== 'delivered' && <>Arrives in {order.delivery.etaMinDays}–{order.delivery.etaMaxDays} days from dispatch. The courier tracking link appears on this page when it ships.</>}
+            {done && order.status !== 'delivered' && <>Arrives in {order.delivery.etaMinDays}–{order.delivery.etaMaxDays} days from dispatch. We email you when it ships, and the tracking link appears on this page.</>}
             {cancelled && order.cancelReason}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           {order.status === 'pending_payment' && (
-            <button type="button" onClick={payAgain} disabled={busy} className="bg-signal px-6 py-3 text-on-signal rounded-pill">
+            <button type="button" onClick={payAgain} disabled={busy} className="rounded-pill bg-paper px-6 py-3 font-semibold text-forest hover:bg-meadow disabled:opacity-60">
               Pay now
             </button>
           )}

@@ -24,7 +24,7 @@ export function CustomersPage() {
   return (
     <Page title="Customers" subtitle="Everyone who has signed in, with what they've bought.">
       <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, email, phone" aria-label="Search customers" className={`${input} mb-4 max-w-xs`} />
-      <div className="overflow-x-auto rounded-4 border border-rule bg-paper">
+      <div tabIndex={0} className="overflow-x-auto rounded-4 border border-rule bg-paper">
         <table className="w-full min-w-[700px]">
           <thead>
             <tr className="rule-b">
@@ -211,7 +211,7 @@ export function SettingsPage({ permissions, meId }: { permissions: string[]; meI
                 <th className={th}>Role</th>
                 <th className={th}>Google linked</th>
                 <th className={th}>Last sign-in</th>
-                <th className={th} />
+                <th className={th}><span className="sr-only">Actions</span></th>
               </tr>
             </thead>
             <tbody>
@@ -222,7 +222,7 @@ export function SettingsPage({ permissions, meId }: { permissions: string[]; meI
                     <span className="block text-xs text-ink-2">{m.email}</span>
                   </td>
                   <td className={td}>
-                    <select value={m.role} disabled={m.id === meId} onChange={(e) => patchStaff(m.id, { role: e.target.value })} className={`${input} w-40`}>
+                    <select aria-label={`Role of ${m.name}`} value={m.role} disabled={m.id === meId} onChange={(e) => patchStaff(m.id, { role: e.target.value })} className={`${input} w-40`}>
                       {ROLES.map((r) => <option key={r} value={r}>{r.replace('_', ' ')}</option>)}
                     </select>
                   </td>
@@ -243,7 +243,7 @@ export function SettingsPage({ permissions, meId }: { permissions: string[]; meI
             <Field label="Google email"><input name="email" type="email" required className={input} /></Field>
             <Field label="Name"><input name="name" required className={input} /></Field>
             <Field label="Role">
-              <select name="role" className={input} defaultValue="warehouse">
+              <select name="role" aria-label="Role" className={input} defaultValue="warehouse">
                 {ROLES.map((r) => <option key={r} value={r}>{r.replace('_', ' ')}</option>)}
               </select>
             </Field>

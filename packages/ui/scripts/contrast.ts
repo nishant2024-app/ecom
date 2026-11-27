@@ -33,6 +33,14 @@ const pairs: [string, string, number][] = [
   ['ink', 'paper-3', 4.5],
   ['ink-2', 'paper', 4.5],
   ['ink-2', 'paper-2', 4.5],
+  ['ink-2', 'paper-3', 4.5],
+  ['ink-3', 'paper', 4.5], // small grey helper text
+  ['ink-3', 'paper-2', 4.5],
+  ['ink-3', 'paper-3', 4.5],
+  ['ink-2', 'meadow', 4.5],
+  ['forest', 'paper', 4.5], // green links and text
+  ['forest', 'paper-2', 4.5],
+  ['forest', 'meadow', 4.5], // green text on the pale green chips
   ['on-signal', 'signal', 4.5],
   ['paper', 'ink', 4.5],
   ['on-forest', 'forest', 4.5],

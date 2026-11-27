@@ -5,7 +5,8 @@
   "packageManager": "pnpm@10.28.0",
   "engines": { "node": ">=22.12" },
   "scripts": {
-    "dev": "turbo run dev --parallel",
+    "dev": "node scripts/dev.mjs",
+    "dev:turbo": "turbo run dev",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",

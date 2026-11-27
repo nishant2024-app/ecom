@@ -48,7 +48,7 @@ function Col({ title, children }: { title: string; children: React.ReactNode }) 
   return (
     <div className="md:col-span-2 md:[&:last-child]:col-span-4">
       <p className="text-[14px] font-bold">{title}</p>
-      <div className="mt-3 flex flex-col gap-2 text-[14px] text-ink-2 [&_a:hover]:text-forest">{children}</div>
+      <div className="mt-2 flex flex-col text-[14px] text-ink-2 [&_a:hover]:text-forest [&_a]:block [&_a]:py-2">{children}</div>
     </div>
   );
 }

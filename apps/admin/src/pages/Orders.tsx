@@ -90,7 +90,7 @@ export function OrdersPage({ status: initial, permissions = [] }: { status?: str
               onClick={() => setStatus(t)}
               className={`rounded-pill px-3 py-1.5 text-sm ${status === t ? 'bg-forest text-on-forest' : 'hover:bg-paper-2'}`}
             >
-              {t ? STATUS[t] : 'All'} <span className="num ml-1 opacity-70">{t ? (data?.counts[t] ?? 0) : total}</span>
+              {t ? STATUS[t] : 'All'} <span className="num ml-1 font-semibold">{t ? (data?.counts[t] ?? 0) : total}</span>
             </button>
           ))}
         </div>
@@ -105,7 +105,7 @@ export function OrdersPage({ status: initial, permissions = [] }: { status?: str
         </div>
       )}
       {note && <p role="status" className="mt-3 text-sm text-ink-2">{note}</p>}
-      <div className="mt-4 overflow-x-auto rounded-4 border border-rule bg-paper">
+      <div tabIndex={0} className="mt-4 overflow-x-auto rounded-4 border border-rule bg-paper">
         <table className="w-full min-w-[820px]">
           <thead>
             <tr className="rule-b">

@@ -1,4 +1,5 @@
-export const API_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:4000';
+/** Production builds set VITE_API_URL (docs/17). In development the admin uses /api, which Vite forwards to the API. */
+export const API_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? '/api';
 
 export interface Problem {
   code: string;

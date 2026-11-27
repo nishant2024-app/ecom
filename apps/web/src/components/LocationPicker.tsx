@@ -68,7 +68,7 @@ export function LocationPicker({ value, onChange }: { value: PickedLocation | nu
           programmatic.current = true;
           m.setView([lat, lng], accuracy > 200 ? 16 : 18);
           circle.current?.remove();
-          circle.current = L.circle([lat, lng], { radius: accuracy, color: '#17803d', weight: 1, fillOpacity: 0.12 }).addTo(m);
+          circle.current = L.circle([lat, lng], { radius: accuracy, color: '#146f36', weight: 1, fillOpacity: 0.12 }).addTo(m);
         }
         onChange({ lat, lng, accuracyM: Math.round(accuracy), source: 'device' });
       },
@@ -84,7 +84,7 @@ export function LocationPicker({ value, onChange }: { value: PickedLocation | nu
         {/* Fixed centre pin */}
         <div className="pointer-events-none absolute left-1/2 top-1/2 z-[500] -translate-x-1/2 -translate-y-full" aria-hidden>
           <svg width="36" height="46" viewBox="0 0 36 46">
-            <path d="M18 45s15-15.4 15-27A15 15 0 0 0 3 18c0 11.6 15 27 15 27Z" fill="#17803d" stroke="#fff" strokeWidth="2.5" />
+            <path d="M18 45s15-15.4 15-27A15 15 0 0 0 3 18c0 11.6 15 27 15 27Z" fill="#146f36" stroke="#fff" strokeWidth="2.5" />
             <circle cx="18" cy="18" r="6" fill="#fff" />
           </svg>
         </div>

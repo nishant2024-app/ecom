@@ -9,11 +9,11 @@ export function GET() {
     (
       <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', background: 'linear-gradient(120deg,#e9f6ec,#ffffff)', color: '#101a14', padding: 72, fontFamily: 'sans-serif' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 20, fontSize: 40 }}>
-          <div style={{ width: 64, height: 64, background: '#17803d', borderRadius: 18 }} />
+          <div style={{ width: 64, height: 64, background: '#146f36', borderRadius: 18 }} />
           {SITE_NAME}
         </div>
         <div style={{ display: 'flex', fontSize: 80, fontWeight: 800, lineHeight: 1.04, maxWidth: 980 }}>Ghee, milk powder and mithai, made the slow way.</div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '3px solid #17803d', paddingTop: 24, fontSize: 28, color: '#56635b' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '3px solid #146f36', paddingTop: 24, fontSize: 28, color: '#56635b' }}>
           <span>From our farm in Mulshi, Pune</span>
           <span>Shipped across India</span>
         </div>

@@ -14,6 +14,8 @@
 
 Shortcut: on Windows run `scripts\local-setup.cmd you@gmail.com`, on macOS/Linux `./scripts/local-setup.sh you@gmail.com`. It does everything below (checks tools, creates `.env`, starts Docker, installs, migrates, seeds). Then run `pnpm dev`. The admin has a "Local testing" email box when `AUTH_TEST_MODE=true`.
 
+**Running on Google Cloud Shell or Codespaces:** use the same two commands. Open the shop and admin from *Web Preview → Preview on port 3000 / 5173* (the admin talks to the API through its own address, so sign-in works there). Cloud Shell has little memory: if `pnpm dev` stops with "ran out of memory", start one part at a time in separate tabs: `pnpm dev api`, `pnpm dev shop`, `pnpm dev admin`.
+
 Step by step:
 
 ```bash
@@ -61,7 +63,7 @@ docs/         this documentation
 
 | Command | Does |
 |---|---|
-| `pnpm dev` | Run all apps in watch mode |
+| `pnpm dev` | Run API, shop and admin together (`pnpm dev api`, `pnpm dev shop` or `pnpm dev admin` for one) |
 | `pnpm --filter api dev` | Run one app |
 | `pnpm build` | Build everything (Turborepo caches) |
 | `pnpm lint` / `pnpm typecheck` | ESLint / TypeScript |

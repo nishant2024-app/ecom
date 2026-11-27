@@ -64,7 +64,7 @@ export function CategoriesPage({ permissions }: { permissions: string[] }) {
         </div>
       )}
       {msg && <p role="alert" className="mb-3 text-alert">{msg}</p>}
-      <div className="overflow-x-auto rounded-4 border border-rule bg-paper">
+      <div tabIndex={0} className="overflow-x-auto rounded-4 border border-rule bg-paper">
         <table className="w-full min-w-[640px]">
           <thead>
             <tr className="rule-b">
@@ -72,7 +72,7 @@ export function CategoriesPage({ permissions }: { permissions: string[] }) {
               <th className={th}>Category</th>
               <th className={th}>Description</th>
               <th className={`${th} text-right`}>Products</th>
-              <th className={th} />
+              <th className={th}><span className="sr-only">Actions</span></th>
             </tr>
           </thead>
           <tbody>

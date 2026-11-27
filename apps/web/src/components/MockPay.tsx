@@ -29,7 +29,7 @@ export function MockPay({ paymentId }: { paymentId: string }) {
   return (
     <div className="mx-auto max-w-md px-4 py-16">
       <div className="border border-rule bg-paper p-6 shadow-card rounded-4">
-        <p className="bg-signal/30 px-3 py-1 text-center text-sm">Test mode: no money moves. Cashfree checkout appears here in production.</p>
+        <p className="bg-[#fdecc8] px-3 py-1 text-center text-sm text-[#7a4b00]">Test mode: no money moves. Cashfree checkout appears here in production.</p>
         {error && <p className="mt-4 text-alert">{error}</p>}
         {p && (
           <>

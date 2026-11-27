@@ -39,7 +39,7 @@ git checkout claude/ecommerce-admin-panel-35t392
 pnpm dev
 ```
 
-The setup installs everything, starts the database and adds sample products. `pnpm dev` starts the shop, admin and API.
+The setup installs everything, starts the database and adds sample products. `pnpm dev` starts the shop, admin and API (`Ctrl+C` stops all three). On Google Cloud Shell, see [the development guide](docs/12-development.md#first-run).
 
 | What | Where |
 |---|---|
