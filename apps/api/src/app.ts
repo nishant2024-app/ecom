@@ -22,6 +22,7 @@ import adminMediaRoutes from './routes/admin/media';
 import contentRoutes from './routes/store/content';
 import reviewRoutes from './routes/store/reviews';
 import adminReviewRoutes from './routes/admin/reviews';
+import adminCouponRoutes from './routes/admin/coupons';
 import { MAX_UPLOAD_BYTES } from './services/images';
 import { createStorage } from './services/storage';
 import { createNominatim, noGeocoder } from './services/geocoder';
@@ -151,6 +152,7 @@ export async function buildApp(deps: AppDeps, opts: { logger?: boolean | object 
       await v1.register(adminMediaRoutes, { prefix: '/admin' });
       await v1.register(adminContentRoutes, { prefix: '/admin' });
       await v1.register(adminReviewRoutes, { prefix: '/admin' });
+      await v1.register(adminCouponRoutes, { prefix: '/admin' });
       await v1.register(adminInventoryRoutes, { prefix: '/admin' });
       await v1.register(adminPeopleRoutes, { prefix: '/admin' });
     },

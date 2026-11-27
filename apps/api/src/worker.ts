@@ -1,9 +1,11 @@
 import { createDeps } from './bootstrap';
+import { sendPendingEmails } from './services/order-emails';
 import { expireUnpaidOrders } from './services/orders';
 
 /**
  * Background worker. Every minute it closes unpaid orders whose payment window passed,
- * after asking the payment provider whether they were in fact paid (missed webhooks).
+ * after asking the payment provider whether they were in fact paid (missed webhooks),
+ * and sends queued order emails.
  * Safe to run more than one: each order is re-checked under a row lock.
  */
 const deps = await createDeps(undefined, 'worker');
@@ -17,6 +19,8 @@ async function tick() {
   try {
     const result = await expireUnpaidOrders(deps);
     if (result.expired || result.paid) log('orders.expiry', result);
+    const mail = await sendPendingEmails(deps);
+    if (mail.sent || mail.failed) log('emails.sent', mail);
   } catch (err) {
     log('worker.tick_failed', { error: err instanceof Error ? err.message : String(err) });
   } finally {
@@ -25,7 +29,7 @@ async function tick() {
 }
 
 const timer = setInterval(tick, 60_000);
-log('worker.started', { payments: deps.payments.name });
+log('worker.started', { payments: deps.payments.name, email: deps.email?.name });
 void tick();
 
 for (const sig of ['SIGTERM', 'SIGINT'] as const) {

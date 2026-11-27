@@ -70,7 +70,7 @@ export default async function checkoutRoutes(fastify: FastifyInstance) {
       schema: {
         tags: ['Checkout'],
         summary: 'Price a cart with live prices, stock and shipping',
-        body: Type.Object({ lines: CartLines, pincode: Type.Optional(Type.String()) }, { additionalProperties: false }),
+        body: Type.Object({ lines: CartLines, pincode: Type.Optional(Type.String()), couponCode: Type.Optional(Type.String({ maxLength: 40 })) }, { additionalProperties: false }),
         response: {
           200: Type.Object({
             lines: Type.Array(
@@ -89,6 +89,9 @@ export default async function checkoutRoutes(fastify: FastifyInstance) {
               }),
             ),
             subtotal: Money,
+            discount: Money,
+            coupon: Nullable(Type.Object({ code: Type.String(), description: Type.String() })),
+            couponError: Nullable(Type.String()),
             taxIncluded: Money,
             weightGrams: Type.Integer(),
             shipping: Nullable(ShippingOut),
@@ -101,10 +104,10 @@ export default async function checkoutRoutes(fastify: FastifyInstance) {
       },
     },
     async (req) => {
-      const { lines, pincode } = req.body;
+      const { lines, pincode, couponCode } = req.body;
       if (pincode !== undefined && !isPincode(pincode)) throw new AppError('VALIDATION_FAILED', 400, 'Enter a valid 6-digit pincode');
       const now = app.deps.now();
-      const q = await quoteCart(db, lines, pincode, now);
+      const q = await quoteCart(db, lines, pincode, now, { couponCode, customerId: req.auth?.typ === 'customer' ? req.auth.sub : null });
       const language = req.headers['accept-language']?.startsWith('hi') ? 'hi' : 'en';
       return {
         lines: q.lines.map((l) => ({
@@ -121,6 +124,9 @@ export default async function checkoutRoutes(fastify: FastifyInstance) {
           problem: l.problem,
         })),
         subtotal: money(q.subtotalPaise),
+        discount: money(q.discountPaise),
+        coupon: q.coupon,
+        couponError: q.couponError,
         taxIncluded: money(q.taxPaise),
         weightGrams: q.weightGrams,
         shipping: q.shipping

@@ -1,8 +1,9 @@
-import { lineTotal, quoteShipping, ShippingError, splitInclusive, sumPaise, todayIST, type ShippingQuote } from '@dairy/core';
+import { allocateDiscount, lineTotal, quoteShipping, ShippingError, splitInclusive, sumPaise, todayIST, type ShippingQuote } from '@dairy/core';
 import { schema as s, type DbOrTx } from '@dairy/db';
 import { inArray } from 'drizzle-orm';
 import { eq } from 'drizzle-orm';
 import { AppError } from '../lib/errors';
+import { describeCoupon, evaluateCoupon } from './coupons';
 import { availability } from './stock';
 import { shippingZones } from './store';
 
@@ -36,6 +37,13 @@ export interface QuotedLine {
 export interface Quote {
   lines: QuotedLine[];
   subtotalPaise: number;
+  /** Discount from the coupon (0 if none or not valid). Applies to products, not shipping. */
+  discountPaise: number;
+  coupon: { code: string; description: string } | null;
+  /** Why the typed code did not apply (shown to the customer); null when fine or no code. */
+  couponError: string | null;
+  /** Internal: the coupon row to record a redemption against. */
+  couponId: string | null;
   weightGrams: number;
   taxPaise: number;
   shipping: ShippingQuote | null;
@@ -45,7 +53,7 @@ export interface Quote {
 }
 
 /** Price a cart from current catalog prices and stock. Never trusts client prices. */
-export async function quoteCart(db: DbOrTx, input: CartLineInput[], pincode: string | undefined, now: Date): Promise<Quote> {
+export async function quoteCart(db: DbOrTx, input: CartLineInput[], pincode: string | undefined, now: Date, opts: { couponCode?: string | null; customerId?: string | null } = {}): Promise<Quote> {
   const merged = new Map<string, number>();
   for (const l of input) merged.set(l.variantId, (merged.get(l.variantId) ?? 0) + l.quantity);
   const ids = [...merged.keys()];
@@ -91,12 +99,27 @@ export async function quoteCart(db: DbOrTx, input: CartLineInput[], pincode: str
 
   const subtotal = sumPaise(lines.map((l) => l.totalPaise));
   const weight = lines.reduce((g, l) => g + l.weightGrams, 0);
-  const tax = sumPaise(lines.map((l) => splitInclusive(l.totalPaise, l.gstRateBps).tax));
+  let discount = 0;
+  let coupon: Quote['coupon'] = null;
+  let couponError: string | null = null;
+  let couponId: string | null = null;
+  if (opts.couponCode?.trim()) {
+    const check = await evaluateCoupon(db, opts.couponCode, { subtotalPaise: subtotal, customerId: opts.customerId ?? null, now });
+    if (check.ok) {
+      discount = check.discountPaise;
+      coupon = { code: check.coupon.code, description: describeCoupon(check.coupon) };
+      couponId = check.coupon.id;
+    } else couponError = check.message;
+  }
+  // GST is included in prices, so a discount lowers the taxable value of each line in proportion.
+  const shares = allocateDiscount(lines.map((l) => l.totalPaise), discount);
+  const tax = sumPaise(lines.map((l, i) => splitInclusive(l.totalPaise - shares[i]!, l.gstRateBps).tax));
+  const payable = subtotal - discount; // free-shipping thresholds look at what the customer actually pays for products
   let shipping: ShippingQuote | null = null;
   let shippingError: string | null = null;
   if (pincode) {
     try {
-      shipping = quoteShipping(pincode, subtotal, weight, await shippingZones(db));
+      shipping = quoteShipping(pincode, payable, weight, await shippingZones(db));
     } catch (err) {
       if (err instanceof ShippingError) shippingError = err.message;
       else throw err;
@@ -105,11 +128,15 @@ export async function quoteCart(db: DbOrTx, input: CartLineInput[], pincode: str
   return {
     lines,
     subtotalPaise: subtotal,
+    discountPaise: discount,
+    coupon,
+    couponError,
+    couponId,
     weightGrams: weight,
     taxPaise: tax,
     shipping,
     shippingError,
-    totalPaise: subtotal + (shipping?.feePaise ?? 0),
+    totalPaise: payable + (shipping?.feePaise ?? 0),
     ok: lines.length > 0 && lines.every((l) => l.problem === null) && (!pincode || shipping !== null),
   };
 }

@@ -361,6 +361,7 @@ export const orders = pgTable(
     taxPaise: paise('tax_paise').notNull(),
     totalPaise: paise('total_paise').notNull(),
     shippingAddress: jsonb('shipping_address').$type<AddressSnapshot>().notNull(),
+    couponCode: text('coupon_code'),
     shippingZone: text('shipping_zone').notNull(),
     etaMinDays: integer('eta_min_days').notNull(),
     etaMaxDays: integer('eta_max_days').notNull(),
@@ -657,11 +658,19 @@ export const notifications = pgTable(
     link: text('link'),
     data: jsonb('data').notNull().default({}),
     status: text('status').notNull().default('pending'),
+    /** One queued message per event, e.g. "order:ord_…:ship", so retries never double-send. */
+    dedupeKey: text('dedupe_key'),
+    attempts: integer('attempts').notNull().default(0),
+    lastError: text('last_error'),
     sentAt: ts('sent_at'),
     readAt: ts('read_at'),
     createdAt: createdAt(),
   },
-  (t) => [index('notifications_customer_idx').on(t.customerId, t.createdAt)],
+  (t) => [
+    index('notifications_customer_idx').on(t.customerId, t.createdAt),
+    uniqueIndex('notifications_dedupe_uq').on(t.dedupeKey),
+    index('notifications_pending_idx').on(t.status, t.createdAt).where(sql`${t.status} = 'pending'`),
+  ],
 );
 
 /** Verified reviews: only customers with a delivered order for the product can write one; staff approve before it shows. */
@@ -692,4 +701,55 @@ export const productReviews = pgTable(
     check('product_reviews_rating_ck', sql`${t.rating} between 1 and 5`),
     check('product_reviews_status_ck', sql`${t.status} in ('pending','approved','rejected')`),
   ],
+);
+
+/** Discount codes managed in the admin. A code takes a percentage (with an optional cap) or a fixed amount off the products. */
+export const coupons = pgTable(
+  'coupons',
+  {
+    id: id(),
+    sellerId: text('seller_id')
+      .notNull()
+      .references(() => sellers.id),
+    code: text('code').notNull(),
+    description: text('description').notNull().default(''),
+    kind: text('kind').notNull(),
+    percentBps: integer('percent_bps'),
+    amountPaise: paise('amount_paise'),
+    maxDiscountPaise: paise('max_discount_paise'),
+    minSubtotalPaise: paise('min_subtotal_paise').notNull().default(0),
+    startsAt: ts('starts_at'),
+    endsAt: ts('ends_at'),
+    /** Total uses across all customers (orders that were not cancelled). Null = unlimited. */
+    usageLimit: integer('usage_limit'),
+    perCustomerLimit: integer('per_customer_limit').notNull().default(1),
+    firstOrderOnly: boolean('first_order_only').notNull().default(false),
+    status: text('status').notNull().default('active'),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    uniqueIndex('coupons_code_uq').on(t.sellerId, t.code),
+    check('coupons_kind_ck', sql`(${t.kind} = 'percent' and ${t.percentBps} between 1 and 10000 and ${t.amountPaise} is null) or (${t.kind} = 'fixed' and ${t.amountPaise} > 0 and ${t.percentBps} is null)`),
+    check('coupons_status_ck', sql`${t.status} in ('active','paused')`),
+  ],
+);
+
+export const couponRedemptions = pgTable(
+  'coupon_redemptions',
+  {
+    id: id(),
+    couponId: text('coupon_id')
+      .notNull()
+      .references(() => coupons.id),
+    customerId: text('customer_id')
+      .notNull()
+      .references(() => customers.id),
+    orderId: text('order_id')
+      .notNull()
+      .references(() => orders.id),
+    amountPaise: paise('amount_paise').notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex('coupon_redemptions_order_uq').on(t.orderId), index('coupon_redemptions_coupon_idx').on(t.couponId, t.customerId)],
 );

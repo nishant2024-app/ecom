@@ -32,6 +32,9 @@ interface CartContextValue {
   clear: () => void;
   pincode: string;
   setPincode: (p: string) => void;
+  /** Coupon code the customer applied; the server decides whether it works. */
+  coupon: string;
+  setCoupon: (code: string) => void;
   flights: Flight[];
   landed: (id: number) => void;
   bump: number;
@@ -40,6 +43,7 @@ interface CartContextValue {
 const CartContext = createContext<CartContextValue | null>(null);
 const KEY = 'mulshi.cart.v1';
 const PIN_KEY = 'mulshi.pincode';
+const COUPON_KEY = 'mulshi.coupon';
 
 function read<T>(key: string, fallback: T): T {
   try {
@@ -53,6 +57,7 @@ function read<T>(key: string, fallback: T): T {
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [pincode, setPincodeState] = useState('');
+  const [coupon, setCouponState] = useState('');
   const [open, setOpen] = useState(false);
   const [flights, setFlights] = useState<Flight[]>([]);
   const [bump, setBump] = useState(0);
@@ -62,6 +67,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     setItems(read<CartItem[]>(KEY, []));
     setPincodeState(read<string>(PIN_KEY, ''));
+    setCouponState(read<string>(COUPON_KEY, ''));
     loaded.current = true;
     const sync = (e: StorageEvent) => {
       if (e.key === KEY) setItems(read<CartItem[]>(KEY, []));
@@ -114,6 +120,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
           /* ignore */
         }
       },
+      coupon,
+      setCoupon: (code) => {
+        const c = code.trim().toUpperCase();
+        setCouponState(c);
+        try {
+          localStorage.setItem(COUPON_KEY, JSON.stringify(c));
+        } catch {
+          /* ignore */
+        }
+      },
       flights,
       landed: (id) => {
         setFlights((f) => f.filter((x) => x.id !== id));
@@ -121,7 +137,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       },
       bump,
     }),
-    [items, open, add, pincode, flights, bump],
+    [items, open, add, pincode, coupon, flights, bump],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

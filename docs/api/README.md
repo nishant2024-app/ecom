@@ -156,7 +156,8 @@ Clients must branch on `code`, never on `title` or `detail` (those are human tex
 | 409 | `IDEMPOTENCY_KEY_REUSED` | Same key, different body |
 | 409 | `IDEMPOTENCY_IN_PROGRESS` | Same key, first request still running |
 | 422 | `NOT_SERVICEABLE` | We don't ship to this pincode |
-| 422 | `GEOCODER_UNAVAILABLE` | 503 | Map lookup service is down; ask the customer to type the address |
+| 422 | `COUPON_INVALID` | 422 | The coupon code does not apply (expired, used up, below the minimum…); `detail` says why |
+| `GEOCODER_UNAVAILABLE` | 503 | Map lookup service is down; ask the customer to type the address |
 | `REVIEW_NOT_ALLOWED` | 403 | Reviews need a delivered order containing the product |
 | `BATCH_NOT_FOUND` | 404 | Batch code not recognised on the verify page |
 | `OUT_OF_STOCK` | Not enough sellable stock (detail names the product and how many are left) |

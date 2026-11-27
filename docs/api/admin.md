@@ -7,7 +7,7 @@ Staff only (`client: "admin"` sign-in). Each endpoint requires the permission sh
 | GET | `/v1/admin/me` | any staff | Profile and permission list (drives the admin navigation) |
 | GET | `/v1/admin/dashboard?days=7` | `dashboard.read` | Revenue (with change vs previous period), paid orders, average order, daily series, orders by status, to-pack/to-ship counts, top products, low stock, batches expiring in 30 days, recent orders |
 | GET | `/v1/admin/orders` | `orders.read` | Filter by `status`; search `q` (number, name, phone, pincode, AWB); counts per status; cursor |
-| GET | `/v1/admin/orders/{id}` | `orders.read` | Detail with customer, events, payment, refunds |
+| GET | `/v1/admin/orders/{id}` | `orders.read` | Detail with customer, events, payment, refunds, coupon and the emails sent to the customer (`emails`) |
 | POST | `/v1/admin/orders/{id}/pack` | `orders.fulfil` | confirmed → packed |
 | POST | `/v1/admin/orders/{id}/ship` | `orders.fulfil` | packed → shipped `{courier, trackingNumber, trackingUrl?}`; stock leaves inventory |
 | POST | `/v1/admin/orders/{id}/deliver` | `orders.fulfil` | shipped → delivered |
@@ -25,6 +25,8 @@ Staff only (`client: "admin"` sign-in). Each endpoint requires the permission sh
 | PATCH / DELETE | `/v1/admin/media/{id}` | `catalog.write` | Edit alt text `{alt}` / delete a product photo (files removed from storage) |
 | GET / POST | `/v1/admin/site-media` | `catalog.read` / `catalog.write` | Storefront image library / upload (same rules as product photos) |
 | DELETE | `/v1/admin/site-media/{id}` | `catalog.write` | Delete; 409 while the image is used on the storefront |
+| GET / POST | `/v1/admin/coupons` | `catalog.read` / `pricing.write` | Coupons with usage / create. See [Coupons](../19-coupons.md) |
+| PUT | `/v1/admin/coupons/{id}` | `pricing.write` | Update a coupon (code, rules, dates, limits, status) |
 | GET | `/v1/admin/reviews?status=pending\|approved\|rejected` | `catalog.read` | Reviews with product, customer email and order number, plus counts per status |
 | PATCH | `/v1/admin/reviews/{id}` | `catalog.write` | `{status: approved\|rejected}`; audited |
 | GET / PUT | `/v1/admin/storefront` | `catalog.read` / `catalog.write` | Home page copy and images: announcement, hero, story, promises, SEO title and description. Image ids must come from the site-media library |

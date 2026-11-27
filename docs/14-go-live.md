@@ -57,6 +57,8 @@ SITE_NOINDEX=false        # true on staging
 
 Admin SPA build: `VITE_API_URL=https://api.example.in pnpm --filter @dairy/admin build`, then deploy `apps/admin/dist` to Cloudflare Pages at `admin.example.in` behind Cloudflare Access.
 
+> **Simplest path:** follow [Put the shop live on one server](17-deploy-single-server.md) (one VPS, `infra/compose/single.yml`, nightly backups). The two-server layout below is for later.
+
 ## 3. First deploy
 
 ```bash

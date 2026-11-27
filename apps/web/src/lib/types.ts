@@ -91,6 +91,9 @@ export interface ShippingInfo {
 export interface Quote {
   lines: { variantId: string; slug: string; name: string; packSize: string; pack: Pack; quantity: number; unitPrice: Money; mrp: Money; total: Money; maxQuantity: number; problem: string | null }[];
   subtotal: Money;
+  discount: Money;
+  coupon: { code: string; description: string } | null;
+  couponError: string | null;
   taxIncluded: Money;
   weightGrams: number;
   shipping: ShippingInfo | null;
@@ -130,6 +133,8 @@ export interface Order {
   expiresAt: string | null;
   items: { id: string; variantId: string; slug: string; name: string; packSize: string; pack: Pack; quantity: number; unitPrice: Money; total: Money }[];
   subtotal: Money;
+  discount?: Money;
+  couponCode?: string | null;
   shipping: Money;
   taxIncluded: Money;
   total: Money;

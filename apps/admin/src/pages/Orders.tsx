@@ -175,6 +175,7 @@ interface Detail {
   events: { type: string; from: string | null; to: string | null; actorType: string; at: string; data: Record<string, unknown> }[];
   cancelReason: string | null;
   customer: { id: string; name: string; email: string; phone: string | null } | null;
+  emails?: { template: string; status: string; attempts: number; lastError: string | null; sentAt: string | null }[];
   note: string | null;
 }
 
@@ -335,6 +336,20 @@ export function OrderDetailPage({ id, permissions }: { id: string; permissions: 
               </p>
             ))}
           </Card>
+          {o.emails && o.emails.length > 0 && (
+            <Card title="Emails to the customer">
+              <ul className="space-y-1 text-sm">
+                {o.emails.map((e, i) => (
+                  <li key={i} className="flex items-baseline justify-between gap-3">
+                    <span>{({ order_confirmed: 'Order confirmed', order_shipped: 'Shipped', order_delivered: 'Delivered', order_cancelled: 'Cancelled' } as Record<string, string>)[e.template] ?? e.template}</span>
+                    <span className={e.status === 'sent' ? 'text-forest' : e.status === 'failed' ? 'text-alert' : 'text-ink-2'}>
+                      {e.status === 'sent' ? `sent ${e.sentAt ? when(e.sentAt) : ''}` : e.status === 'failed' ? `failed: ${e.lastError ?? ''}` : 'waiting to send'}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
           {o.note && <Card title="Customer note"><p>{o.note}</p></Card>}
         </div>
       </div>

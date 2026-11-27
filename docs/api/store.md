@@ -14,13 +14,13 @@ Customer-facing endpoints for the storefront and the future Android app. Convent
 | GET | `/v1/store/geo/reverse?lat=&lng=` | Customer · 15/min | Suggest area, city, state, pincode for a map point |
 | GET | `/v1/store/content` | Public | Home page copy and images edited in Admin → Storefront: announcement, rotating `banners` (title, colour theme, category, optional photo), story, promises, SEO |
 | GET | `/v1/store/shipping/estimate?pincode=` | Public | Zone, fee, free-shipping threshold, delivery dates |
-| POST | `/v1/store/checkout/quote` | Public | Price a cart `{lines, pincode?}` with live prices, stock problems and shipping |
+| POST | `/v1/store/checkout/quote` | Public | Price a cart `{lines, pincode?, couponCode?}` with live prices, stock problems, shipping and the coupon discount (`discount`, `coupon`, `couponError`). See [Coupons](../19-coupons.md) |
 | GET / PATCH / DELETE | `/v1/store/me` | Customer | Profile; delete starts account deletion |
 | GET / POST | `/v1/store/me/addresses` | Customer | Addresses (state derived from pincode, phone normalised to +91) with optional exact `location`. See [Exact delivery location](../16-location-and-delivery.md) |
 | PATCH / DELETE | `/v1/store/me/addresses/{id}` | Customer | Update / remove |
 | POST / DELETE | `/v1/store/me/devices[/{id}]` | Customer | Push tokens |
 | GET / PUT | `/v1/store/me/notification-preferences` | Customer | `marketingEmail`, `orderUpdates` |
-| POST | `/v1/store/orders` | Customer · Idempotent | Place order `{lines, addressId, note?}` → `{order, payment}` |
+| POST | `/v1/store/orders` | Customer · Idempotent | Place order `{lines, addressId, note?, couponCode?}` → `{order, payment}`; `422 COUPON_INVALID` if the code stopped working |
 | GET | `/v1/store/orders` | Customer | My orders (cursor) |
 | GET | `/v1/store/orders/{id}` | Customer | Detail: items, totals, address, timeline, events, payment, refunds, `canCancel` |
 | POST | `/v1/store/orders/{id}/pay` | Customer | New payment attempt for an unpaid order |

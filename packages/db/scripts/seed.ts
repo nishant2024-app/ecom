@@ -359,6 +359,10 @@ await db.transaction(async (tx) => {
     }).map(([key, value]) => ({ sellerId, key, value })),
   );
 
+  if (catalogMode === 'demo') {
+    await tx.insert(s.coupons).values({ id: newId('cpn'), sellerId, code: 'WELCOME10', description: 'Sample: 10% off a first order', kind: 'percent', percentBps: 1000, maxDiscountPaise: 10000, minSubtotalPaise: 30000, perCustomerLimit: 1, firstOrderOnly: true });
+  }
+
   const ownerEmail = process.env.SEED_OWNER_EMAIL;
   if (ownerEmail) {
     await tx.insert(s.staff).values({ id: newId('stf'), email: ownerEmail, name: 'Owner', role: 'owner' });

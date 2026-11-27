@@ -6,14 +6,15 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '@/lib/api-client';
 import { useCart } from '@/lib/cart';
+import { CouponBox } from './CouponBox';
 import { etaText } from '@/lib/format';
 import type { Quote } from '@/lib/types';
 
-export function useQuote(lines: { variantId: string; quantity: number }[], pincode: string, enabled = true) {
+export function useQuote(lines: { variantId: string; quantity: number }[], pincode: string, enabled = true, couponCode = '') {
   const [quote, setQuote] = useState<Quote | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const key = JSON.stringify([lines.map((l) => [l.variantId, l.quantity]), pincode]);
+  const key = JSON.stringify([lines.map((l) => [l.variantId, l.quantity]), pincode, couponCode]);
   useEffect(() => {
     if (!enabled || lines.length === 0) {
       setQuote(null);
@@ -22,7 +23,7 @@ export function useQuote(lines: { variantId: string; quantity: number }[], pinco
     const ctrl = new AbortController();
     setLoading(true);
     const t = setTimeout(() => {
-      api<Quote>('/v1/store/checkout/quote', { method: 'POST', body: JSON.stringify({ lines, ...(/^[1-9]\d{5}$/.test(pincode) ? { pincode } : {}) }), signal: ctrl.signal })
+      api<Quote>('/v1/store/checkout/quote', { method: 'POST', body: JSON.stringify({ lines, ...(/^[1-9]\d{5}$/.test(pincode) ? { pincode } : {}), ...(couponCode ? { couponCode } : {}) }), signal: ctrl.signal })
         .then((q) => {
           setQuote(q);
           setError(null);
@@ -66,9 +67,9 @@ export function FreeShippingBar({ quote }: { quote: Quote }) {
 }
 
 export function CartDrawer() {
-  const { items, open, setOpen, setQuantity, remove, pincode, setPincode } = useCart();
+  const { items, open, setOpen, setQuantity, remove, pincode, setPincode, coupon } = useCart();
   const lines = items.map((i) => ({ variantId: i.variantId, quantity: i.quantity }));
-  const { quote, error } = useQuote(lines, pincode, open);
+  const { quote, error } = useQuote(lines, pincode, open, coupon);
   const closeRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -180,11 +181,18 @@ export function CartDrawer() {
                     {quote?.shippingError && <span className="text-alert">{quote.shippingError}</span>}
                   </label>
                   {quote && <FreeShippingBar quote={quote} />}
+                  <CouponBox quote={quote} />
                   <dl className="space-y-1">
                     <div className="flex justify-between">
                       <dt className="text-ink-2">Subtotal</dt>
                       <dd>{quote ? <Money paise={quote.subtotal.amount} /> : '…'}</dd>
                     </div>
+                    {quote && quote.discount.amount > 0 && (
+                      <div className="flex justify-between text-forest">
+                        <dt>Coupon {quote.coupon?.code}</dt>
+                        <dd>−<Money paise={quote.discount.amount} /></dd>
+                      </div>
+                    )}
                     <div className="flex justify-between">
                       <dt className="text-ink-2">Shipping</dt>
                       <dd>{quote?.shipping ? quote.shipping.free ? 'Free' : <Money paise={quote.shipping.fee.amount} /> : <span className="text-ink-3">enter pincode</span>}</dd>

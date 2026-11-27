@@ -7,6 +7,7 @@ import type { Kv } from './services/kv';
 import type { PaymentProvider } from './services/payments';
 import type { Storage } from './services/storage';
 import type { Geocoder } from './services/geocoder';
+import type { EmailProvider } from './services/email';
 import type { AccessClaims, TokenService } from './services/tokens';
 
 export interface AppDeps {
@@ -20,6 +21,8 @@ export interface AppDeps {
   storage?: Storage;
   /** Reverse geocoder; defaults to Nominatim from config. */
   geocoder?: Geocoder;
+  /** Sends order emails; defaults to the provider chosen by EMAIL_PROVIDER. */
+  email?: EmailProvider;
   /** Injectable clock for tests. */
   now: () => Date;
   /** Set by the auth routes; reused by the dev sign-in route. */

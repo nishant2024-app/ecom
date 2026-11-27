@@ -162,7 +162,12 @@ export default async function adminOrderRoutes(fastify: FastifyInstance) {
     async (req) => {
       const view = await orderView(db, req.params.orderId);
       const [customer] = await db.select().from(s.customers).where(eq(s.customers.id, view.customerId));
-      return { ...view, customer: customer ? { id: customer.id, name: customer.name, email: customer.email, phone: customer.phone } : null };
+      const emails = await db
+        .select({ template: s.notifications.template, status: s.notifications.status, attempts: s.notifications.attempts, lastError: s.notifications.lastError, sentAt: s.notifications.sentAt })
+        .from(s.notifications)
+        .where(and(eq(s.notifications.customerId, view.customerId), sql`${s.notifications.data}->>'orderId' = ${view.id}`))
+        .orderBy(desc(s.notifications.createdAt));
+      return { ...view, customer: customer ? { id: customer.id, name: customer.name, email: customer.email, phone: customer.phone } : null, emails: emails.map((e) => ({ ...e, sentAt: e.sentAt?.toISOString() ?? null })) };
     },
   );
 

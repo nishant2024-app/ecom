@@ -1,0 +1,85 @@
+# Everything on ONE server (a 2 vCPU / 4-8 GB VPS is enough to start). No public ports: Cloudflare Tunnel
+# connects out to Cloudflare, so the server needs no open inbound ports except SSH.
+#
+#   cd /opt/dairy/app
+#   docker compose -f infra/compose/single.yml --env-file /opt/dairy/.env up -d --build
+#
+# Guide: docs/17-deploy-single-server.md
+name: dairy
+x-env: &env
+  env_file: /opt/dairy/.env
+  restart: unless-stopped
+  logging: { driver: json-file, options: { max-size: '10m', max-file: '5' } }
+
+services:
+  postgres:
+    <<: *env
+    image: postgres:17-alpine
+    # The env file provides POSTGRES_USER (migrator), POSTGRES_PASSWORD, POSTGRES_DB and APP_DB_PASSWORD.
+    command: postgres -c shared_buffers=512MB -c effective_cache_size=1536MB -c work_mem=8MB -c max_connections=60 -c log_min_duration_statement=500 -c timezone=UTC
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init-prod.sh:/docker-entrypoint-initdb.d/10-init.sh:ro
+      - /opt/dairy/backups:/backups
+    shm_size: 256m
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}']
+      interval: 10s
+      retries: 10
+    deploy: { resources: { limits: { memory: 1g } } }
+
+  valkey:
+    <<: *env
+    image: valkey/valkey:8-alpine
+    command: ['valkey-server', '--appendonly', 'yes', '--maxmemory', '200mb', '--maxmemory-policy', 'noeviction']
+    volumes: ['valkeydata:/data']
+    deploy: { resources: { limits: { memory: 300m } } }
+
+  migrate:
+    <<: *env
+    build: { context: ../.., dockerfile: apps/api/Dockerfile, target: migrate }
+    restart: 'no'
+    depends_on: { postgres: { condition: service_healthy } }
+
+  api:
+    <<: *env
+    build: { context: ../.., dockerfile: apps/api/Dockerfile, target: runtime }
+    image: dairy-api:${GIT_SHA:-local}
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      valkey: { condition: service_started }
+    healthcheck:
+      test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:4000/v1/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 4s
+      start_period: 20s
+    deploy: { resources: { limits: { memory: 768m } } }
+
+  worker:
+    <<: *env
+    image: dairy-api:${GIT_SHA:-local}
+    command: ['node', 'dist/worker.js']
+    depends_on: { api: { condition: service_healthy } }
+    healthcheck: { disable: true }
+    deploy: { resources: { limits: { memory: 512m } } }
+
+  web:
+    <<: *env
+    build: { context: ../.., dockerfile: apps/web/Dockerfile }
+    image: dairy-web:${GIT_SHA:-local}
+    environment:
+      API_INTERNAL_URL: http://api:4000
+    depends_on: { api: { condition: service_healthy } }
+    deploy: { resources: { limits: { memory: 768m } } }
+
+  cloudflared:
+    <<: *env
+    image: cloudflare/cloudflared:latest
+    command: ['tunnel', '--no-autoupdate', 'run']
+    # TUNNEL_TOKEN comes from the env file.
+    depends_on: [web, api]
+    deploy: { resources: { limits: { memory: 128m } } }
+
+volumes:
+  pgdata:
+  valkeydata:

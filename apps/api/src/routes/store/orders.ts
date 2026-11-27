@@ -38,7 +38,7 @@ export default async function orderRoutes(fastify: FastifyInstance) {
       schema: {
         tags: ['Orders'],
         summary: 'Place an order and start payment',
-        body: Type.Object({ lines: CartLines, addressId: Type.String(), note: Type.Optional(Type.String({ maxLength: 300 })) }, { additionalProperties: false }),
+        body: Type.Object({ lines: CartLines, addressId: Type.String(), note: Type.Optional(Type.String({ maxLength: 300 })), couponCode: Type.Optional(Type.String({ maxLength: 40 })) }, { additionalProperties: false }),
       },
     },
     async (req, reply) => {

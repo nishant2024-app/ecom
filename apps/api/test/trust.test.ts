@@ -115,3 +115,75 @@ describe('exact delivery location', () => {
     expect((await t.app.inject({ url: '/v1/store/geo/reverse?lat=0&lng=0', headers: c.headers })).statusCode).toBe(400);
   });
 });
+
+describe('order emails', () => {
+  it('emails the customer when an order is paid, shipped, delivered and cancelled; never twice; respects the opt-out', async () => {
+    const { sendPendingEmails } = await import('../src/services/order-emails');
+    const deps = t.app.deps;
+    const c = await readyCustomer(t);
+    const ids = await variantIds(t);
+    const staff = await staffHeaders(t, 'ops_manager');
+    const mine = () => t.emails.filter((e) => e.to === c.body.user.email);
+    const place = async () => {
+      const r = await t.app.inject({ method: 'POST', url: '/v1/store/orders', headers: { ...c.headers, 'idempotency-key': crypto.randomUUID() }, payload: { lines: [{ variantId: ids.powder500, quantity: 1 }], addressId: c.addressId } });
+      const { order, payment } = r.json();
+      await t.app.inject({ method: 'POST', url: `/v1/dev/payments/${payment.id}/simulate`, headers: c.headers, payload: { outcome: 'success' } });
+      return order as { id: string; number: string };
+    };
+
+    await sendPendingEmails(deps, 500); // clear anything queued by earlier tests
+    const o1 = await place();
+    expect(mine()).toHaveLength(0); // queued, not sent until the worker runs
+    expect(await sendPendingEmails(deps, 500)).toMatchObject({ sent: 1 });
+    expect(mine()[0]).toMatchObject({ subject: `Order ${o1.number} confirmed` });
+    expect(mine()[0]!.text).toContain('Whole Milk Powder');
+    expect(mine()[0]!.html).toContain('View your order');
+
+    await t.app.inject({ method: 'POST', url: `/v1/admin/orders/${o1.id}/pack`, headers: staff });
+    await t.app.inject({ method: 'POST', url: `/v1/admin/orders/${o1.id}/ship`, headers: staff, payload: { courier: 'Delhivery', trackingNumber: 'DLV777', trackingUrl: 'https://track.example/DLV777' } });
+    await t.app.inject({ method: 'POST', url: `/v1/admin/orders/${o1.id}/deliver`, headers: staff });
+    await sendPendingEmails(deps, 500);
+    expect(mine().map((e) => e.subject)).toEqual([`Order ${o1.number} confirmed`, `Your order ${o1.number} is on its way`, `Delivered: order ${o1.number}`]);
+    expect(mine()[1]!.text).toContain('DLV777');
+    expect(mine()[1]!.html).toContain('https://track.example/DLV777');
+    expect((await sendPendingEmails(deps, 500)).sent).toBe(0); // nothing is sent twice
+
+    // Cancelling a paid order mentions the refund.
+    const o2 = await place();
+    await sendPendingEmails(deps);
+    await t.app.inject({ method: 'POST', url: `/v1/store/orders/${o2.id}/cancel`, headers: c.headers, payload: { reason: 'Changed my mind' } });
+    await sendPendingEmails(deps);
+    const cancelled = mine().at(-1)!;
+    expect(cancelled.subject).toBe(`Order ${o2.number} cancelled`);
+    expect(cancelled.text).toMatch(/refund of ₹330/);
+
+    // The admin sees what was sent for the order.
+    const detail = (await t.app.inject({ url: `/v1/admin/orders/${o1.id}`, headers: staff })).json();
+    expect(detail.emails.map((e: { template: string; status: string }) => `${e.template}:${e.status}`).sort()).toEqual(['order_confirmed:sent', 'order_delivered:sent', 'order_shipped:sent']);
+
+    // Opting out of order updates stops the emails.
+    await t.app.inject({ method: 'PUT', url: '/v1/store/me/notification-preferences', headers: c.headers, payload: { orderUpdates: false } });
+    const before = mine().length;
+    await place();
+    await sendPendingEmails(deps);
+    expect(mine()).toHaveLength(before);
+  });
+
+  it('retries a failing provider, then gives up and shows the error', async () => {
+    const { sendPendingEmails } = await import('../src/services/order-emails');
+    const deps = t.app.deps;
+    await sendPendingEmails(deps, 500);
+    const real = deps.email!;
+    let calls = 0;
+    deps.email = { name: 'broken', send: async () => void (calls++, (() => { throw new Error('provider 503'); })()) };
+    const c = await readyCustomer(t);
+    const ids = await variantIds(t);
+    const r = await t.app.inject({ method: 'POST', url: '/v1/store/orders', headers: { ...c.headers, 'idempotency-key': crypto.randomUUID() }, payload: { lines: [{ variantId: ids.powder500, quantity: 1 }], addressId: c.addressId } });
+    await t.app.inject({ method: 'POST', url: `/v1/dev/payments/${r.json().payment.id}/simulate`, headers: c.headers, payload: { outcome: 'success' } });
+    for (let i = 0; i < 6; i++) await sendPendingEmails(deps);
+    expect(calls).toBe(5);
+    const [row] = await t.db.select().from(s.notifications).where(eq(s.notifications.customerId, c.customerId));
+    expect(row).toMatchObject({ status: 'failed', attempts: 5, lastError: 'provider 503' });
+    deps.email = real;
+  });
+});

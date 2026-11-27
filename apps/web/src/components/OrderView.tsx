@@ -175,6 +175,12 @@ export function OrderView({ id }: { id: string }) {
               <dt className="text-ink-2">Subtotal</dt>
               <dd><Money paise={order.subtotal.amount} /></dd>
             </div>
+            {order.discount && order.discount.amount > 0 && (
+              <div className="flex justify-between text-forest">
+                <dt>Coupon {order.couponCode}</dt>
+                <dd>−<Money paise={order.discount.amount} /></dd>
+              </div>
+            )}
             <div className="flex justify-between">
               <dt className="text-ink-2">Shipping</dt>
               <dd>{order.shipping.amount ? <Money paise={order.shipping.amount} /> : 'Free'}</dd>

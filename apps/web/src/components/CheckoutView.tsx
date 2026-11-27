@@ -10,6 +10,7 @@ import { useCart } from '@/lib/cart';
 import { etaText } from '@/lib/format';
 import type { Address, Order, PaymentStart } from '@/lib/types';
 import { AddressForm } from './AddressForm';
+import { CouponBox } from './CouponBox';
 import { FreeShippingBar, useQuote } from './CartDrawer';
 
 declare global {
@@ -43,7 +44,7 @@ export async function startPayment(payment: PaymentStart, router: ReturnType<typ
 
 export function CheckoutView() {
   const router = useRouter();
-  const { items, clear, setPincode } = useCart();
+  const { items, clear, setPincode, coupon, setCoupon } = useCart();
   const [me, setMe] = useState<{ name: string } | null | 'signed-out'>(null);
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [addressId, setAddressId] = useState<string | null>(null);
@@ -52,7 +53,7 @@ export function CheckoutView() {
   const [error, setError] = useState<string | null>(null);
   const address = addresses.find((a) => a.id === addressId);
   const lines = useMemo(() => items.map((i) => ({ variantId: i.variantId, quantity: i.quantity })), [items]);
-  const { quote } = useQuote(lines, address?.pincode ?? '');
+  const { quote } = useQuote(lines, address?.pincode ?? '', true, coupon);
   const idempotency = useRef(crypto.randomUUID());
   useEffect(() => {
     idempotency.current = crypto.randomUUID();
@@ -80,8 +81,9 @@ export function CheckoutView() {
     setBusy(true);
     setError(null);
     try {
-      const r = await api<{ order: Order; payment: PaymentStart }>('/v1/store/orders', { method: 'POST', idempotencyKey: idempotency.current, body: JSON.stringify({ lines, addressId }) });
+      const r = await api<{ order: Order; payment: PaymentStart }>('/v1/store/orders', { method: 'POST', idempotencyKey: idempotency.current, body: JSON.stringify({ lines, addressId, ...(quote?.coupon ? { couponCode: quote.coupon.code } : {}) }) });
       clear();
+      setCoupon("");
       await startPayment(r.payment, router);
     } catch (e) {
       setError(e instanceof ApiError ? (e.problem.detail ?? e.problem.title) : e instanceof Error ? e.message : 'Could not place the order');
@@ -186,6 +188,7 @@ export function CheckoutView() {
             {quote && (
               <div className="mt-5 space-y-3 rule-t pt-4">
                 <FreeShippingBar quote={quote} />
+                <CouponBox quote={quote} />
                 <dl className="space-y-1.5">
                   <div className="flex justify-between">
                     <dt className="text-ink-2">Subtotal</dt>
@@ -193,6 +196,14 @@ export function CheckoutView() {
                       <Money paise={quote.subtotal.amount} />
                     </dd>
                   </div>
+                  {quote.discount.amount > 0 && (
+                    <div className="flex justify-between text-forest">
+                      <dt>Coupon {quote.coupon?.code}</dt>
+                      <dd>
+                        −<Money paise={quote.discount.amount} />
+                      </dd>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <dt className="text-ink-2">Shipping {quote.shipping && <span className="text-sm">({quote.shipping.zone})</span>}</dt>
                     <dd>{quote.shipping ? quote.shipping.free ? 'Free' : <Money paise={quote.shipping.fee.amount} /> : '—'}</dd>

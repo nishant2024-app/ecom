@@ -5,6 +5,8 @@ import { schema as s, type Db, type DbOrTx } from '@dairy/db';
 import { and, asc, desc, eq, inArray, lt, sql } from 'drizzle-orm';
 import type { AppDeps } from '../context';
 import { AppError, notFound } from '../lib/errors';
+import { evaluateCoupon } from './coupons';
+import { enqueueOrderEmail } from './outbox';
 import { quoteCart, type CartLineInput } from './quote';
 import { release, reserve, ship } from './stock';
 import { defaultSellerId, settingNumber, settingsMap } from './store';
@@ -43,6 +45,7 @@ export async function transition(tx: DbOrTx, orderId: string, action: OrderActio
   }[action];
   await tx.update(s.orders).set({ status: to, ...stamps, ...extra }).where(eq(s.orders.id, orderId));
   await tx.insert(s.orderEvents).values({ id: newId('oev'), orderId, type: action, fromStatus: order.status, toStatus: to, actorType: actor.type, actorId: actor.id ?? null, data });
+  await enqueueOrderEmail(tx, order, action);
   return { from: order.status as OrderStatus, to, order };
 }
 
@@ -51,6 +54,7 @@ export interface PlaceOrderInput {
   addressId: string;
   lines: CartLineInput[];
   note?: string;
+  couponCode?: string;
 }
 
 export async function placeOrder(deps: AppDeps, input: PlaceOrderInput) {
@@ -62,7 +66,8 @@ export async function placeOrder(deps: AppDeps, input: PlaceOrderInput) {
   const [address] = await db.select().from(s.addresses).where(and(eq(s.addresses.id, input.addressId), eq(s.addresses.customerId, input.customerId)));
   if (!address || address.archivedAt) throw new AppError('VALIDATION_FAILED', 400, 'Choose a delivery address');
 
-  const quote = await quoteCart(db, input.lines, address.pincode, now);
+  const quote = await quoteCart(db, input.lines, address.pincode, now, { couponCode: input.couponCode, customerId: customer.id });
+  if (input.couponCode?.trim() && quote.couponError) throw new AppError('COUPON_INVALID', 422, quote.couponError);
   if (quote.shippingError || !quote.shipping) throw new AppError('NOT_SERVICEABLE', 422, quote.shippingError ?? 'We do not ship to this pincode yet');
   const problem = quote.lines.find((l) => l.problem);
   if (problem) {
@@ -103,6 +108,8 @@ export async function placeOrder(deps: AppDeps, input: PlaceOrderInput) {
       customerId: customer.id,
       status: 'pending_payment',
       subtotalPaise: quote.subtotalPaise,
+      discountPaise: quote.discountPaise,
+      couponCode: quote.coupon?.code ?? null,
       shippingPaise: quote.shipping!.feePaise,
       taxPaise: quote.taxPaise,
       totalPaise: quote.totalPaise,
@@ -114,6 +121,13 @@ export async function placeOrder(deps: AppDeps, input: PlaceOrderInput) {
       expiresAt,
       placedOn: today,
     });
+    if (quote.couponId) {
+      // Lock the coupon and check the limits again, so two checkouts can't both take the last use.
+      await tx.select({ id: s.coupons.id }).from(s.coupons).where(eq(s.coupons.id, quote.couponId)).for('update');
+      const again = await evaluateCoupon(tx, quote.coupon!.code, { subtotalPaise: quote.subtotalPaise, customerId: customer.id, now });
+      if (!again.ok) throw new AppError('COUPON_INVALID', 422, again.message);
+      await tx.insert(s.couponRedemptions).values({ id: newId('cpn'), couponId: quote.couponId, customerId: customer.id, orderId, amountPaise: quote.discountPaise });
+    }
     const items = quote.lines.map((l) => ({ ...l, orderItemId: newId('ori') }));
     await tx.insert(s.orderItems).values(
       items.map((l) => ({
@@ -353,6 +367,7 @@ export async function orderView(db: DbOrTx | Db, orderId: string) {
       deliveredAt: order.deliveredAt?.toISOString() ?? null,
       cancelledAt: order.cancelledAt?.toISOString() ?? null,
     },
+    couponCode: order.couponCode,
     cancelReason: order.cancelReason,
     payment: latest
       ? {

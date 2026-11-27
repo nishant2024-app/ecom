@@ -1,6 +1,7 @@
 import { createDb } from '@dairy/db';
 import { loadConfig, type Config } from './config';
 import type { AppDeps } from './context';
+import { createEmailProvider } from './services/email';
 import { createGoogleVerifier } from './services/google';
 import { createCashfreeProvider, createMockProvider, type PaymentProvider } from './services/payments';
 import { createRedisKv } from './services/kv';
@@ -12,7 +13,7 @@ export async function createDeps(config: Config = loadConfig(), appName = 'api')
   const kv = createRedisKv(config.VALKEY_URL);
   const tokens = await TokenService.fromConfig(config.JWT_PRIVATE_KEYS, config.PUBLIC_API_URL, !config.isProduction);
   const google = createGoogleVerifier(config.GOOGLE_WEB_CLIENT_ID);
-  return { config, db, kv, tokens, google, payments: paymentProvider(config), now: () => new Date() };
+  return { config, db, kv, tokens, google, payments: paymentProvider(config), email: createEmailProvider(config), now: () => new Date() };
 }
 
 /** Cashfree when keys are configured; the mock provider only outside production. */

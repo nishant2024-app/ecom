@@ -9,3 +9,4 @@ export * from './shipping';
 export * from './orders';
 export * from './quantity';
 export * from './geo';
+export * from './discount';

@@ -9,6 +9,7 @@ import { createGoogleVerifier } from '../src/services/google';
 import { createMemoryKv } from '../src/services/kv';
 import { TokenService } from '../src/services/tokens';
 import { createMockProvider, type PaymentProvider } from '../src/services/payments';
+import type { Email } from '../src/services/email';
 
 export const CLIENT_ID = 'test-client.apps.googleusercontent.com';
 
@@ -32,12 +33,15 @@ export interface TestApp {
   db: ReturnType<typeof createDb>['db'];
   now: Date;
   payments: PaymentProvider;
+  /** Every email the app tried to send. */
+  emails: Email[];
   close: () => Promise<void>;
 }
 
 export async function createTestApp(now = new Date(), payments: PaymentProvider = createMockProvider()): Promise<TestApp> {
   const config = loadConfig();
   const handle = createDb(config.DATABASE_URL, { max: 5, appName: 'test' });
+  const emails: Email[] = [];
   const app = await buildApp(
     {
       config,
@@ -46,13 +50,14 @@ export async function createTestApp(now = new Date(), payments: PaymentProvider 
       tokens: await TokenService.fromConfig('', config.PUBLIC_API_URL, true),
       google: createGoogleVerifier(CLIENT_ID, createLocalJWKSet({ keys: [googleJwk] })),
       payments,
+      email: { name: 'test', send: async (e) => void emails.push(e) },
       now: () => now,
       geocoder: { name: 'test', reverse: async () => ({ area: 'Baner Road, Baner', city: 'Pune', state: 'Maharashtra', pincode: '411045', label: 'Baner Road, Baner, Pune' }) },
     },
     { logger: false },
   );
   await app.ready();
-  return { app, db: handle.db, now, payments, close: async () => { await app.close(); await handle.close(); } };
+  return { app, db: handle.db, now, payments, emails, close: async () => { await app.close(); await handle.close(); } };
 }
 
 export const uniq = () => newId('req').slice(-10).toLowerCase();

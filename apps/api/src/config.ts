@@ -27,6 +27,11 @@ const ConfigSchema = Type.Object({
   R2_SECRET_ACCESS_KEY: Type.String({ default: '' }),
   R2_BUCKET_MEDIA: Type.String({ default: '' }),
   MEDIA_DIR: Type.String({ default: './var/media' }),
+  /** Order emails: "log" prints them to the server log (development); "resend" or "brevo" really send. */
+  EMAIL_PROVIDER: Type.Union([Type.Literal('log'), Type.Literal('resend'), Type.Literal('brevo')], { default: 'log' }),
+  EMAIL_FROM: Type.String({ default: 'Mulshi Dairy <orders@example.in>' }),
+  RESEND_API_KEY: Type.String({ default: '' }),
+  BREVO_API_KEY: Type.String({ default: '' }),
   /** Reverse geocoding (pin → area/city/pincode). Nominatim-compatible URL, or "off". */
   GEOCODER_URL: Type.String({ default: 'https://nominatim.openstreetmap.org' }),
   /** Contact email sent to the geocoding provider, as its usage policy asks. */
@@ -63,6 +68,8 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
   if (isProduction && c.AUTH_TEST_MODE) throw new ConfigError('AUTH_TEST_MODE must not be enabled in production');
   if (isProduction && !c.GOOGLE_WEB_CLIENT_ID) throw new ConfigError('GOOGLE_WEB_CLIENT_ID is required in production');
   if (isProduction && !c.JWT_PRIVATE_KEYS) throw new ConfigError('JWT_PRIVATE_KEYS is required in production');
+  if (c.EMAIL_PROVIDER === 'resend' && !c.RESEND_API_KEY) throw new ConfigError('RESEND_API_KEY is required when EMAIL_PROVIDER=resend');
+  if (c.EMAIL_PROVIDER === 'brevo' && !c.BREVO_API_KEY) throw new ConfigError('BREVO_API_KEY is required when EMAIL_PROVIDER=brevo');
   return {
     ...c,
     corsOrigins: c.CORS_ORIGINS.split(',').map((s) => s.trim()).filter(Boolean),
