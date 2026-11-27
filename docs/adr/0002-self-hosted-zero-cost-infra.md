@@ -1,6 +1,6 @@
 # ADR 0002: Self-host on Oracle Cloud Always Free behind Cloudflare
 
-- **Status:** Accepted
+- **Status:** Accepted, then partly superseded. The shipped deployment is one VPS with Docker Compose and Nginx ([DEPLOYMENT.md](../../DEPLOYMENT.md)); Oracle Always Free still works with the same files. OpenTofu, Ansible, pgBackRest and Cloudflare Access described below were not built.
 - **Date:** 2026-11-20
 
 ## Context

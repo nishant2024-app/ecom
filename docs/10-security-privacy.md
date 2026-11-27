@@ -5,7 +5,7 @@
 | Asset | Threat | Controls |
 |---|---|---|
 | Customer payments | Double charges, replayed requests, forged payment success | Idempotency keys on order placement; payments only marked paid by a verified webhook or a server-side status check; late payments auto-refunded |
-| Admin panel | Account takeover, unauthorised access | Cloudflare Access allowlist + Google sign-in + staff binding to Google `sub`; short staff sessions (12 h); permission checks per route; audit log (TOTP planned) |
+| Admin panel | Account takeover, unauthorised access | Google sign-in + staff allowlist (optionally Cloudflare Access or an Nginx IP allowlist in front) + staff binding to Google `sub`; short staff sessions (12 h); permission checks per route; audit log (TOTP planned) |
 | Customer accounts | Session theft | httpOnly Secure cookies, CSRF tokens, refresh token rotation with reuse detection, per-device session list and revoke |
 | Customer personal data | Leak via API or logs | Authorisation on every query (customers only see their own orders and addresses); PII redacted from logs; least-privilege DB users |
 | Payment webhooks | Forged events | HMAC signature on raw body, timestamp freshness, event dedupe |
@@ -14,7 +14,7 @@
 | API availability | Abuse, scraping, DDoS | Cloudflare WAF and DDoS protection; rate limits per IP and user; `under-pressure` load shedding |
 | Uploads | Malicious files | Signed upload URLs with content type and size limits; images re-encoded by `sharp` (strips metadata and payloads); no SVG uploads |
 | Supply chain | Compromised dependency | Lockfile; `pnpm audit` and Dependabot; pinned Docker base images by digest; GitHub Actions pinned by SHA |
-| Secrets | Leak in git | SOPS + age encrypted env files; gitleaks in CI; secrets only on servers that need them; production keys never on laptops |
+| Secrets | Leak in git | secrets only in `/opt/dairy/.env` (mode 600, outside the repository, backed up in a password manager); `.env*` files are git-ignored except the examples; the shop container receives no database or payment secrets |
 
 ## Application controls
 

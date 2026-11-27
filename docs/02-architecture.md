@@ -14,7 +14,7 @@ flowchart LR
     TUN[Tunnel]
   end
   CDN --> TUN
-  subgraph OCI[Oracle Cloud Always Free]
+  subgraph VPS[One Linux server, Docker Compose]
     WEB[Next.js server]
     API[Fastify API]
     WRK[Worker]
@@ -52,7 +52,7 @@ Next.js standalone in Docker. Catalog pages render on the server and revalidate 
 
 ### Admin (`apps/admin`)
 
-Static Vite build on Cloudflare Pages behind Cloudflare Access, calling `api.example.in` with cookies and CSRF headers. Navigation is filtered by the signed-in staff member's permissions.
+Static Vite build (served by its own small Nginx container, or from Cloudflare Pages), calling `api.example.in` with cookies and CSRF headers. Navigation is filtered by the signed-in staff member's permissions.
 
 ### Video (`apps/video`)
 

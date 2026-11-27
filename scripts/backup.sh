@@ -29,6 +29,13 @@ else
   echo "BACKUP_BUCKET or R2 keys not set: backup kept on this server only"
 fi
 
+# Photos kept on this server's disk (no R2) are backed up too. Restore with:
+#   docker run --rm -v dairy_media:/media -v /opt/dairy/backups:/in alpine tar xzf /in/media-<stamp>.tgz -C /media
+if [ -z "$(get R2_ACCOUNT_ID)" ]; then
+  echo "[$(date -u +%FT%TZ)] archiving the local photo folder"
+  docker run --rm -v dairy_media:/media:ro -v "$DIR:/out" alpine tar czf "/out/media-$STAMP.tgz" -C /media .
+fi
+
 # Keep the last 7 days on the server.
-find "$DIR" -name 'dairy-*.dump' -mtime +7 -delete
+find "$DIR" \( -name 'dairy-*.dump' -o -name 'media-*.tgz' \) -mtime +7 -delete
 echo "[$(date -u +%FT%TZ)] done: $FILE ($SIZE bytes)"

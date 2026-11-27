@@ -1,6 +1,6 @@
 # Mulshi Dairy: Build Plan (v4)
 
-An online shop for **shelf-stable dairy products** made on our farm: bilona ghee, milk powder, UHT and flavoured milk, condensed milk and milk sweets. Customers in India order online, pay through Cashfree, and receive the parcel by courier in 1–6 days. The owner runs everything from an admin panel. One Fastify API serves the website, the admin and a future Android app. Hosting is free-tier (Oracle Cloud Always Free behind Cloudflare).
+An online shop for **shelf-stable dairy products** made on our farm: bilona ghee, milk powder, UHT and flavoured milk, condensed milk and milk sweets. Customers in India order online, pay through Cashfree, and receive the parcel by courier in 1–6 days. The owner runs everything from an admin panel. One Fastify API serves the website, the admin and a future Android app. Hosting is one small VPS (or Oracle Always Free) running Docker Compose behind Nginx; see DEPLOYMENT.md.
 
 > **What changed in v4:** the business is not daily fresh-milk delivery. It sells durable, processed dairy products shipped by courier. Subscriptions, the milk calendar, the 10 PM cutoff, delivery routes, agents and the wallet were removed. The storefront was redesigned as an animated site ([ADR 0007](docs/adr/0007-shelf-stable-shipped-commerce.md)). Detailed reference: [`docs/`](docs/README.md).
 
@@ -13,7 +13,7 @@ An online shop for **shelf-stable dairy products** made on our farm: bilona ghee
 | 3 | Payments | Cashfree, INR, prepaid only (UPI, cards, net banking). No cash on delivery yet. |
 | 4 | Login | Google Sign-In only, for customers and staff. No SMS. |
 | 5 | Vendors | Single brand now; schema is multi-vendor ready ([ADR 0006](docs/adr/0006-multi-vendor-ready-schema.md)) |
-| 6 | Hosting | ₹0: Oracle Always Free + Cloudflare; Docker so it moves anywhere ([ADR 0002](docs/adr/0002-self-hosted-zero-cost-infra.md)) |
+| 6 | Hosting | One VPS (about ₹500–900 a month, or ₹0 on Oracle Always Free) + Nginx + Let's Encrypt; Docker so it moves anywhere ([ADR 0002](docs/adr/0002-self-hosted-zero-cost-infra.md)) |
 | 7 | API | Fastify, versioned `/v1`, OpenAPI generated from code ([ADR 0001](docs/adr/0001-fastify-api-first.md)) |
 | 8 | Design | Animated "Pasture & Pantry" storefront with drawn pack illustrations until photography exists ([docs/08](docs/08-design-system.md)) |
 | 9 | Video | Remotion renders brand and product reels on our own machine, no paid rendering service ([docs/09](docs/09-video.md)) |

@@ -100,7 +100,7 @@ flowchart LR
 ```
 
 - **Invite only.** An owner invites a Google email with a role (Admin → Settings → Team). The first successful sign-in binds the record to that Google `sub`; after that only that account can use it.
-- **Cloudflare Access** in front of `admin.example.in` uses Google with the same allowlist, so even an app bug can't expose the admin.
+- **Optional extra layer:** Cloudflare Access (or an Nginx `allow`/`deny` IP list) in front of `admin.example.in`, so even an app bug can't expose the admin. Not enabled by default.
 - **Deactivating** a member or changing their role revokes all their sessions immediately.
 - **Second factor:** TOTP for Owner, Admin and Accountant is planned. Until then, require 2-step verification on those Google accounts.
 

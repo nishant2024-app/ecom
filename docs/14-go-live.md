@@ -7,11 +7,11 @@ You don't need to write any code. The owner only provides **accounts, keys and b
 | # | Item | Where to get it | Goes into |
 |---|---|---|---|
 | 1 | **Domain** (e.g. `example.in`) | Any registrar, ~₹700–1,200/year. Point its nameservers to Cloudflare (free plan) | Cloudflare DNS |
-| 2 | **Server** | Oracle Cloud Always Free (Ampere VM), or any VPS with 2 vCPU / 8 GB. See [Infrastructure](03-infrastructure.md) | — |
+| 2 | **Server** | Any Ubuntu 24.04 VPS with 2 vCPU / 4 GB RAM or more (Oracle Always Free also works). See [Infrastructure](03-infrastructure.md) | — |
 | 3 | **Database password** | Pick strong passwords for the `app` and `migrator` Postgres users (Postgres runs in Docker on the server) | `DATABASE_URL`, `DATABASE_MIGRATOR_URL` |
 | 4 | **Google sign-in client ID** | Google Cloud Console → APIs & Services → Credentials → OAuth client ID → *Web application*. Authorised JavaScript origins: `https://example.in`, `https://admin.example.in` | `GOOGLE_WEB_CLIENT_ID` |
 | 5 | **Cashfree keys** | Cashfree Merchant Dashboard → Developers → API keys (test keys first, then production after KYC approval) | `CASHFREE_APP_ID`, `CASHFREE_SECRET_KEY`, `CASHFREE_ENV` |
-| 6 | **Cashfree webhook** | Dashboard → Developers → Webhooks → add `https://api.example.in/v1/webhooks/cashfree` (payment and refund events) | — |
+| 6 | **Cashfree webhook** | Dashboard → Developers → Webhooks → add `https://api.example.in/v1/webhooks/cashfree/payments` (payment events) | — |
 | 7 | **Cloudflare R2 bucket** for photos | Cloudflare → R2 → create bucket `dairy-media`; Settings → connect custom domain `media.example.in`; R2 → Manage API tokens → *Object Read & Write* for that bucket | `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_MEDIA`, `R2_PUBLIC_BASE_URL=https://media.example.in` |
 | 8 | **Cloudflare Tunnel token** | Cloudflare Zero Trust → Networks → Tunnels → create; route `example.in` → `http://web:3000`, `api.example.in` → `http://api:4000` | `CLOUDFLARE_TUNNEL_TOKEN` |
 | 9 | **Owner's Google email** | The Gmail/Workspace account that will run the admin | `SEED_OWNER_EMAIL` |
@@ -55,16 +55,15 @@ SITE_NAME=Your Brand
 SITE_NOINDEX=false        # true on staging
 ```
 
-Admin SPA build: `VITE_API_URL=https://api.example.in pnpm --filter @dairy/admin build`, then deploy `apps/admin/dist` to Cloudflare Pages at `admin.example.in` behind Cloudflare Access.
+The admin is built and served by the `admin` container on the same server (the API address is baked in from `PUBLIC_API_URL`); Nginx serves it at `admin.example.in`.
 
-> **Simplest path:** follow [Put the shop live on one server](17-deploy-single-server.md) (one VPS, `infra/compose/single.yml`, nightly backups). The two-server layout below is for later.
+> **Follow [DEPLOYMENT.md](../DEPLOYMENT.md)** for the exact steps (one VPS, Nginx, HTTPS, `infra/compose/single.yml`, nightly backups).
 
 ## 3. First deploy
 
 ```bash
-docker compose -f infra/compose/data.yml up -d                 # on the data VM
-docker compose -f infra/compose/app.yml up -d --build          # runs migrations, then api ×2, worker, web, tunnel
-docker compose -f infra/compose/app.yml run --rm migrate pnpm seed  # first time only
+docker compose -f infra/compose/single.yml --env-file /opt/dairy/.env up -d --build          # database, migrations, API, worker, shop, admin
+docker compose -f infra/compose/single.yml --env-file /opt/dairy/.env run --rm migrate pnpm seed  # first time only
 ```
 
 The seed only runs on an empty database. In production it creates (`SEED_CATALOG=draft`, the default):
@@ -103,7 +102,7 @@ Be clear about these before launch:
 
 | Area | Today | Planned |
 |---|---|---|
-| Order emails and push notifications | Customers see status on their order page; no emails are sent yet | Brevo/Resend emails and FCM push (variables are reserved in `.env.example`) |
+| Push notifications | Customers get order emails (set `EMAIL_PROVIDER`, [docs/18](18-order-emails.md)) and see status on their order page; no push yet | FCM push for the Android app |
 | Courier booking | Staff book the courier themselves (Shiprocket, Delhivery, India Post) and type the AWB number into the admin | Shiprocket API integration |
 | GST invoices | Prices include GST and HSN/GST rate are stored per product; no invoice PDF yet | Invoice PDF per order |
 | Discount codes | Not available | Coupons |
