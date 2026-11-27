@@ -12,6 +12,10 @@
 
 ## First run
 
+Shortcut: `./scripts/local-setup.sh you@gmail.com` does everything below (checks tools, creates `.env`, starts Docker, installs, migrates, seeds). Then run `pnpm dev`. The admin has a "Local testing" email box when `AUTH_TEST_MODE=true`.
+
+Step by step:
+
 ```bash
 git clone https://github.com/nishant2024-app/ecom.git
 cd ecom

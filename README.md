@@ -13,6 +13,26 @@ Online shop for shelf-stable dairy products (ghee, milk powder, UHT and flavoure
 | **Launching: keys to provide and setup steps** | [docs/14-go-live.md](docs/14-go-live.md) |
 | Competitor research (Amul and others) and feature decisions | [docs/15-competitor-research.md](docs/15-competitor-research.md) |
 
+## Run it on your computer
+
+You need **Node 22.12+**, **Docker Desktop** (running) and **git**. Windows: use WSL or Git Bash.
+
+```bash
+git clone https://github.com/nishant2024-app/ecom.git
+cd ecom
+git checkout claude/ecommerce-admin-panel-35t392
+./scripts/local-setup.sh you@gmail.com     # installs, starts the database, adds sample products
+pnpm dev                                   # starts the shop, admin and API
+```
+
+| What | Where |
+|---|---|
+| Shop | http://localhost:3000 |
+| Admin (sign in with the email above) | http://localhost:5173 |
+| API docs | http://localhost:4000/docs |
+
+While testing there is a "test sign-in" box instead of Google and a fake payment page instead of Cashfree, so nothing real is charged. Put in your real keys when you go live: [docs/14-go-live.md](docs/14-go-live.md).
+
 ## Repository
 
 ```

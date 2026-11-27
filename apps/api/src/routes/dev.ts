@@ -43,6 +43,23 @@ export default async function devRoutes(fastify: FastifyInstance) {
     );
   }
 
+  /** Sign in as an existing staff member without Google (AUTH_TEST_MODE only; never in production). */
+  if (app.deps.config.AUTH_TEST_MODE) {
+    app.post(
+      '/staff-sign-in',
+      {
+        config: { auth: 'public', csrf: false },
+        schema: { tags: ['Dev'], summary: 'Test staff sign-in (staff must already exist, e.g. SEED_OWNER_EMAIL)', body: Type.Object({ email: Type.String({ format: 'email' }) }) },
+      },
+      async (req, reply) => {
+        const [staff] = await db.select().from(s.staff).where(and(eq(s.staff.email, req.body.email.toLowerCase()), eq(s.staff.status, 'active')));
+        if (!staff) throw notFound('Staff member');
+        const out = await app.deps.issueSession!(req, reply, { type: 'staff', id: staff.id, role: staff.role }, 'admin', 'Test sign-in');
+        return { staffId: staff.id, role: staff.role, ...out };
+      },
+    );
+  }
+
   app.get(
     '/payments/:paymentId',
     { config: { auth: 'customer' }, schema: { tags: ['Dev'], summary: 'Mock payment details', params: Type.Object({ paymentId: Type.String() }) } },
