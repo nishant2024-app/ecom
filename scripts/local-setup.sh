@@ -12,8 +12,17 @@ say "Checking tools"
 command -v node >/dev/null || fail "Node.js is missing. Install Node 22 or newer from https://nodejs.org"
 node -e 'const [a,b]=process.versions.node.split(".").map(Number); process.exit(a>22||(a===22&&b>=12)?0:1)' || fail "Node $(node -v) is too old. Install Node 22.12 or newer."
 if ! command -v pnpm >/dev/null; then
-  command -v corepack >/dev/null || fail "pnpm is missing. Run: npm install -g pnpm"
-  corepack enable && corepack prepare pnpm@10.28.0 --activate
+  say "Installing pnpm"
+  if command -v corepack >/dev/null && corepack enable 2>/dev/null && corepack prepare pnpm@10.28.0 --activate 2>/dev/null; then
+    :
+  else
+    # Node 25+ no longer ships corepack: install pnpm with npm into your home folder (no sudo needed).
+    command -v npm >/dev/null || fail "npm is missing. Reinstall Node from https://nodejs.org"
+    npm install -g --prefix "$HOME/.local" pnpm@10.28.0
+    export PATH="$HOME/.local/bin:$PATH"
+    grep -qs '.local/bin' "$HOME/.bashrc" || echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.bashrc"
+  fi
+  command -v pnpm >/dev/null || fail "Could not install pnpm. Run: npm install -g pnpm"
 fi
 command -v docker >/dev/null || fail "Docker is missing. Install Docker Desktop from https://www.docker.com/products/docker-desktop and start it."
 docker info >/dev/null 2>&1 || fail "Docker is installed but not running. Start Docker Desktop, then run this again."
