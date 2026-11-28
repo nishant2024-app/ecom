@@ -19,6 +19,8 @@ Staff only (`client: "admin"` sign-in). Each endpoint requires the permission sh
 | PUT / DELETE | `/v1/admin/categories/{id}` | `catalog.write` | Update / delete (refused with 409 while it has products) |
 | GET / POST | `/v1/admin/products` | `catalog.read` / `catalog.write` | List with sizes and stock / create with sizes |
 | GET / PUT | `/v1/admin/products/{id}` | `catalog.read` / `catalog.write` | Detail / replace (sizes not listed are archived; price changes also need `pricing.write`) |
+| PATCH | `/v1/admin/products/{id}/status` | `catalog.write` | `{status: active\|draft\|archived}`: show, hide or archive. Showing needs stock (409 otherwise) |
+| DELETE | `/v1/admin/products/{id}` | `catalog.write` | Permanently delete a product with no orders and no stock history (409 with advice to archive otherwise). Photos are removed |
 | GET | `/v1/admin/products/{id}/media` | `catalog.read` | Product photos in display order; the first is the main image |
 | POST | `/v1/admin/products/{id}/media` | `catalog.write` | Upload photos: `multipart/form-data`, field `file` (repeatable), optional `alt`. See [Photos](#photos) |
 | PUT | `/v1/admin/products/{id}/media/order` | `catalog.write` | `{ids}`: every photo of the product exactly once, in the new order |

@@ -20,17 +20,39 @@ export interface StaffMe {
 }
 
 const NAV = [
-  { id: 'dashboard', label: 'Dashboard', key: 'g', permission: 'dashboard.read' },
-  { id: 'orders', label: 'Orders', key: 'o', permission: 'orders.read' },
-  { id: 'products', label: 'Products', key: 'p', permission: 'catalog.read' },
-  { id: 'categories', label: 'Categories', key: 'k', permission: 'catalog.read' },
-  { id: 'inventory', label: 'Inventory', key: 'i', permission: 'catalog.read' },
-  { id: 'coupons', label: 'Coupons', key: 'u', permission: 'catalog.read' },
-  { id: 'reviews', label: 'Reviews', key: 'r', permission: 'catalog.read' },
-  { id: 'storefront', label: 'Storefront', key: 'f', permission: 'catalog.read' },
-  { id: 'customers', label: 'Customers', key: 'c', permission: 'customers.read' },
-  { id: 'settings', label: 'Settings', key: 's', permission: 'catalog.read' },
+  { id: 'dashboard', label: 'Dashboard', permission: 'dashboard.read' },
+  { id: 'orders', label: 'Orders', permission: 'orders.read' },
+  { id: 'products', label: 'Products', permission: 'catalog.read' },
+  { id: 'categories', label: 'Categories', permission: 'catalog.read' },
+  { id: 'inventory', label: 'Inventory', permission: 'catalog.read' },
+  { id: 'coupons', label: 'Coupons', permission: 'catalog.read' },
+  { id: 'reviews', label: 'Reviews', permission: 'catalog.read' },
+  { id: 'storefront', label: 'Storefront', permission: 'catalog.read' },
+  { id: 'customers', label: 'Customers', permission: 'customers.read' },
+  { id: 'settings', label: 'Settings', permission: 'catalog.read' },
 ] as const;
+
+const ICONS: Record<string, string> = {
+  dashboard: 'M4 13h6V4H4v9Zm0 7h6v-5H4v5Zm10 0h6V11h-6v9Zm0-16v5h6V4h-6Z',
+  orders: 'M6 3h12l2 4v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7l2-4Zm-2 4h16M9 11h6',
+  products: 'M3 7.5 12 3l9 4.5v9L12 21l-9-4.5v-9Zm9 4.5 9-4.5M12 12v9M12 12 3 7.5',
+  categories: 'M4 4h7v7H4V4Zm9 0h7v7h-7V4ZM4 13h7v7H4v-7Zm9 3.5a3.5 3.5 0 1 0 7 0 3.5 3.5 0 0 0-7 0Z',
+  inventory: 'M3 8l9-5 9 5v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8Zm5 12v-7h8v7',
+  coupons: 'M3 9a2 2 0 0 0 0 6v3a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-3a2 2 0 0 1 0-6V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v3Zm6-1 6 8m-6 0h.01M15 8h.01',
+  reviews: 'm12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9L12 3Z',
+  storefront: 'M3 9l1.5-5h15L21 9M3 9v1a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0V9M5 13v7h14v-7M10 20v-4h4v4',
+  customers: 'M16 11a4 4 0 1 0-8 0 4 4 0 0 0 8 0ZM4 20a8 8 0 0 1 16 0',
+  settings:
+    'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm7.4-2a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V20a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H4a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H10a1.7 1.7 0 0 0 1-1.5V4a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V10a1.7 1.7 0 0 0 1.5 1H20a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z',
+};
+
+function NavIcon({ id }: { id: string }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden className="shrink-0">
+      <path d={ICONS[id] ?? ICONS.dashboard} />
+    </svg>
+  );
+}
 
 function parseHash() {
   const [path = '', query = ''] = location.hash.replace(/^#\/?/, '').split('?');
@@ -56,11 +78,7 @@ export function App() {
       setMenu(false);
     };
     const onKey = (e: KeyboardEvent) => {
-      const t = e.target as HTMLElement;
       if (e.key === 'Escape') setMenu(false);
-      if (['INPUT', 'SELECT', 'TEXTAREA'].includes(t.tagName) || e.metaKey || e.ctrlKey || e.altKey) return;
-      const item = NAV.find((n) => n.key === e.key);
-      if (item) location.hash = `#/${item.id}`;
     };
     window.addEventListener('hashchange', onHash);
     window.addEventListener('keydown', onKey);
@@ -109,24 +127,34 @@ export function App() {
               key={n.id}
               href={`#/${n.id}`}
               aria-current={section === n.id ? 'page' : undefined}
-              className={`flex min-h-[44px] items-center justify-between rounded-pill px-3 py-2 transition-colors ${section === n.id ? 'bg-meadow font-semibold text-forest' : 'text-ink-2 hover:bg-paper-2 hover:text-ink'}`}
+              className={`flex min-h-[44px] items-center gap-3 rounded-pill px-3.5 py-2 transition-colors ${section === n.id ? 'bg-meadow font-semibold text-forest' : 'text-ink-2 hover:bg-paper-2 hover:text-ink'}`}
             >
+              <NavIcon id={n.id} />
               {n.label}
-              <kbd className={`num rounded-1 px-1 text-xs ${section === n.id ? 'text-forest/60' : 'text-ink-3'}`}>{n.key}</kbd>
             </a>
           ))}
         </nav>
-        <div className="mx-3 mb-3 rounded-3 bg-paper-2 p-3 text-xs">
-          <p className="font-semibold">{me.name}</p>
-          <p className="capitalize text-ink-2">{me.role.replace('_', ' ')}</p>
+        <div className="mx-3 mb-3 rounded-4 border border-rule p-3">
+          <div className="flex items-center gap-3">
+            <span aria-hidden className="grid h-10 w-10 shrink-0 place-items-center rounded-pill bg-forest text-base font-bold text-on-forest">
+              {(me.name || me.email).trim().charAt(0).toUpperCase()}
+            </span>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold">{me.name}</p>
+              <p className="truncate text-xs capitalize text-ink-2">{me.role.replace('_', ' ')}</p>
+            </div>
+          </div>
           <button
             type="button"
-            className="mt-2 underline underline-offset-2"
+            className="mt-3 flex h-10 w-full items-center justify-center gap-2 rounded-pill border border-rule text-sm font-medium text-ink-2 transition-colors hover:border-alert hover:text-alert"
             onClick={async () => {
               await api('/v1/auth/logout', { method: 'POST' }).catch(() => undefined);
               setMe('signed-out');
             }}
           >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M9 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4M16 8l4 4-4 4M20 12H9" />
+            </svg>
             Sign out
           </button>
         </div>

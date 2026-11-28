@@ -139,6 +139,60 @@ describe('admin: catalog and inventory', () => {
   });
 });
 
+describe('admin: product delete and status', () => {
+  const draft = (slug: string, sku: string, categoryId: string) => ({
+    slug,
+    categoryId,
+    nameEn: `Test ${slug}`,
+    nameHi: 'परीक्षण',
+    tagline: 'x',
+    pack: { kind: 'can', color: '#EADBC0', accent: '#14432F' },
+    status: 'draft',
+    variants: [{ sku, packSize: '100 g', pricePaise: 10000, mrpPaise: 12000, weightGrams: 120, hsnCode: '0406', gstRateBps: 500, shelfLifeDays: 90 }],
+  });
+
+  it('deletes an unused product, keeps ordered or stocked ones (archive instead), and changes status', async () => {
+    const owner = await staffHeaders(t, 'owner');
+    const categoryId = (await t.app.inject({ url: '/v1/admin/categories', headers: owner })).json().data[0].id;
+
+    // Never ordered, never stocked: can be deleted.
+    const unused = (await t.app.inject({ method: 'POST', url: '/v1/admin/products', headers: owner, payload: draft('delete-me', 'DEL-100', categoryId) })).json();
+    expect((await t.app.inject({ method: 'PATCH', url: `/v1/admin/products/${unused.id}/status`, headers: owner, payload: { status: 'active' } })).statusCode).toBe(409); // no stock yet
+    expect((await t.app.inject({ method: 'DELETE', url: `/v1/admin/products/${unused.id}`, headers: owner })).statusCode).toBe(204);
+    expect((await t.app.inject({ url: `/v1/admin/products/${unused.id}`, headers: owner })).statusCode).toBe(404);
+    expect((await t.app.inject({ method: 'DELETE', url: `/v1/admin/products/${unused.id}`, headers: owner })).statusCode).toBe(404);
+
+    // Stocked product: can be shown, hidden and archived, but not deleted (stock history is kept).
+    const stocked = (await t.app.inject({ method: 'POST', url: '/v1/admin/products', headers: owner, payload: draft('archive-me', 'ARC-100', categoryId) })).json();
+    await t.app.inject({
+      method: 'POST',
+      url: '/v1/admin/batches',
+      headers: owner,
+      payload: { variantId: stocked.variants[0].id, code: 'ARC-1', manufacturedOn: '2026-11-01', expiresOn: '2027-05-01', quantity: 10 },
+    });
+    expect((await t.app.inject({ method: 'PATCH', url: `/v1/admin/products/${stocked.id}/status`, headers: owner, payload: { status: 'active' } })).json().status).toBe('active');
+    expect((await t.app.inject('/v1/store/products/archive-me')).statusCode).toBe(200);
+    expect((await t.app.inject({ method: 'PATCH', url: `/v1/admin/products/${stocked.id}/status`, headers: owner, payload: { status: 'archived' } })).json().status).toBe('archived');
+    expect((await t.app.inject('/v1/store/products/archive-me')).statusCode).toBe(404);
+    const keepStock = await t.app.inject({ method: 'DELETE', url: `/v1/admin/products/${stocked.id}`, headers: owner });
+    expect(keepStock.statusCode).toBe(409);
+    expect(keepStock.json().detail).toMatch(/Archive it instead/);
+
+    // Ordered product keeps its history too.
+    const ids = await variantIds(t);
+    await paidOrder(ids.powder500, 1);
+    const products = (await t.app.inject({ url: '/v1/admin/products', headers: owner })).json().data;
+    const ordered = products.find((p: { variants: { id: string }[] }) => p.variants.some((v) => v.id === ids.powder500));
+    expect((await t.app.inject({ method: 'DELETE', url: `/v1/admin/products/${ordered.id}`, headers: owner })).statusCode).toBe(409);
+    expect((await t.app.inject({ url: `/v1/admin/products/${ordered.id}`, headers: owner })).statusCode).toBe(200);
+
+    // Staff without catalog.write cannot delete or change status.
+    const warehouse = await staffHeaders(t, 'warehouse');
+    expect((await t.app.inject({ method: 'DELETE', url: `/v1/admin/products/${ordered.id}`, headers: warehouse })).statusCode).toBe(403);
+    expect((await t.app.inject({ method: 'PATCH', url: `/v1/admin/products/${ordered.id}/status`, headers: warehouse, payload: { status: 'draft' } })).statusCode).toBe(403);
+  });
+});
+
 describe('admin: store details', () => {
   it('lets the owner edit legal and contact details, validates them, and keeps other roles read-only', async () => {
     const owner = await staffHeaders(t, 'owner');

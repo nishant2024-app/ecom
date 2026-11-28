@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'motion/react';
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { STATUS } from '../lib/format';
 
 export function Page({ title, subtitle, actions, children }: { title: string; subtitle?: ReactNode; actions?: ReactNode; children: ReactNode }) {
@@ -100,6 +100,131 @@ export function Drawer({ open, onClose, title, children, wide = false }: { open:
         </div>
       )}
     </AnimatePresence>
+  );
+}
+
+export interface MenuAction {
+  label: string;
+  onSelect: () => void;
+  danger?: boolean;
+  disabled?: boolean;
+  hint?: string;
+}
+
+/** A "⋯" button that opens a small list of actions. Closes on outside click or Escape; arrow keys move between items. */
+export function RowMenu({ label, actions }: { label: string; actions: MenuAction[] }) {
+  const [open, setOpen] = useState(false);
+  const root = useRef<HTMLDivElement>(null);
+  const id = useId();
+  useEffect(() => {
+    if (!open) return;
+    const away = (e: MouseEvent) => !root.current?.contains(e.target as Node) && setOpen(false);
+    const key = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setOpen(false);
+        root.current?.querySelector<HTMLButtonElement>('[aria-haspopup]')?.focus();
+      }
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        const items = [...(root.current?.querySelectorAll<HTMLButtonElement>('[role=menuitem]:not(:disabled)') ?? [])];
+        const at = items.indexOf(document.activeElement as HTMLButtonElement);
+        items[(at + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length]?.focus();
+      }
+    };
+    document.addEventListener('mousedown', away);
+    document.addEventListener('keydown', key);
+    root.current?.querySelector<HTMLButtonElement>('[role=menuitem]:not(:disabled)')?.focus();
+    return () => {
+      document.removeEventListener('mousedown', away);
+      document.removeEventListener('keydown', key);
+    };
+  }, [open]);
+  return (
+    <div ref={root} className="relative inline-block" onClick={(e) => e.stopPropagation()}>
+      <button
+        type="button"
+        aria-label={label}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-controls={open ? id : undefined}
+        onClick={() => setOpen((o) => !o)}
+        className="grid h-9 w-9 place-items-center rounded-pill border border-rule hover:bg-paper-2"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+          <circle cx="5" cy="12" r="1.8" />
+          <circle cx="12" cy="12" r="1.8" />
+          <circle cx="19" cy="12" r="1.8" />
+        </svg>
+      </button>
+      {open && (
+        <div id={id} role="menu" aria-label={label} className="absolute right-0 top-full z-20 mt-1 min-w-[210px] rounded-3 border border-rule bg-paper p-1 shadow-float">
+          {actions.map((a) => (
+            <button
+              key={a.label}
+              type="button"
+              role="menuitem"
+              disabled={a.disabled}
+              title={a.hint}
+              onClick={() => {
+                setOpen(false);
+                a.onSelect();
+              }}
+              className={`flex min-h-[40px] w-full items-center rounded-2 px-3 text-left text-sm hover:bg-paper-2 disabled:opacity-50 ${a.danger ? 'text-alert' : ''}`}
+            >
+              {a.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** A small "are you sure?" dialog for actions that cannot be undone. */
+export function ConfirmDialog({
+  open,
+  title,
+  children,
+  confirmLabel,
+  danger = false,
+  busy = false,
+  onConfirm,
+  onCancel,
+}: {
+  open: boolean;
+  title: string;
+  children: ReactNode;
+  confirmLabel: string;
+  danger?: boolean;
+  busy?: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  const cancelRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    cancelRef.current?.focus();
+    const k = (e: KeyboardEvent) => e.key === 'Escape' && onCancel();
+    document.addEventListener('keydown', k);
+    return () => document.removeEventListener('keydown', k);
+  }, [open, onCancel]);
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-[60] grid place-items-center p-4">
+      <div className="absolute inset-0 bg-ink/40" onClick={onCancel} aria-hidden />
+      <div role="alertdialog" aria-modal="true" aria-label={title} className="relative w-full max-w-md rounded-4 bg-paper p-5 shadow-float">
+        <h2 className="text-xl font-bold">{title}</h2>
+        <div className="mt-2 text-ink-2">{children}</div>
+        <div className="mt-5 flex justify-end gap-2">
+          <button ref={cancelRef} type="button" onClick={onCancel} className="inline-flex h-9 items-center rounded-pill border border-rule px-4 text-sm hover:bg-paper-2">
+            Cancel
+          </button>
+          <Btn variant={danger ? 'danger' : 'primary'} disabled={busy} onClick={onConfirm}>
+            {busy ? 'Working…' : confirmLabel}
+          </Btn>
+        </div>
+      </div>
+    </div>
   );
 }
 

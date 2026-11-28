@@ -1,7 +1,7 @@
 import { PackShot } from '@dairy/ui';
 import { useEffect, useState } from 'react';
 import { PhotoManager } from '../components/PhotoManager';
-import { Btn, Card, Drawer, Field, Page, input, td, th } from '../components/ui';
+import { Btn, Card, ConfirmDialog, Drawer, Empty, Field, Page, RowMenu, input, td, th, type MenuAction } from '../components/ui';
 import { api, ApiError } from '../lib/api';
 import { rupees, type Money } from '../lib/format';
 
@@ -70,6 +70,10 @@ export function ProductsPage({ permissions }: { permissions: string[] }) {
   const [q, setQ] = useState('');
   const [editing, setEditing] = useState<ProductForm | null>(null);
   const [categories, setCategories] = useState<{ id: string; nameEn: string }[]>([]);
+  const [tab, setTab] = useState<'all' | 'active' | 'draft' | 'archived'>('all');
+  const [notice, setNotice] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
+  const [confirm, setConfirm] = useState<{ row: Row; kind: 'archive' | 'delete' } | null>(null);
+  const [busy, setBusy] = useState(false);
   const canWrite = permissions.includes('catalog.write');
   const load = () => api<{ data: Row[] }>(`/v1/admin/products${q ? `?q=${encodeURIComponent(q)}` : ''}`).then((r) => setRows(r.data));
   useEffect(() => {
@@ -79,6 +83,60 @@ export function ProductsPage({ permissions }: { permissions: string[] }) {
   useEffect(() => {
     api<{ data: { id: string; nameEn: string }[] }>('/v1/admin/categories').then((r) => setCategories(r.data));
   }, []);
+
+  const problem = (e: unknown, fallback: string) => (e instanceof ApiError ? (e.problem.detail ?? e.problem.title) : fallback);
+
+  async function setStatus(row: Row, status: 'active' | 'draft' | 'archived') {
+    setNotice(null);
+    try {
+      await api(`/v1/admin/products/${row.id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) });
+      await load();
+      setNotice({
+        kind: 'ok',
+        text: status === 'active' ? `${row.name} is now on sale.` : status === 'draft' ? `${row.name} is hidden from the shop.` : `${row.name} is archived and hidden from the shop.`,
+      });
+    } catch (e) {
+      setNotice({ kind: 'error', text: problem(e, 'Could not change the status') });
+    }
+  }
+
+  async function runConfirmed() {
+    if (!confirm) return;
+    setBusy(true);
+    setNotice(null);
+    try {
+      if (confirm.kind === 'delete') {
+        await api(`/v1/admin/products/${confirm.row.id}`, { method: 'DELETE' });
+        setNotice({ kind: 'ok', text: `${confirm.row.name} was deleted.` });
+        await load();
+      } else {
+        await setStatus(confirm.row, 'archived');
+      }
+      setConfirm(null);
+    } catch (e) {
+      setConfirm(null);
+      setNotice({ kind: 'error', text: problem(e, 'Could not complete that') });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const actionsFor = (p: Row): MenuAction[] =>
+    !canWrite
+      ? []
+      : [
+          p.status === 'active' ? { label: 'Hide from shop', onSelect: () => void setStatus(p, 'draft') } : { label: 'Show in shop', onSelect: () => void setStatus(p, 'active') },
+          ...(p.status !== 'archived' ? [{ label: 'Archive…', onSelect: () => setConfirm({ row: p, kind: 'archive' }) }] : []),
+          { label: 'Delete…', danger: true, onSelect: () => setConfirm({ row: p, kind: 'delete' }) },
+        ];
+
+  const counts = {
+    all: rows.length,
+    active: rows.filter((r) => r.status === 'active').length,
+    draft: rows.filter((r) => r.status === 'draft').length,
+    archived: rows.filter((r) => r.status === 'archived').length,
+  };
+  const shown = tab === 'all' ? rows : rows.filter((r) => r.status === tab);
 
   async function open(id?: string) {
     if (!id) {
@@ -131,7 +189,7 @@ export function ProductsPage({ permissions }: { permissions: string[] }) {
   return (
     <Page
       title="Products"
-      subtitle={`${rows.length} products`}
+      subtitle={`${counts.all} products · ${counts.active} on sale`}
       actions={
         canWrite && (
           <Btn variant="primary" onClick={() => open()}>
@@ -140,8 +198,67 @@ export function ProductsPage({ permissions }: { permissions: string[] }) {
         )
       }
     >
-      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search products" aria-label="Search products" className={`${input} mb-4 max-w-xs`} />
-      <div tabIndex={0} className="overflow-x-auto rounded-4 border border-rule bg-paper">
+      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search products" aria-label="Search products" className={`${input} mb-3 max-w-xs`} />
+      <div className="mb-3 flex flex-wrap gap-2" role="tablist" aria-label="Filter by status">
+        {(
+          [
+            ['all', 'All'],
+            ['active', 'On sale'],
+            ['draft', 'Hidden'],
+            ['archived', 'Archived'],
+          ] as const
+        ).map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            role="tab"
+            aria-selected={tab === key}
+            onClick={() => setTab(key)}
+            className={`rounded-pill border px-3.5 py-1.5 text-sm ${tab === key ? 'border-forest bg-forest text-on-forest' : 'border-rule bg-paper hover:border-forest'}`}
+          >
+            {label} <span className="num ml-1 font-semibold">{counts[key]}</span>
+          </button>
+        ))}
+      </div>
+      {notice && (
+        <p role={notice.kind === 'error' ? 'alert' : 'status'} className={`mb-3 rounded-3 p-3 text-sm ${notice.kind === 'error' ? 'bg-paper-3 text-alert' : 'bg-meadow text-forest'}`}>
+          {notice.text}
+        </p>
+      )}
+      {shown.length === 0 && <Empty>{rows.length === 0 ? 'No products yet. Use "+ New product" to add the first one.' : 'No products in this view.'}</Empty>}
+      <ul className="space-y-3 md:hidden" aria-label="Products">
+        {shown.map((p) => {
+          const active = p.variants.filter((v) => v.status === 'active');
+          const total = active.reduce((n, v) => n + v.available, 0);
+          return (
+            <li key={p.id} className="rounded-4 border border-rule bg-paper p-3">
+              <div className="flex items-start gap-3">
+                {p.image ? (
+                  <img src={p.image} alt="" className="h-14 w-14 rounded-2 object-cover" />
+                ) : (
+                  <PackShot kind={p.pack.kind} color={p.pack.color} accent={p.pack.accent} label={p.name} className="h-14 w-10" />
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold">{p.name}</p>
+                  <p className="text-xs text-ink-2">{p.category}</p>
+                  <p className="num mt-1 text-sm">{active.map((v) => rupees(v.price.amount)).join(' · ')}</p>
+                  <p className={`text-sm ${total === 0 ? 'font-semibold text-alert' : 'text-ink-2'}`}>{total === 0 ? 'Out of stock' : `${total} in stock`}</p>
+                </div>
+                <span className={`rounded-pill px-2.5 py-0.5 text-xs ${p.status === 'active' ? 'bg-meadow text-forest' : 'bg-paper-3 text-ink-2'}`}>
+                  {p.status === 'active' ? 'On sale' : p.status === 'draft' ? 'Hidden' : 'Archived'}
+                </span>
+              </div>
+              <div className="mt-3 flex items-center justify-end gap-2">
+                <Btn variant="outline" onClick={() => open(p.id)}>
+                  {canWrite ? 'Edit' : 'View'}
+                </Btn>
+                {canWrite && <RowMenu label={`More actions for ${p.name}`} actions={actionsFor(p)} />}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+      <div tabIndex={0} className={`hidden overflow-x-auto rounded-4 border border-rule bg-paper md:block ${shown.length === 0 ? 'md:hidden' : ''}`}>
         <table className="w-full min-w-[760px]">
           <thead>
             <tr className="rule-b">
@@ -150,10 +267,11 @@ export function ProductsPage({ permissions }: { permissions: string[] }) {
               <th className={`${th} text-right`}>Price</th>
               <th className={`${th} text-right`}>In stock</th>
               <th className={th}>Status</th>
+              <th className={`${th} text-right`}>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((p) => {
+            {shown.map((p) => {
               const active = p.variants.filter((v) => v.status === 'active');
               return (
                 <tr key={p.id} onClick={() => open(p.id)} className="cursor-pointer rule-b hover:bg-paper-2">
@@ -188,7 +306,17 @@ export function ProductsPage({ permissions }: { permissions: string[] }) {
                     })()}
                   </td>
                   <td className={td}>
-                    <span className={`rounded-pill px-2.5 py-0.5 text-xs ${p.status === 'active' ? 'bg-meadow' : 'bg-paper-3'}`}>{p.status}</span>
+                    <span className={`rounded-pill px-2.5 py-0.5 text-xs ${p.status === 'active' ? 'bg-meadow text-forest' : 'bg-paper-3 text-ink-2'}`}>
+                      {p.status === 'active' ? 'On sale' : p.status === 'draft' ? 'Hidden' : 'Archived'}
+                    </span>
+                  </td>
+                  <td className={`${td} text-right`} onClick={(e) => e.stopPropagation()}>
+                    <span className="inline-flex items-center gap-2">
+                      <Btn variant="outline" onClick={() => open(p.id)} aria-label={`${canWrite ? 'Edit' : 'View'} ${p.name}`}>
+                        {canWrite ? 'Edit' : 'View'}
+                      </Btn>
+                      {canWrite && <RowMenu label={`More actions for ${p.name}`} actions={actionsFor(p)} />}
+                    </span>
                   </td>
                 </tr>
               );
@@ -196,6 +324,21 @@ export function ProductsPage({ permissions }: { permissions: string[] }) {
           </tbody>
         </table>
       </div>
+      <ConfirmDialog
+        open={!!confirm}
+        danger={confirm?.kind === 'delete'}
+        busy={busy}
+        title={confirm?.kind === 'delete' ? `Delete ${confirm.row.name}?` : `Archive ${confirm?.row.name ?? ''}?`}
+        confirmLabel={confirm?.kind === 'delete' ? 'Delete product' : 'Archive product'}
+        onConfirm={() => void runConfirmed()}
+        onCancel={() => setConfirm(null)}
+      >
+        {confirm?.kind === 'delete' ? (
+          <p>This permanently removes the product and its photos. It only works for products that have never been ordered or stocked; otherwise use Archive. This cannot be undone.</p>
+        ) : (
+          <p>The product disappears from the shop but stays in your order history, and you can show it again any time.</p>
+        )}
+      </ConfirmDialog>
       <Drawer open={!!editing} onClose={() => setEditing(null)} title={editing?.id ? `Edit ${editing.nameEn}` : 'New product'} wide>
         {editing && (
           <ProductEditor

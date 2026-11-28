@@ -8,6 +8,7 @@ import { audit } from '../../lib/audit';
 import { AppError, forbidden, notFound } from '../../lib/errors';
 import { hasPermission } from '../../lib/permissions';
 import { IdParam, money } from '../../lib/schemas';
+import { deleteImage } from '../../services/images';
 import { availability } from '../../services/stock';
 import { defaultSellerId } from '../../services/store';
 
@@ -298,6 +299,75 @@ export default async function adminCatalogRoutes(fastify: FastifyInstance) {
     await audit(db, req, 'product.create', 'product', id, null, out);
     return reply.status(201).send(out);
   });
+
+  app.patch(
+    '/products/:productId/status',
+    {
+      config: { auth: 'staff', permission: 'catalog.write' },
+      schema: {
+        tags: ['Admin'],
+        summary: 'Show, hide or archive a product',
+        params: IdParam('productId'),
+        body: Type.Object({ status: Type.Union([Type.Literal('active'), Type.Literal('draft'), Type.Literal('archived')]) }, { additionalProperties: false }),
+      },
+    },
+    async (req) => {
+      const before = await productOut(req.params.productId);
+      if (req.body.status === 'active' && before.variants.every((v) => v.available <= 0)) {
+        throw new AppError('CONFLICT', 409, 'Add stock before showing this product in the shop');
+      }
+      await db.update(s.products).set({ status: req.body.status, updatedAt: new Date() }).where(eq(s.products.id, req.params.productId));
+      await audit(db, req, 'product.status', 'product', req.params.productId, { status: before.status }, { status: req.body.status });
+      return productOut(req.params.productId);
+    },
+  );
+
+  app.delete(
+    '/products/:productId',
+    {
+      config: { auth: 'staff', permission: 'catalog.write' },
+      schema: { tags: ['Admin'], summary: 'Permanently delete a product that has never been ordered or stocked', params: IdParam('productId'), response: { 204: Type.Null() } },
+    },
+    async (req, reply) => {
+      const before = await productOut(req.params.productId);
+      const variantIds = (await db.select({ id: s.productVariants.id }).from(s.productVariants).where(eq(s.productVariants.productId, req.params.productId))).map((v) => v.id);
+      if (variantIds.length > 0) {
+        const [used] = await db
+          .select({ n: sql<number>`count(*)::int` })
+          .from(s.orderItems)
+          .where(inArray(s.orderItems.variantId, variantIds));
+        if ((used?.n ?? 0) > 0)
+          throw new AppError(
+            'CONFLICT',
+            409,
+            `This product is on ${used!.n} order line${used!.n === 1 ? '' : 's'}, so it cannot be deleted. Archive it instead to hide it from the shop and keep your order history.`,
+          );
+      }
+      if (variantIds.length > 0) {
+        const [stocked] = await db
+          .select({ n: sql<number>`count(*)::int` })
+          .from(s.batches)
+          .where(inArray(s.batches.variantId, variantIds));
+        if ((stocked?.n ?? 0) > 0)
+          throw new AppError('CONFLICT', 409, 'This product has stock history, which is kept for your records, so it cannot be deleted. Archive it instead to hide it from the shop.');
+      }
+      const media = await db.select().from(s.productMedia).where(eq(s.productMedia.productId, req.params.productId));
+      try {
+        await db.transaction(async (tx) => {
+          await tx.delete(s.productMedia).where(eq(s.productMedia.productId, req.params.productId));
+          await tx.delete(s.productReviews).where(eq(s.productReviews.productId, req.params.productId));
+          await tx.delete(s.productVariants).where(eq(s.productVariants.productId, req.params.productId));
+          await tx.delete(s.products).where(eq(s.products.id, req.params.productId));
+        });
+      } catch (e) {
+        if ((e as { code?: string }).code === '23503') throw new AppError('CONFLICT', 409, 'This product is still referenced elsewhere, so it cannot be deleted. Archive it instead.');
+        throw e;
+      }
+      for (const m of media) await deleteImage(app.deps.storage!, m.variants).catch(() => undefined);
+      await audit(db, req, 'product.delete', 'product', req.params.productId, { name: before.nameEn, slug: before.slug }, null);
+      return reply.status(204).send(null);
+    },
+  );
 
   app.put(
     '/products/:productId',
