@@ -62,6 +62,8 @@ pnpm db:migrate
 pnpm db:seed
 
 printf '\n\033[1;32m✓ Ready.\033[0m Start everything with:\n\n    pnpm dev\n\n'
+if [ -d "$HOME/.local/bin" ] && ! command -v pnpm >/dev/null 2>&1; then :; fi
+case ":$PATH:" in *":$HOME/.local/bin:"*) if [ -x "$HOME/.local/bin/pnpm" ]; then printf 'If "pnpm: command not found" appears, run this once:  export PATH="$HOME/.local/bin:$PATH"\n\n'; fi;; esac
 cat <<MSG
 Then open:
     Shop         http://localhost:3000
