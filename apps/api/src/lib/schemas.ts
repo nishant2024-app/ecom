@@ -18,7 +18,21 @@ export const Problem = Type.Object(
     requestId: Type.String(),
     errors: Type.Array(Type.Object({ field: Type.String(), code: Type.String(), message: Type.String() })),
   },
-  { $id: 'Problem' },
+  {
+    $id: 'Problem',
+    description: 'RFC 9457 problem details. Branch on `code`; show `detail` to people.',
+    examples: [
+      {
+        type: 'https://api.example.in/problems/validation-failed',
+        title: 'Validation failed',
+        status: 400,
+        code: 'VALIDATION_FAILED',
+        detail: 'pincode must be 6 digits',
+        requestId: 'req_01JD3K8Q2V7M4X9TB6N5R1ZC0P',
+        errors: [{ field: 'pincode', code: 'pattern', message: 'must be 6 digits' }],
+      },
+    ],
+  },
 );
 
 export const PageInfo = Type.Object({ nextCursor: Type.Union([Type.String(), Type.Null()]), hasMore: Type.Boolean() });

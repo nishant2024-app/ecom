@@ -31,7 +31,8 @@ export default async function reviewRoutes(fastify: FastifyInstance) {
       config: { auth: 'public' },
       schema: {
         tags: ['Catalog'],
-        summary: 'Approved reviews with rating breakdown (every review is from a delivered order)',
+        summary: 'Product reviews',
+        description: 'Approved reviews with the rating breakdown. Every review comes from a delivered order.',
         params: Slug,
         querystring: Type.Object({ cursor: Type.Optional(Type.String()), limit: Type.Optional(Type.Integer({ minimum: 1, maximum: 50, default: 10 })) }),
         response: {
@@ -84,7 +85,8 @@ export default async function reviewRoutes(fastify: FastifyInstance) {
       config: { auth: 'customer' },
       schema: {
         tags: ['Catalog'],
-        summary: 'Whether I can review this product (needs a delivered order) and my existing review',
+        summary: 'My review status',
+        description: 'Whether I can review this product (needs a delivered order) and my existing review.',
         params: Slug,
         response: {
           200: Type.Object({ eligible: Type.Boolean(), review: Nullable(Type.Object({ rating: Type.Integer(), title: Type.String(), body: Type.String(), status: Type.String() })) }),
@@ -110,7 +112,8 @@ export default async function reviewRoutes(fastify: FastifyInstance) {
       config: { auth: 'customer' },
       schema: {
         tags: ['Catalog'],
-        summary: 'Write or edit my review. Only after a delivered order; shows after staff approve it',
+        summary: 'Write or edit my review',
+        description: 'Only possible after a delivered order. The review shows after staff approve it.',
         params: Slug,
         body: Type.Object(
           { rating: Type.Integer({ minimum: 1, maximum: 5 }), title: Type.Optional(Type.String({ maxLength: 80 })), body: Type.Optional(Type.String({ maxLength: 2000 })) },
@@ -147,7 +150,8 @@ export default async function reviewRoutes(fastify: FastifyInstance) {
       config: { auth: 'public', rateLimit: { max: 20, timeWindow: '1 minute' } },
       schema: {
         tags: ['Catalog'],
-        summary: 'Check a batch code printed on a pack: genuine or not, with its dates',
+        summary: 'Verify a batch code',
+        description: 'Check a batch code printed on a pack: genuine or not, with its dates.',
         params: Type.Object({ code: Type.String({ minLength: 3, maxLength: 40 }) }),
         response: {
           200: Type.Object({

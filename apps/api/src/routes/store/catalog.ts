@@ -248,7 +248,8 @@ export default async function catalogRoutes(fastify: FastifyInstance) {
       config: { auth: 'public' },
       schema: {
         tags: ['Catalog'],
-        summary: 'Recently made batches that are in stock (made in the last 21 days), newest first',
+        summary: 'Fresh batches',
+        description: 'Batches made in the last 21 days that are in stock, newest first.',
         response: {
           200: Type.Object({
             data: Type.Array(Type.Object({ product: ProductSummary, variantId: Type.String(), packSize: Type.String(), manufacturedOn: Type.String(), daysAgo: Type.Integer() })),

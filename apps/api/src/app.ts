@@ -13,6 +13,7 @@ import { createRequire } from 'node:module';
 import './context';
 import type { AppDeps } from './context';
 import { errorHandler, sendProblem } from './lib/errors';
+import { API_DESCRIPTION, API_TAGS, SCALAR_CONFIGURATION, transformOperation } from './openapi';
 import { MoneySchema, Problem } from './lib/schemas';
 import authPlugin from './plugins/auth';
 import idempotencyPlugin from './plugins/idempotency';
@@ -99,10 +100,13 @@ export async function buildApp(deps: AppDeps, opts: { logger?: boolean | object 
   }
 
   await app.register(swagger, {
+    transform: transformOperation as never,
+    refResolver: { buildLocalReference: (json: { $id?: string }, _base: unknown, _fragment: unknown, i: number) => json.$id ?? `def-${i}` },
     openapi: {
       openapi: '3.1.0',
-      info: { title: 'Dairy Store API', version: '1.0.0', description: 'See docs/api/README.md for conventions.' },
-      servers: [{ url: deps.config.PUBLIC_API_URL }],
+      info: { title: 'Mulshi Dairy API', version: '1.0.0', description: API_DESCRIPTION },
+      servers: [{ url: deps.config.PUBLIC_API_URL, description: 'API server' }],
+      tags: API_TAGS,
       components: {
         securitySchemes: {
           bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
@@ -111,7 +115,7 @@ export async function buildApp(deps: AppDeps, opts: { logger?: boolean | object 
       },
     },
   });
-  if (!deps.config.isProduction) await app.register(scalar, { routePrefix: '/docs' });
+  if (!deps.config.isProduction) await app.register(scalar, { routePrefix: '/docs', configuration: SCALAR_CONFIGURATION as never });
 
   await app.register(multipart, { limits: { fileSize: MAX_UPLOAD_BYTES, files: 10, fields: 10 } });
   const storage = deps.storage;

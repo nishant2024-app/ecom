@@ -326,7 +326,13 @@ export default async function adminCatalogRoutes(fastify: FastifyInstance) {
     '/products/:productId',
     {
       config: { auth: 'staff', permission: 'catalog.write' },
-      schema: { tags: ['Admin'], summary: 'Permanently delete a product that has never been ordered or stocked', params: IdParam('productId'), response: { 204: Type.Null() } },
+      schema: {
+        tags: ['Admin'],
+        summary: 'Delete a product',
+        description: 'Permanently deletes a product that has never been ordered or stocked. Otherwise archive it.',
+        params: IdParam('productId'),
+        response: { 204: Type.Null() },
+      },
     },
     async (req, reply) => {
       const before = await productOut(req.params.productId);

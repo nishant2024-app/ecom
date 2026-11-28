@@ -148,7 +148,8 @@ export default async function adminOrderRoutes(fastify: FastifyInstance) {
       config: { auth: 'staff', permission: 'orders.fulfil' },
       schema: {
         tags: ['Admin'],
-        summary: 'Mark several confirmed orders packed; returns which succeeded',
+        summary: 'Pack several orders',
+        description: 'Marks several confirmed orders packed and returns which succeeded.',
         body: Type.Object({ orderIds: Type.Array(Type.String(), { minItems: 1, maxItems: 100 }) }, { additionalProperties: false }),
       },
     },
@@ -174,7 +175,8 @@ export default async function adminOrderRoutes(fastify: FastifyInstance) {
       config: { auth: 'staff', permission: 'orders.read' },
       schema: {
         tags: ['Admin'],
-        summary: 'Full detail for several orders, for printing packing slips',
+        summary: 'Packing slip data',
+        description: 'Full detail for several orders, for printing packing slips.',
         body: Type.Object({ orderIds: Type.Array(Type.String(), { minItems: 1, maxItems: 100 }) }, { additionalProperties: false }),
       },
     },
@@ -239,7 +241,8 @@ export default async function adminOrderRoutes(fastify: FastifyInstance) {
       config: { auth: 'staff', permission: 'orders.refund' },
       schema: {
         tags: ['Admin'],
-        summary: 'Cancel before shipping; releases stock and refunds the payment',
+        summary: 'Cancel an order',
+        description: 'Possible before shipping. Releases the stock and refunds the payment.',
         params: IdParam('orderId'),
         body: Type.Object({ reason: Type.String({ minLength: 3, maxLength: 200 }) }, { additionalProperties: false }),
       },

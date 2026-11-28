@@ -14,8 +14,9 @@ export default async function geoRoutes(fastify: FastifyInstance) {
       config: { auth: 'customer', rateLimit: { max: 15, timeWindow: '1 minute' } },
       schema: {
         tags: ['Profile'],
-        summary: 'Suggest area, city, state and pincode for a map point (to prefill the address form)',
-        description: 'Signed-in customers only, 15/min. Results are suggestions: the customer confirms or edits them. Returns all nulls when the provider has no answer.',
+        summary: 'Look up an address from a map point',
+        description:
+          'Suggests area, city, state and pincode for a map point, to prefill the address form. Signed-in customers only, 15/min. Results are suggestions: the customer confirms or edits them. Returns all nulls when the provider has no answer.',
         querystring: Type.Object({ lat: Type.Number({ minimum: -90, maximum: 90 }), lng: Type.Number({ minimum: -180, maximum: 180 }) }),
         response: {
           200: Type.Object({

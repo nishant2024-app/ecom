@@ -64,8 +64,9 @@ export default async function adminMediaRoutes(fastify: FastifyInstance) {
       config: write,
       schema: {
         tags: ['Admin'],
-        summary: 'Upload product photos (multipart, field "file", repeatable; optional "alt")',
-        description: 'JPG, PNG, WebP or HEIC, up to 20 MB each and at least 400 px wide. Stored as WebP at 480, 960 and 1600 px. The first photo is the main product image.',
+        summary: 'Upload product photos',
+        description:
+          '`multipart/form-data` with the field `file` (repeatable) and an optional `alt`. JPG, PNG, WebP or HEIC, up to 20 MB each and at least 400 px wide. Stored as WebP at 480, 960 and 1600 px. The first photo is the main product image.',
         params: IdParam('productId'),
         consumes: ['multipart/form-data'],
         response: { 201: Type.Object({ data: Type.Array(ImageOut) }) },
@@ -165,7 +166,8 @@ export default async function adminMediaRoutes(fastify: FastifyInstance) {
       config: write,
       schema: {
         tags: ['Admin'],
-        summary: 'Upload storefront images (multipart, field "file"; optional "alt")',
+        summary: 'Upload storefront images',
+        description: '`multipart/form-data` with the field `file` and an optional `alt`.',
         consumes: ['multipart/form-data'],
         response: { 201: Type.Object({ data: Type.Array(ImageOut) }) },
       },

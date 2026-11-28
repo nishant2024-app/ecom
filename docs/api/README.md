@@ -9,7 +9,7 @@ One REST API serves the storefront, the admin panel and the future Android app.
 | Local | `http://localhost:4000/v1` |
 | Format | JSON (`application/json; charset=utf-8`), UTF-8 |
 | Errors | `application/problem+json` (RFC 9457) |
-| Spec | [openapi.json](openapi.json) (OpenAPI 3.1, generated from code). Live docs at `/docs` outside production. |
+| Spec | [openapi.json](openapi.json) (OpenAPI 3.1, generated from code). Live docs at `/docs` outside production. The introduction, tag descriptions, operation ids, security and standard error responses are added in `apps/api/src/openapi.ts`; regenerate with `pnpm --filter @dairy/api spec ../../docs/api/openapi.json`. |
 
 ## Endpoint reference
 

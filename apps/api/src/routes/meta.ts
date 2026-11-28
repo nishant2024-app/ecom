@@ -25,7 +25,8 @@ export default async function metaRoutes(fastify: FastifyInstance) {
       config: { auth: 'public' },
       schema: {
         tags: ['Meta'],
-        summary: 'Minimum versions, feature flags, support and legal info',
+        summary: 'App configuration',
+        description: 'Minimum app versions, feature flags, support contact and legal details (FSSAI, address). Cached for a minute.',
         response: {
           200: Type.Object({
             minVersions: Type.Object({ android: Type.Integer(), web: Type.String() }),
