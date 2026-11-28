@@ -1,7 +1,11 @@
 import { PackShot } from '@dairy/ui';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { PhotoManager } from '../components/PhotoManager';
-import { Btn, Card, ConfirmDialog, Drawer, Empty, Field, Page, RowMenu, input, td, th, type MenuAction } from '../components/ui';
+import { renderToStaticMarkup } from 'react-dom/server';
+import type { ColumnDefinition } from 'tabulator-tables';
+import { button, el, menuButton, pill } from '../components/cells';
+import { DataTable } from '../components/DataTable';
+import { Btn, Card, ConfirmDialog, Drawer, Empty, Field, FloatingMenu, Page, RowMenu, input, type MenuAction } from '../components/ui';
 import { api, ApiError } from '../lib/api';
 import { rupees, type Money } from '../lib/format';
 
@@ -65,6 +69,123 @@ const blankVariant = (): VariantForm => ({
   maxPerOrder: 10,
 });
 
+type ProductRow = Row & { minPrice: number; totalStock: number };
+
+function productColumns(act: { current: { open: (id?: string) => Promise<void>; openMenu: (row: Row, anchor: HTMLElement) => void; canWrite: boolean } }): ColumnDefinition[] {
+  return [
+    {
+      title: 'Product',
+      field: 'name',
+      minWidth: 280,
+      responsive: 0,
+      formatter: (cell) => {
+        const p = cell.getData() as ProductRow;
+        const thumb = el('span', { class: 'dt-thumb-wrap' });
+        if (p.image) {
+          const img = el('img', { class: 'dt-thumb' }) as HTMLImageElement;
+          img.src = p.image;
+          img.alt = '';
+          thumb.append(img);
+        } else {
+          const wrap = el('span', { class: 'dt-thumb' });
+          wrap.innerHTML = renderToStaticMarkup(<PackShot kind={p.pack.kind} color={p.pack.color} accent={p.pack.accent} label={p.name} className="h-12 w-9" />);
+          thumb.append(wrap);
+        }
+        const photos = p.photoCount ? `${p.photoCount} photo${p.photoCount > 1 ? 's' : ''}` : 'no photos';
+        thumb.append(
+          el(
+            'span',
+            {},
+            el(
+              'span',
+              { class: 'dt-line' },
+              el('a', { class: 'dt-link', href: '#/products', text: p.name, onClick: (e) => (e.preventDefault(), void act.current.open(p.id)) }),
+              p.featured ? pill('Featured', 'on') : null,
+            ),
+            el('span', { class: 'dt-sub' }, `${p.category} · `, p.photoCount ? photos : el('span', { class: 'dt-alert', text: 'no photos' })),
+          ),
+        );
+        return thumb;
+      },
+    },
+    {
+      title: 'Sizes',
+      field: 'sizes',
+      minWidth: 120,
+      responsive: 3,
+      headerSort: false,
+      formatter: (cell) =>
+        el('span', {
+          text: (cell.getData() as ProductRow).variants
+            .filter((v) => v.status === 'active')
+            .map((v) => v.packSize)
+            .join(', '),
+        }),
+    },
+    {
+      title: 'Price',
+      field: 'minPrice',
+      width: 160,
+      responsive: 1,
+      hozAlign: 'right',
+      cssClass: 'dt-right',
+      sorter: 'number',
+      formatter: (cell) =>
+        el('span', {
+          class: 'dt-num',
+          text: (cell.getData() as ProductRow).variants
+            .filter((v) => v.status === 'active')
+            .map((v) => rupees(v.price.amount))
+            .join(' · '),
+        }),
+    },
+    {
+      title: 'In stock',
+      field: 'totalStock',
+      width: 180,
+      responsive: 2,
+      hozAlign: 'right',
+      cssClass: 'dt-right',
+      sorter: 'number',
+      formatter: (cell) => {
+        const p = cell.getData() as ProductRow;
+        const active = p.variants.filter((v) => v.status === 'active');
+        const low = active.some((v) => v.available <= v.lowStockThreshold);
+        const box = el('div', { class: 'dt-num' });
+        box.style.textAlign = 'right';
+        box.append(el('span', { class: p.totalStock === 0 ? 'dt-alert' : low ? 'dt-alert' : '', text: p.totalStock === 0 ? 'Out of stock' : String(p.totalStock) }));
+        if (active.length > 1) box.append(el('span', { class: 'dt-sub', text: active.map((v) => `${v.packSize}: ${v.available}`).join(' · ') }));
+        if (low && p.totalStock > 0) box.append(el('span', { class: 'dt-sub dt-alert', text: active.length > 1 ? 'low on one size' : 'running low' }));
+        return box;
+      },
+    },
+    {
+      title: 'Status',
+      field: 'status',
+      width: 110,
+      responsive: 4,
+      formatter: (cell) => pill(cell.getValue() === 'active' ? 'On sale' : cell.getValue() === 'draft' ? 'Hidden' : 'Archived', cell.getValue() === 'active' ? 'on' : 'off'),
+    },
+    {
+      title: 'Actions',
+      field: 'actions',
+      width: 150,
+      responsive: 0,
+      hozAlign: 'right',
+      cssClass: 'dt-right',
+      headerSort: false,
+      resizable: false,
+      formatter: (cell) => {
+        const p = cell.getData() as ProductRow;
+        const box = el('span', { class: 'dt-actions' });
+        box.append(button(act.current.canWrite ? 'Edit' : 'View', () => void act.current.open(p.id), { ariaLabel: `${act.current.canWrite ? 'Edit' : 'View'} ${p.name}` }));
+        if (act.current.canWrite) box.append(menuButton(`More actions for ${p.name}`, (anchor) => act.current.openMenu(p, anchor)));
+        return box;
+      },
+    },
+  ];
+}
+
 export function ProductsPage({ permissions }: { permissions: string[] }) {
   const [rows, setRows] = useState<Row[]>([]);
   const [q, setQ] = useState('');
@@ -74,6 +195,7 @@ export function ProductsPage({ permissions }: { permissions: string[] }) {
   const [notice, setNotice] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
   const [confirm, setConfirm] = useState<{ row: Row; kind: 'archive' | 'delete' } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [menu, setMenu] = useState<{ row: Row; anchor: HTMLElement } | null>(null);
   const canWrite = permissions.includes('catalog.write');
   const load = () => api<{ data: Row[] }>(`/v1/admin/products${q ? `?q=${encodeURIComponent(q)}` : ''}`).then((r) => setRows(r.data));
   useEffect(() => {
@@ -136,7 +258,19 @@ export function ProductsPage({ permissions }: { permissions: string[] }) {
     draft: rows.filter((r) => r.status === 'draft').length,
     archived: rows.filter((r) => r.status === 'archived').length,
   };
-  const shown = tab === 'all' ? rows : rows.filter((r) => r.status === tab);
+  const shown = useMemo(() => (tab === 'all' ? rows : rows.filter((r) => r.status === tab)), [rows, tab]);
+
+  // Columns are built once; they reach the page's latest handlers through this ref.
+  const act = useRef({ open: (_id?: string) => Promise.resolve(), openMenu: (_row: Row, _anchor: HTMLElement) => {}, canWrite });
+  const tableRows = useMemo(
+    () =>
+      shown.map((p) => {
+        const active = p.variants.filter((v) => v.status === 'active');
+        return { ...p, minPrice: Math.min(...active.map((v) => v.price.amount), Infinity), totalStock: active.reduce((n, v) => n + v.available, 0) };
+      }),
+    [shown],
+  );
+  const columns = useMemo<ColumnDefinition[]>(() => productColumns(act), []);
 
   async function open(id?: string) {
     if (!id) {
@@ -185,6 +319,8 @@ export function ProductsPage({ permissions }: { permissions: string[] }) {
       variants: p.variants.filter((v) => v.status === 'active').map(pick),
     });
   }
+
+  act.current = { open, openMenu: (row, anchor) => setMenu({ row, anchor }), canWrite };
 
   return (
     <Page
@@ -258,72 +394,17 @@ export function ProductsPage({ permissions }: { permissions: string[] }) {
           );
         })}
       </ul>
-      <div tabIndex={0} className={`hidden overflow-x-auto rounded-4 border border-rule bg-paper md:block ${shown.length === 0 ? 'md:hidden' : ''}`}>
-        <table className="w-full min-w-[760px]">
-          <thead>
-            <tr className="rule-b">
-              <th className={th}>Product</th>
-              <th className={th}>Sizes</th>
-              <th className={`${th} text-right`}>Price</th>
-              <th className={`${th} text-right`}>In stock</th>
-              <th className={th}>Status</th>
-              <th className={`${th} text-right`}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {shown.map((p) => {
-              const active = p.variants.filter((v) => v.status === 'active');
-              return (
-                <tr key={p.id} onClick={() => open(p.id)} className="cursor-pointer rule-b hover:bg-paper-2">
-                  <td className={td}>
-                    <span className="flex items-center gap-3">
-                      {p.image ? (
-                        <img src={p.image} alt="" className="h-12 w-12 rounded-2 object-cover" />
-                      ) : (
-                        <PackShot kind={p.pack.kind} color={p.pack.color} accent={p.pack.accent} label={p.name} className="h-12 w-9" />
-                      )}
-                      <span>
-                        {p.name} {p.featured && <span className="ml-1 rounded-pill bg-meadow text-forest px-2 py-0.5 text-xs">Featured</span>}
-                        <span className="block text-xs text-ink-2">
-                          {p.category} · {p.photoCount ? `${p.photoCount} photo${p.photoCount > 1 ? 's' : ''}` : <span className="text-alert">no photos</span>}
-                        </span>
-                      </span>
-                    </span>
-                  </td>
-                  <td className={td}>{active.map((v) => v.packSize).join(', ')}</td>
-                  <td className={`${td} num text-right`}>{active.map((v) => rupees(v.price.amount)).join(' · ')}</td>
-                  <td className={`${td} num text-right`}>
-                    {(() => {
-                      const total = active.reduce((n, v) => n + v.available, 0);
-                      const low = active.some((v) => v.available <= v.lowStockThreshold);
-                      return (
-                        <>
-                          <span className={total === 0 ? 'font-semibold text-alert' : low ? 'text-alert' : ''}>{total === 0 ? 'Out of stock' : total}</span>
-                          {active.length > 1 && <span className="block text-xs text-ink-2">{active.map((v) => `${v.packSize}: ${v.available}`).join(' · ')}</span>}
-                          {low && total > 0 && <span className="block text-xs text-alert">{active.length > 1 ? 'low on one size' : 'running low'}</span>}
-                        </>
-                      );
-                    })()}
-                  </td>
-                  <td className={td}>
-                    <span className={`rounded-pill px-2.5 py-0.5 text-xs ${p.status === 'active' ? 'bg-meadow text-forest' : 'bg-paper-3 text-ink-2'}`}>
-                      {p.status === 'active' ? 'On sale' : p.status === 'draft' ? 'Hidden' : 'Archived'}
-                    </span>
-                  </td>
-                  <td className={`${td} text-right`} onClick={(e) => e.stopPropagation()}>
-                    <span className="inline-flex items-center gap-2">
-                      <Btn variant="outline" onClick={() => open(p.id)} aria-label={`${canWrite ? 'Edit' : 'View'} ${p.name}`}>
-                        {canWrite ? 'Edit' : 'View'}
-                      </Btn>
-                      {canWrite && <RowMenu label={`More actions for ${p.name}`} actions={actionsFor(p)} />}
-                    </span>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+      <div className={`hidden md:block ${shown.length === 0 ? 'md:hidden' : ''}`}>
+        <DataTable
+          label="Products"
+          data={tableRows}
+          columns={columns}
+          onRowClick={(p) => void act.current.open(p.id)}
+          initialSort={[{ column: 'name', dir: 'asc' }]}
+          placeholder="No products in this view."
+        />
       </div>
+      {menu && <FloatingMenu anchor={menu.anchor} label={`More actions for ${menu.row.name}`} actions={actionsFor(menu.row)} onClose={() => setMenu(null)} />}
       <ConfirmDialog
         open={!!confirm}
         danger={confirm?.kind === 'delete'}

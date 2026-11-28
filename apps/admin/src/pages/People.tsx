@@ -1,4 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
+import type { ColumnDefinition } from 'tabulator-tables';
+import { el } from '../components/cells';
+import { DataTable } from '../components/DataTable';
 import { Btn, Card, Field, Page, StatusBadge, input, td, th } from '../components/ui';
 import { api, ApiError } from '../lib/api';
 import { day, rupees, when, type Money } from '../lib/format';
@@ -14,45 +17,62 @@ interface CustomerRow {
   joinedAt: string;
 }
 
+const customerColumns: ColumnDefinition[] = [
+  {
+    title: 'Customer',
+    field: 'name',
+    minWidth: 200,
+    responsive: 0,
+    formatter: (cell) => {
+      const c = cell.getData() as CustomerRow;
+      return el('div', {}, el('a', { class: 'dt-link', href: `#/customers/${c.id}`, text: c.name }), el('span', { class: 'dt-sub', text: c.email }));
+    },
+  },
+  { title: 'Phone', field: 'phone', width: 160, responsive: 3, formatter: (cell) => el('span', { class: 'dt-num', text: (cell.getValue() as string | null) ?? '—' }) },
+  {
+    title: 'Orders',
+    field: 'orders',
+    width: 100,
+    responsive: 1,
+    hozAlign: 'right',
+    cssClass: 'dt-right',
+    sorter: 'number',
+    formatter: (cell) => el('span', { class: 'dt-num', text: String(cell.getValue()) }),
+  },
+  {
+    title: 'Spent',
+    field: 'spentPaise',
+    width: 130,
+    hozAlign: 'right',
+    cssClass: 'dt-right',
+    sorter: 'number',
+    formatter: (cell) => el('span', { class: 'dt-num', text: rupees(cell.getValue() as number) }),
+  },
+  { title: 'Last order', field: 'lastOrderAt', width: 140, responsive: 4, formatter: (cell) => el('span', { class: 'dt-num', text: cell.getValue() ? day(cell.getValue() as string) : '—' }) },
+  { title: 'Joined', field: 'joinedAt', width: 120, responsive: 5, formatter: (cell) => el('span', { class: 'dt-num', text: day(cell.getValue() as string) }) },
+];
+
 export function CustomersPage() {
   const [q, setQ] = useState('');
-  const [rows, setRows] = useState<CustomerRow[]>([]);
+  const [rows, setRows] = useState<(CustomerRow & { spentPaise: number })[]>([]);
   useEffect(() => {
-    const t = setTimeout(() => api<{ data: CustomerRow[] }>(`/v1/admin/customers${q ? `?q=${encodeURIComponent(q)}` : ''}`).then((r) => setRows(r.data)), 200);
+    const t = setTimeout(
+      () => api<{ data: CustomerRow[] }>(`/v1/admin/customers${q ? `?q=${encodeURIComponent(q)}` : ''}`).then((r) => setRows(r.data.map((c) => ({ ...c, spentPaise: c.spent.amount })))),
+      200,
+    );
     return () => clearTimeout(t);
   }, [q]);
   return (
     <Page title="Customers" subtitle="Everyone who has signed in, with what they've bought.">
       <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, email, phone" aria-label="Search customers" className={`${input} mb-4 max-w-xs`} />
-      <div tabIndex={0} className="overflow-x-auto rounded-4 border border-rule bg-paper">
-        <table className="w-full min-w-[700px]">
-          <thead>
-            <tr className="rule-b">
-              <th className={th}>Customer</th>
-              <th className={th}>Phone</th>
-              <th className={`${th} text-right`}>Orders</th>
-              <th className={`${th} text-right`}>Spent</th>
-              <th className={th}>Last order</th>
-              <th className={th}>Joined</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((c) => (
-              <tr key={c.id} onClick={() => (location.hash = `#/customers/${c.id}`)} className="cursor-pointer rule-b hover:bg-paper-2">
-                <td className={td}>
-                  {c.name}
-                  <span className="block text-xs text-ink-2">{c.email}</span>
-                </td>
-                <td className={`${td} num`}>{c.phone ?? '—'}</td>
-                <td className={`${td} num text-right`}>{c.orders}</td>
-                <td className={`${td} num text-right`}>{rupees(c.spent.amount)}</td>
-                <td className={`${td} num`}>{c.lastOrderAt ? day(c.lastOrderAt) : '—'}</td>
-                <td className={`${td} num`}>{day(c.joinedAt)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        label="Customers"
+        data={rows}
+        columns={customerColumns}
+        onRowClick={(c) => (location.hash = `#/customers/${c.id}`)}
+        initialSort={[{ column: 'joinedAt', dir: 'desc' }]}
+        placeholder="No customers yet."
+      />
     </Page>
   );
 }

@@ -1,6 +1,9 @@
 import { PackShot } from '@dairy/ui';
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { Btn, Card, Empty, Field, Page, StatusBadge, input, td, th } from '../components/ui';
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
+import type { ColumnDefinition } from 'tabulator-tables';
+import { el, statusPill, twoLine } from '../components/cells';
+import { DataTable } from '../components/DataTable';
+import { Btn, Card, Field, Page, StatusBadge, input } from '../components/ui';
 import { api, ApiError, download } from '../lib/api';
 import { printPackingSlips } from '../lib/packing-slip';
 import { STATUS, rupees, when, type Money } from '../lib/format';
@@ -22,6 +25,56 @@ interface Row {
   trackingNumber: string | null;
 }
 
+const orderColumns: ColumnDefinition[] = [
+  {
+    title: 'Order',
+    field: 'placedAt',
+    minWidth: 150,
+    responsive: 0,
+    formatter: (cell) => {
+      const o = cell.getData() as Row;
+      return el('div', {}, el('a', { class: 'dt-link dt-num', href: `#/orders/${o.id}`, text: o.number }), el('span', { class: 'dt-sub', text: when(o.placedAt) }));
+    },
+  },
+  { title: 'Customer', field: 'customer', minWidth: 150, responsive: 2, formatter: (cell) => twoLine((cell.getData() as Row).customer, (cell.getData() as Row).phone) },
+  {
+    title: 'Items',
+    field: 'firstItem',
+    minWidth: 150,
+    responsive: 4,
+    formatter: (cell) => {
+      const o = cell.getData() as Row;
+      return el('span', {}, o.firstItem, o.items > 1 ? el('span', { class: 'dt-muted', text: ` +${o.items - 1}` }) : null);
+    },
+  },
+  {
+    title: 'Ship to',
+    field: 'city',
+    minWidth: 150,
+    responsive: 3,
+    formatter: (cell) => {
+      const o = cell.getData() as Row;
+      return el(
+        'div',
+        {},
+        el('span', {}, `${o.city} `, el('span', { class: 'dt-muted dt-num', text: o.pincode })),
+        o.trackingNumber ? el('span', { class: 'dt-sub dt-num', text: `${o.courier} · ${o.trackingNumber}` }) : null,
+      );
+    },
+  },
+  { title: 'Status', field: 'status', width: 130, responsive: 1, formatter: (cell) => statusPill(cell.getValue() as string) },
+  {
+    title: 'Total',
+    field: 'totalPaise',
+    width: 120,
+    responsive: 0,
+    hozAlign: 'right',
+    cssClass: 'dt-right',
+    sorter: 'number',
+    formatter: (cell) => el('span', { class: 'dt-num', text: rupees(cell.getValue() as number) }),
+  },
+];
+
 const TABS = ['', 'confirmed', 'packed', 'shipped', 'delivered', 'pending_payment', 'cancelled'];
 
 export function OrdersPage({ status: initial, permissions = [] }: { status?: string; permissions?: string[] }) {
@@ -42,7 +95,7 @@ export function OrdersPage({ status: initial, permissions = [] }: { status?: str
   }, [load, q]);
 
   const total = data ? Object.values(data.counts).reduce((a, b) => a + b, 0) : 0;
-  const rows = data?.data ?? [];
+  const rows = useMemo(() => (data?.data ?? []).map((o) => ({ ...o, totalPaise: o.total.amount })), [data]);
   const toggle = (id: string) =>
     setSelected((s0) => {
       const s1 = new Set(s0);
@@ -50,7 +103,6 @@ export function OrdersPage({ status: initial, permissions = [] }: { status?: str
       else s1.add(id);
       return s1;
     });
-  const allOn = rows.length > 0 && rows.every((r) => selected.has(r.id));
   const picked = rows.filter((r) => selected.has(r.id));
 
   async function bulkPack() {
@@ -98,13 +150,18 @@ export function OrdersPage({ status: initial, permissions = [] }: { status?: str
       {picked.length > 0 && (
         <div className="sticky top-0 z-10 mt-4 flex flex-wrap items-center gap-2 rounded-3 bg-forest px-4 py-2 text-on-forest">
           <span className="num mr-2">{picked.length} selected</span>
-          <Btn variant="primary" onClick={slips}>
+          <button type="button" onClick={slips} className="inline-flex h-9 items-center rounded-pill bg-paper px-4 text-sm font-semibold text-forest hover:bg-meadow">
             Print packing slips
-          </Btn>
+          </button>
           {canFulfil && (
-            <Btn variant="primary" disabled={busy} onClick={bulkPack}>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={bulkPack}
+              className="inline-flex h-9 items-center rounded-pill bg-paper px-4 text-sm font-semibold text-forest hover:bg-meadow disabled:opacity-60"
+            >
               Mark packed
-            </Btn>
+            </button>
           )}
           <button type="button" className="ml-auto text-sm underline" onClick={() => setSelected(new Set())}>
             Clear
@@ -146,66 +203,17 @@ export function OrdersPage({ status: initial, permissions = [] }: { status?: str
         ))}
       </ul>
       {data && data.data.length === 0 && <p className="mt-4 text-ink-2">No orders match.</p>}
-      <div tabIndex={0} className="mt-4 hidden overflow-x-auto rounded-4 border border-rule bg-paper md:block">
-        <table className="w-full min-w-[820px]">
-          <thead>
-            <tr className="rule-b">
-              <th className={`${th} w-10`}>
-                <input
-                  type="checkbox"
-                  aria-label="Select all orders on this page"
-                  checked={allOn}
-                  onChange={() => setSelected(allOn ? new Set() : new Set(rows.map((r) => r.id)))}
-                  className="accent-[var(--forest)]"
-                />
-              </th>
-              <th className={th}>Order</th>
-              <th className={th}>Customer</th>
-              <th className={th}>Items</th>
-              <th className={th}>Ship to</th>
-              <th className={th}>Status</th>
-              <th className={`${th} text-right`}>Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data?.data.map((o) => (
-              <tr key={o.id} onClick={() => (location.hash = `#/orders/${o.id}`)} className={`cursor-pointer rule-b hover:bg-paper-2 ${selected.has(o.id) ? 'bg-meadow/20' : ''}`}>
-                <td className={td} onClick={(e) => e.stopPropagation()}>
-                  <input type="checkbox" aria-label={`Select order ${o.number}`} checked={selected.has(o.id)} onChange={() => toggle(o.id)} className="accent-[var(--forest)]" />
-                </td>
-                <td className={td}>
-                  <span className="num">{o.number}</span>
-                  <span className="block text-xs text-ink-2">{when(o.placedAt)}</span>
-                </td>
-                <td className={td}>
-                  {o.customer}
-                  <span className="num block text-xs text-ink-2">{o.phone}</span>
-                </td>
-                <td className={td}>
-                  {o.firstItem}
-                  {o.items > 1 && <span className="text-ink-2"> +{o.items - 1}</span>}
-                </td>
-                <td className={td}>
-                  {o.city} <span className="num text-ink-2">{o.pincode}</span>
-                  {o.trackingNumber && (
-                    <span className="num block text-xs text-ink-2">
-                      {o.courier} · {o.trackingNumber}
-                    </span>
-                  )}
-                </td>
-                <td className={td}>
-                  <StatusBadge status={o.status} />
-                </td>
-                <td className={`${td} num text-right`}>{rupees(o.total.amount)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {data && data.data.length === 0 && (
-          <div className="p-4">
-            <Empty>No orders here.</Empty>
-          </div>
-        )}
+      <div className="mt-4 hidden md:block">
+        <DataTable
+          label="Orders"
+          data={rows}
+          columns={orderColumns}
+          selectable
+          selectedIds={selected}
+          onSelectionChange={setSelected}
+          onRowClick={(o) => (location.hash = `#/orders/${o.id}`)}
+          placeholder="No orders here."
+        />
       </div>
     </Page>
   );

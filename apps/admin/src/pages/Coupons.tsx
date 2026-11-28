@@ -1,5 +1,8 @@
-import { useEffect, useState } from 'react';
-import { Btn, Drawer, Empty, Field, Page, input, td, th } from '../components/ui';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import type { ColumnDefinition } from 'tabulator-tables';
+import { el, pill } from '../components/cells';
+import { DataTable } from '../components/DataTable';
+import { Btn, Drawer, Field, Page, input } from '../components/ui';
 import { api, ApiError } from '../lib/api';
 import { rupees } from '../lib/format';
 
@@ -72,6 +75,81 @@ function state(c: Coupon) {
   return { label: 'Live', cls: 'bg-meadow text-forest' };
 }
 
+const TONE: Record<string, 'on' | 'off' | 'warn'> = { Live: 'on', Scheduled: 'warn', Paused: 'off', Expired: 'off', 'Fully used': 'off' };
+
+function couponColumns(act: { current: { edit: (c: Coupon) => void; canWrite: boolean } }): ColumnDefinition[] {
+  return [
+    {
+      title: 'Code',
+      field: 'code',
+      minWidth: 170,
+      responsive: 0,
+      formatter: (cell) => {
+        const c = cell.getData() as Coupon;
+        const name = act.current.canWrite
+          ? el('a', { class: 'dt-link dt-num', href: '#/coupons', text: c.code, onClick: (e) => (e.preventDefault(), act.current.edit(c)) })
+          : el('span', { class: 'dt-link dt-num', text: c.code });
+        return el('div', {}, name, c.description ? el('span', { class: 'dt-sub', text: c.description }) : null);
+      },
+    },
+    { title: 'Offer', field: 'offer', minWidth: 150, responsive: 1, headerSort: false, formatter: (cell) => el('span', { text: offerText(cell.getData() as Coupon) }) },
+    {
+      title: 'Rules',
+      field: 'rules',
+      minWidth: 220,
+      responsive: 4,
+      headerSort: false,
+      formatter: (cell) => {
+        const c = cell.getData() as Coupon;
+        return el('span', {
+          class: 'dt-muted',
+          text: [
+            c.minSubtotalPaise ? `min ${rupees(c.minSubtotalPaise)}` : null,
+            c.firstOrderOnly ? 'first order only' : null,
+            `${c.perCustomerLimit} per customer`,
+            c.endsAt ? `until ${toDate(c.endsAt)}` : null,
+          ]
+            .filter(Boolean)
+            .join(' · '),
+        });
+      },
+    },
+    {
+      title: 'Used',
+      field: 'used',
+      width: 100,
+      responsive: 3,
+      hozAlign: 'right',
+      cssClass: 'dt-right',
+      sorter: 'number',
+      formatter: (cell) => {
+        const c = cell.getData() as Coupon;
+        return el('span', { class: 'dt-num', text: `${c.used}${c.usageLimit ? ` / ${c.usageLimit}` : ''}` });
+      },
+    },
+    {
+      title: 'Given away',
+      field: 'discountGivenPaise',
+      width: 130,
+      responsive: 5,
+      hozAlign: 'right',
+      cssClass: 'dt-right',
+      sorter: 'number',
+      formatter: (cell) => el('span', { class: 'dt-num', text: rupees(cell.getValue() as number) }),
+    },
+    {
+      title: 'Status',
+      field: 'status',
+      width: 120,
+      responsive: 2,
+      formatter: (cell) => {
+        const st = state(cell.getData() as Coupon);
+        return pill(st.label, TONE[st.label] ?? 'off');
+      },
+    },
+  ];
+}
+
 export function CouponsPage({ permissions }: { permissions: string[] }) {
   const [rows, setRows] = useState<Coupon[]>([]);
   const [form, setForm] = useState<Form | null>(null);
@@ -125,6 +203,11 @@ export function CouponsPage({ permissions }: { permissions: string[] }) {
     }
   }
 
+  const act = useRef({ edit: (_c: Coupon) => {}, canWrite });
+  act.current = { edit, canWrite };
+  const tableRows = rows;
+  const columns = useMemo<ColumnDefinition[]>(() => couponColumns(act), []);
+
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setForm((f) => (f ? { ...f, [k]: v } : f));
 
   return (
@@ -139,57 +222,14 @@ export function CouponsPage({ permissions }: { permissions: string[] }) {
         )
       }
     >
-      <div tabIndex={0} className="overflow-x-auto rounded-4 border border-rule bg-paper">
-        <table className="w-full min-w-[780px]">
-          <thead>
-            <tr className="rule-b">
-              <th className={th}>Code</th>
-              <th className={th}>Offer</th>
-              <th className={th}>Rules</th>
-              <th className={`${th} text-right`}>Used</th>
-              <th className={`${th} text-right`}>Given away</th>
-              <th className={th}>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((c) => {
-              const st = state(c);
-              return (
-                <tr key={c.id} onClick={() => canWrite && edit(c)} className={`rule-b ${canWrite ? 'cursor-pointer hover:bg-paper-2' : ''}`}>
-                  <td className={`${td} num font-semibold`}>
-                    {c.code}
-                    {c.description && <span className="block text-xs font-normal text-ink-2">{c.description}</span>}
-                  </td>
-                  <td className={td}>{offerText(c)}</td>
-                  <td className={`${td} text-sm text-ink-2`}>
-                    {[
-                      c.minSubtotalPaise ? `min ${rupees(c.minSubtotalPaise)}` : null,
-                      c.firstOrderOnly ? 'first order only' : null,
-                      `${c.perCustomerLimit} per customer`,
-                      c.endsAt ? `until ${toDate(c.endsAt)}` : null,
-                    ]
-                      .filter(Boolean)
-                      .join(' · ')}
-                  </td>
-                  <td className={`${td} num text-right`}>
-                    {c.used}
-                    {c.usageLimit ? ` / ${c.usageLimit}` : ''}
-                  </td>
-                  <td className={`${td} num text-right`}>{rupees(c.discountGivenPaise)}</td>
-                  <td className={td}>
-                    <span className={`rounded-pill px-2.5 py-0.5 text-xs ${st.cls}`}>{st.label}</span>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-        {rows.length === 0 && (
-          <div className="p-4">
-            <Empty>No coupons yet. Create one, for example WELCOME10: 10% off a first order.</Empty>
-          </div>
-        )}
-      </div>
+      <DataTable
+        label="Coupons"
+        data={tableRows}
+        columns={columns}
+        onRowClick={(c) => canWrite && act.current.edit(c)}
+        initialSort={[{ column: 'code', dir: 'asc' }]}
+        placeholder="No coupons yet. Create one, for example WELCOME10: 10% off a first order."
+      />
 
       <Drawer open={!!form} onClose={() => setForm(null)} title={form?.id ? `Edit ${form.code}` : 'New coupon'}>
         {form && (

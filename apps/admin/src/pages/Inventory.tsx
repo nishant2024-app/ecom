@@ -1,5 +1,9 @@
 import { PackShot } from '@dairy/ui';
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import type { ColumnDefinition } from 'tabulator-tables';
+import { el, pill } from '../components/cells';
+import { DataTable } from '../components/DataTable';
 import { Btn, Card, Drawer, Field, Page, input, td, th } from '../components/ui';
 import { api, ApiError } from '../lib/api';
 import { day, dayYear, todayIST, when } from '../lib/format';
@@ -38,6 +42,86 @@ interface Movement {
   referenceType: string | null;
 }
 
+type InvRow = Row & { id: string };
+
+function inventoryColumns(act: { current: { open: (r: Row) => void } }): ColumnDefinition[] {
+  return [
+    {
+      title: 'Product',
+      field: 'name',
+      minWidth: 260,
+      responsive: 0,
+      formatter: (cell) => {
+        const r = cell.getData() as InvRow;
+        const wrap = el('span', { class: 'dt-thumb-wrap' });
+        const art = el('span', { class: 'dt-thumb' });
+        art.innerHTML = renderToStaticMarkup(<PackShot kind={r.pack.kind} color={r.pack.color} accent={r.pack.accent} label={r.name} className="h-10 w-8" />);
+        wrap.append(
+          art,
+          el(
+            'span',
+            {},
+            el('a', { class: 'dt-link', href: '#/inventory', text: `${r.name} ${r.packSize}`, onClick: (e) => (e.preventDefault(), act.current.open(r)) }),
+            el('span', { class: 'dt-sub dt-num', text: r.sku }),
+          ),
+        );
+        return wrap;
+      },
+    },
+    {
+      title: 'On hand',
+      field: 'onHand',
+      width: 110,
+      responsive: 2,
+      hozAlign: 'right',
+      cssClass: 'dt-right',
+      sorter: 'number',
+      formatter: (c) => el('span', { class: 'dt-num', text: String(c.getValue()) }),
+    },
+    {
+      title: 'Reserved',
+      field: 'reserved',
+      width: 110,
+      responsive: 4,
+      hozAlign: 'right',
+      cssClass: 'dt-right',
+      sorter: 'number',
+      formatter: (c) => el('span', { class: 'dt-num dt-muted', text: String(c.getValue()) }),
+    },
+    {
+      title: 'Available',
+      field: 'available',
+      width: 120,
+      responsive: 1,
+      hozAlign: 'right',
+      cssClass: 'dt-right',
+      sorter: 'number',
+      formatter: (c) => ((c.getData() as InvRow).low ? pill(String(c.getValue()), 'warn') : el('span', { class: 'dt-num', text: String(c.getValue()) })),
+    },
+    {
+      title: 'Next expiry',
+      field: 'nextExpiry',
+      width: 170,
+      responsive: 3,
+      formatter: (c) => {
+        const v = c.getValue() as string | null;
+        if (!v) return el('span', { text: '—' });
+        return v < todayIST() ? pill(`Expired ${dayYear(v)}`, 'alert') : el('span', { class: 'dt-num', text: dayYear(v) });
+      },
+    },
+    {
+      title: 'Batches',
+      field: 'batches',
+      width: 100,
+      responsive: 5,
+      hozAlign: 'right',
+      cssClass: 'dt-right',
+      sorter: 'number',
+      formatter: (c) => el('span', { class: 'dt-num', text: String(c.getValue()) }),
+    },
+  ];
+}
+
 export function InventoryPage({ permissions }: { permissions: string[] }) {
   const [rows, setRows] = useState<Row[]>([]);
   const [filter, setFilter] = useState<'all' | 'low'>('all');
@@ -46,7 +130,10 @@ export function InventoryPage({ permissions }: { permissions: string[] }) {
   useEffect(() => {
     void load();
   }, []);
-  const list = filter === 'low' ? rows.filter((r) => r.low) : rows;
+  const act = useRef({ open: (_r: Row) => {} });
+  act.current = { open: (r) => setOpen(r) };
+  const tableRows = useMemo(() => (filter === 'low' ? rows.filter((r) => r.low) : rows).map((r) => ({ ...r, id: r.variantId })), [rows, filter]);
+  const columns = useMemo<ColumnDefinition[]>(() => inventoryColumns(act), []);
 
   return (
     <Page
@@ -63,52 +150,14 @@ export function InventoryPage({ permissions }: { permissions: string[] }) {
         </>
       }
     >
-      <div tabIndex={0} className="overflow-x-auto rounded-4 border border-rule bg-paper">
-        <table className="w-full min-w-[760px]">
-          <thead>
-            <tr className="rule-b">
-              <th className={th}>Product</th>
-              <th className={`${th} text-right`}>On hand</th>
-              <th className={`${th} text-right`}>Reserved</th>
-              <th className={`${th} text-right`}>Available</th>
-              <th className={th}>Next expiry</th>
-              <th className={`${th} text-right`}>Batches</th>
-            </tr>
-          </thead>
-          <tbody>
-            {list.map((r) => (
-              <tr key={r.variantId} onClick={() => setOpen(r)} className="cursor-pointer rule-b hover:bg-paper-2">
-                <td className={td}>
-                  <span className="flex items-center gap-3">
-                    <PackShot kind={r.pack.kind} color={r.pack.color} accent={r.pack.accent} label={r.name} className="h-10 w-8" />
-                    <span>
-                      {r.name} <span className="text-ink-2">{r.packSize}</span>
-                      <span className="num block text-xs text-ink-2">{r.sku}</span>
-                    </span>
-                  </span>
-                </td>
-                <td className={`${td} num text-right`}>{r.onHand}</td>
-                <td className={`${td} num text-right text-ink-2`}>{r.reserved}</td>
-                <td className={`${td} num text-right`}>
-                  <span className={r.low ? 'rounded-pill bg-[#fdecc8] text-[#7a4b00] px-2 py-0.5' : ''}>{r.available}</span>
-                </td>
-                <td className={`${td} num`}>
-                  {r.nextExpiry ? (
-                    r.nextExpiry < todayIST() ? (
-                      <span className="rounded-pill bg-paper-3 px-2 py-0.5 text-xs font-semibold text-alert">Expired {dayYear(r.nextExpiry)}</span>
-                    ) : (
-                      dayYear(r.nextExpiry)
-                    )
-                  ) : (
-                    '—'
-                  )}
-                </td>
-                <td className={`${td} num text-right`}>{r.batches}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        label="Inventory"
+        data={tableRows}
+        columns={columns}
+        onRowClick={(r) => setOpen(rows.find((x) => x.variantId === r.variantId) ?? null)}
+        initialSort={[{ column: 'name', dir: 'asc' }]}
+        placeholder={filter === 'low' ? 'Nothing is running low.' : 'No stock yet.'}
+      />
       <Drawer open={!!open} onClose={() => setOpen(null)} title={open ? `${open.name} ${open.packSize}` : ''} wide>
         {open && <Batches row={open} canWrite={permissions.includes('inventory.write')} onChanged={load} />}
       </Drawer>

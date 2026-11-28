@@ -180,6 +180,70 @@ export function RowMenu({ label, actions }: { label: string; actions: MenuAction
   );
 }
 
+/** The same action list as RowMenu, but anchored to any element (such as a button inside a table cell). */
+export function FloatingMenu({ anchor, label, actions, onClose }: { anchor: HTMLElement; label: string; actions: MenuAction[]; onClose: () => void }) {
+  const root = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ top: number; right: number } | null>(null);
+  useEffect(() => {
+    const r = anchor.getBoundingClientRect();
+    const height = actions.length * 40 + 12;
+    const below = r.bottom + 4 + height < window.innerHeight;
+    setPos({ top: below ? r.bottom + 4 : Math.max(8, r.top - 4 - height), right: Math.max(8, window.innerWidth - r.right) });
+  }, [anchor, actions.length]);
+  useEffect(() => {
+    root.current?.querySelector<HTMLButtonElement>('[role=menuitem]:not(:disabled)')?.focus();
+    const away = (e: MouseEvent) => !root.current?.contains(e.target as Node) && e.target !== anchor && !anchor.contains(e.target as Node) && onClose();
+    const key = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' || e.key === 'Tab') {
+        onClose();
+        if (e.key === 'Escape') anchor.focus();
+      }
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        const items = [...(root.current?.querySelectorAll<HTMLButtonElement>('[role=menuitem]:not(:disabled)') ?? [])];
+        const at = items.indexOf(document.activeElement as HTMLButtonElement);
+        items[(at + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length]?.focus();
+      }
+    };
+    document.addEventListener('mousedown', away);
+    document.addEventListener('keydown', key);
+    window.addEventListener('resize', onClose);
+    window.addEventListener('scroll', onClose, true);
+    return () => {
+      document.removeEventListener('mousedown', away);
+      document.removeEventListener('keydown', key);
+      window.removeEventListener('resize', onClose);
+      window.removeEventListener('scroll', onClose, true);
+    };
+  }, [anchor, onClose]);
+  return (
+    <div
+      ref={root}
+      role="menu"
+      aria-label={label}
+      style={pos ? { position: 'fixed', top: pos.top, right: pos.right } : { position: 'fixed', visibility: 'hidden' }}
+      className="z-[55] min-w-[210px] rounded-3 border border-rule bg-paper p-1 shadow-float"
+    >
+      {actions.map((a) => (
+        <button
+          key={a.label}
+          type="button"
+          role="menuitem"
+          disabled={a.disabled}
+          title={a.hint}
+          onClick={() => {
+            onClose();
+            a.onSelect();
+          }}
+          className={`flex min-h-[40px] w-full items-center rounded-2 px-3 text-left text-sm hover:bg-paper-2 disabled:opacity-50 ${a.danger ? 'text-alert' : ''}`}
+        >
+          {a.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 /** A small "are you sure?" dialog for actions that cannot be undone. */
 export function ConfirmDialog({
   open,

@@ -1,5 +1,8 @@
-import { useEffect, useState } from 'react';
-import { Btn, Empty, Field, Page, input, td, th } from '../components/ui';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import type { ColumnDefinition } from 'tabulator-tables';
+import { button, el } from '../components/cells';
+import { DataTable } from '../components/DataTable';
+import { Btn, ConfirmDialog, Field, Page, input } from '../components/ui';
 import { api, ApiError } from '../lib/api';
 
 interface Category {
@@ -21,10 +24,63 @@ const slugify = (s: string) =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '');
 
+function categoryColumns(act: { current: { edit: (c: Category) => void; del: (c: Category) => void; canWrite: boolean } }): ColumnDefinition[] {
+  return [
+    { title: '#', field: 'sort', width: 70, responsive: 3, sorter: 'number', formatter: (c) => el('span', { class: 'dt-num dt-muted', text: String(c.getValue()) }) },
+    {
+      title: 'Category',
+      field: 'nameEn',
+      minWidth: 240,
+      responsive: 0,
+      formatter: (cell) => {
+        const c = cell.getData() as Category;
+        return el('div', {}, el('span', {}, c.nameEn, el('span', { class: 'dt-muted', text: ` · ${c.nameHi}` })), el('span', { class: 'dt-sub dt-num', text: `/products?category=${c.slug}` }));
+      },
+    },
+    { title: 'Description', field: 'blurb', minWidth: 200, responsive: 2, formatter: (c) => el('span', { class: 'dt-muted', text: String(c.getValue() ?? '') }) },
+    {
+      title: 'Products',
+      field: 'productCount',
+      width: 120,
+      responsive: 1,
+      hozAlign: 'right',
+      cssClass: 'dt-right',
+      sorter: 'number',
+      formatter: (c) => el('span', { class: 'dt-num', text: String(c.getValue()) }),
+    },
+    {
+      title: 'Actions',
+      field: 'actions',
+      width: 170,
+      responsive: 0,
+      hozAlign: 'right',
+      cssClass: 'dt-right',
+      headerSort: false,
+      resizable: false,
+      formatter: (cell) => {
+        const c = cell.getData() as Category;
+        const box = el('span', { class: 'dt-actions' });
+        if (!act.current.canWrite) return box;
+        box.append(button('Edit', () => act.current.edit(c), { ariaLabel: `Edit ${c.nameEn}` }));
+        box.append(
+          button('Delete', () => act.current.del(c), {
+            ariaLabel: `Delete ${c.nameEn}`,
+            danger: true,
+            disabled: c.productCount > 0,
+            title: c.productCount > 0 ? 'Move its products first' : undefined,
+          }),
+        );
+        return box;
+      },
+    },
+  ];
+}
+
 export function CategoriesPage({ permissions }: { permissions: string[] }) {
   const [rows, setRows] = useState<Category[]>([]);
   const [form, setForm] = useState<Form | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
+  const [toDelete, setToDelete] = useState<Category | null>(null);
   const canWrite = permissions.includes('catalog.write');
   const load = () => api<{ data: Category[] }>('/v1/admin/categories').then((r) => setRows(r.data));
   useEffect(() => {
@@ -43,15 +99,20 @@ export function CategoriesPage({ permissions }: { permissions: string[] }) {
       setMsg(e instanceof ApiError ? (e.problem.errors?.[0] ? `${e.problem.errors[0].field}: ${e.problem.errors[0].message}` : (e.problem.detail ?? e.problem.title)) : 'Could not save');
     }
   }
-  async function remove(c: Category) {
-    if (!confirm(`Delete the category "${c.nameEn}"?`)) return;
+  async function remove() {
+    if (!toDelete) return;
     try {
-      await api(`/v1/admin/categories/${c.id}`, { method: 'DELETE' });
+      await api(`/v1/admin/categories/${toDelete.id}`, { method: 'DELETE' });
+      setToDelete(null);
       await load();
     } catch (e) {
+      setToDelete(null);
       setMsg(e instanceof ApiError ? (e.problem.detail ?? e.problem.title) : 'Could not delete');
     }
   }
+  const act = useRef({ edit: (_c: Category) => {}, del: (_c: Category) => {}, canWrite });
+  act.current = { edit: (c) => setForm({ id: c.id, slug: c.slug, nameEn: c.nameEn, nameHi: c.nameHi, blurb: c.blurb, sort: c.sort }), del: (c) => setToDelete(c), canWrite };
+  const columns = useMemo<ColumnDefinition[]>(() => categoryColumns(act), []);
 
   return (
     <Page
@@ -99,54 +160,10 @@ export function CategoriesPage({ permissions }: { permissions: string[] }) {
           {msg}
         </p>
       )}
-      <div tabIndex={0} className="overflow-x-auto rounded-4 border border-rule bg-paper">
-        <table className="w-full min-w-[640px]">
-          <thead>
-            <tr className="rule-b">
-              <th className={th}>#</th>
-              <th className={th}>Category</th>
-              <th className={th}>Description</th>
-              <th className={`${th} text-right`}>Products</th>
-              <th className={th}>
-                <span className="sr-only">Actions</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((c) => (
-              <tr key={c.id} className="rule-b">
-                <td className={`${td} num text-ink-2`}>{c.sort}</td>
-                <td className={td}>
-                  {c.nameEn}{' '}
-                  <span className="text-ink-2" lang="hi">
-                    · {c.nameHi}
-                  </span>
-                  <span className="num block text-xs text-ink-3">/products?category={c.slug}</span>
-                </td>
-                <td className={`${td} text-sm text-ink-2`}>{c.blurb}</td>
-                <td className={`${td} num text-right`}>{c.productCount}</td>
-                <td className={`${td} whitespace-nowrap text-right`}>
-                  {canWrite && (
-                    <>
-                      <Btn variant="ghost" onClick={() => setForm({ id: c.id, slug: c.slug, nameEn: c.nameEn, nameHi: c.nameHi, blurb: c.blurb, sort: c.sort })}>
-                        Edit
-                      </Btn>
-                      <Btn variant="ghost" className="text-alert" disabled={c.productCount > 0} title={c.productCount > 0 ? 'Move its products first' : undefined} onClick={() => remove(c)}>
-                        Delete
-                      </Btn>
-                    </>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {rows.length === 0 && (
-          <div className="p-4">
-            <Empty>No categories yet.</Empty>
-          </div>
-        )}
-      </div>
+      <DataTable label="Categories" data={rows} columns={columns} initialSort={[{ column: 'sort', dir: 'asc' }]} placeholder="No categories yet." />
+      <ConfirmDialog open={!!toDelete} danger title={`Delete ${toDelete?.nameEn ?? ''}?`} confirmLabel="Delete category" onConfirm={() => void remove()} onCancel={() => setToDelete(null)}>
+        <p>The category disappears from the shop menu. This cannot be undone. A category that still has products cannot be deleted.</p>
+      </ConfirmDialog>
     </Page>
   );
 }
