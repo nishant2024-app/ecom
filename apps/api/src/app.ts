@@ -127,6 +127,17 @@ export async function buildApp(deps: AppDeps, opts: { logger?: boolean | object 
     });
   }
 
+  // Friendly page for anyone who opens the API address in a browser (hidden from the OpenAPI spec).
+  app.get('/', { config: { auth: 'public', rateLimit: false }, schema: { hide: true } }, async (_req, reply) => {
+    const docs = deps.config.isProduction ? '' : '<li><a href="/docs">API reference</a></li>';
+    return reply
+      .type('text/html; charset=utf-8')
+      .header('cache-control', 'public, max-age=300')
+      .send(
+        `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>API</title><body style="font-family:system-ui,sans-serif;max-width:32rem;margin:15vh auto;padding:0 1rem;color:#14301f"><h1>The shop API is running</h1><p>This address is for apps, not people. Use these instead:</p><ul><li><a href="${deps.config.PUBLIC_WEB_URL}">The shop</a></li>${docs}<li><a href="/v1/health/ready">Health check</a></li></ul></body>`,
+      );
+  });
+
   await app.register(authPlugin);
   await app.register(idempotencyPlugin);
 
