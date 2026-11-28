@@ -4,3 +4,36 @@
 @import '@dairy/ui/theme.css';
 
 @source '../../../../packages/ui/src';
+
+/* Google's translator adds its own banner, tooltip and page offset. Keep the shop's design: our picker is the only control. */
+body {
+  top: 0 !important;
+}
+.skiptranslate iframe,
+.goog-te-banner-frame,
+.VIpgJd-ZVi9od-ORHb-OEVmcd,
+.VIpgJd-ZVi9od-aZ2wEe-wOHMyf,
+.VIpgJd-ZVi9od-aZ2wEe-OiiCO,
+#goog-gt-tt,
+.goog-tooltip,
+.goog-tooltip:hover {
+  display: none !important;
+  visibility: hidden !important;
+}
+.goog-text-highlight {
+  background: none !important;
+  box-shadow: none !important;
+}
+font {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Horizontal rails scroll by swipe, trackpad, keyboard and the arrow buttons; the bar itself is clutter. */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}

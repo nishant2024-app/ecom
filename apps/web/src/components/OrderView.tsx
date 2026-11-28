@@ -1,7 +1,8 @@
 'use client';
 
 import { Money, PackShot } from '@dairy/ui';
-import { motion, useReducedMotion } from 'motion/react';
+import { motion } from 'motion/react';
+import { useReducedMotionAfterMount } from '@/lib/use-reduced-motion';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
@@ -20,7 +21,7 @@ const STEPS: { key: keyof Order['timeline']; label: string }[] = [
 
 /** A parcel whose flaps close: plays once when the order is confirmed. */
 function Parcel({ done }: { done: boolean }) {
-  const reduce = useReducedMotion();
+  const reduce = useReducedMotionAfterMount();
   return (
     <svg viewBox="0 0 120 100" className="h-24 w-28" aria-hidden>
       <path d="M20 40 h80 v50 H20 Z" fill="#f2c45a" />

@@ -36,7 +36,7 @@ export async function LegalPage({ slug }: { slug: string }) {
   ];
   return (
     <div className="mx-auto grid max-w-[1280px] gap-8 px-4 pt-8 md:px-6 lg:grid-cols-12">
-      <nav aria-label="Policies" className="flex gap-2 overflow-x-auto text-[14px] font-semibold lg:col-span-3 lg:flex-col lg:gap-1">
+      <nav aria-label="Policies" className="flex gap-2 no-scrollbar overflow-x-auto text-[14px] font-semibold lg:col-span-3 lg:flex-col lg:gap-1">
         {links.map(([s, l]) => (
           <Link
             key={s}

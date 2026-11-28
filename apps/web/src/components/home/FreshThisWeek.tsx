@@ -1,6 +1,8 @@
 'use client';
 
-import { motion, useReducedMotion } from 'motion/react';
+import { motion } from 'motion/react';
+import { useRef } from 'react';
+import { useReducedMotionAfterMount } from '@/lib/use-reduced-motion';
 import Link from 'next/link';
 import { longDate } from '@/lib/format';
 import type { ProductSummary } from '@/lib/types';
@@ -18,7 +20,9 @@ const ago = (d: number) => (d <= 0 ? 'Made today' : d === 1 ? 'Made yesterday' :
 
 /** Batches made in the last three weeks, straight from the batch records: proof the stock is fresh. */
 export function FreshThisWeek({ items }: { items: FreshItem[] }) {
-  const reduce = useReducedMotion();
+  const reduce = useReducedMotionAfterMount();
+  const rail = useRef<HTMLUListElement>(null);
+  const slide = (dir: 1 | -1) => rail.current?.scrollBy({ left: dir * rail.current.clientWidth * 0.8, behavior: reduce ? 'auto' : 'smooth' });
   if (!items.length) return null;
   return (
     <section className="overflow-hidden rounded-5 bg-[linear-gradient(120deg,var(--meadow),var(--paper-2))] p-5 md:p-8">
@@ -34,11 +38,26 @@ export function FreshThisWeek({ items }: { items: FreshItem[] }) {
           <h2 className="mt-1 text-[22px] font-extrabold tracking-[-0.025em] md:text-[28px]">Fresh from the dairy</h2>
           <p className="text-[14px] text-ink-2 md:text-[15px]">Recently made batches, in stock now. The date on your pack will match.</p>
         </div>
-        <Link href="/verify" className="inline-flex min-h-[44px] items-center text-[14px] font-semibold text-forest hover:underline">
-          How to verify your pack →
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link href="/verify" className="inline-flex min-h-[44px] items-center text-[14px] font-semibold text-forest hover:underline">
+            How to verify your pack →
+          </Link>
+          <div className="hidden gap-2 md:flex">
+            {([-1, 1] as const).map((dir) => (
+              <button
+                key={dir}
+                type="button"
+                onClick={() => slide(dir)}
+                aria-label={dir === -1 ? 'Previous batches' : 'Next batches'}
+                className="grid h-10 w-10 place-items-center rounded-pill border border-rule bg-paper text-ink hover:bg-paper-2"
+              >
+                <span aria-hidden="true">{dir === -1 ? '←' : '→'}</span>
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
-      <ul className="-mx-5 mt-5 flex snap-x gap-3 overflow-x-auto px-5 pb-1 md:-mx-0 md:px-0">
+      <ul ref={rail} className="no-scrollbar -mx-5 mt-5 flex snap-x gap-3 overflow-x-auto px-5 pb-1 md:-mx-0 md:px-0">
         {items.map((it, i) => (
           <motion.li
             key={it.product.id}

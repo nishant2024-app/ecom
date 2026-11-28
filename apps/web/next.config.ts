@@ -5,18 +5,18 @@ const api = process.env.API_INTERNAL_URL ?? 'http://localhost:4000';
 const isProd = process.env.NODE_ENV === 'production';
 
 /**
- * Content-Security-Policy: scripts only from this site, Google sign-in and Cashfree checkout; the page can't be
+ * Content-Security-Policy: scripts only from this site, Google sign-in, Google Translate (only loaded after a visitor picks a language) and Cashfree checkout; the page can't be
  * framed by other sites; forms post only to ourselves or Cashfree. Images allow any https host because product
  * photos come from the media (R2) domain. 'unsafe-inline' is needed for Next's own inline bootstrap scripts.
  */
 const csp = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isProd ? '' : " 'unsafe-eval'"} https://accounts.google.com https://sdk.cashfree.com`,
-  "style-src 'self' 'unsafe-inline' https://accounts.google.com",
+  `script-src 'self' 'unsafe-inline'${isProd ? '' : " 'unsafe-eval'"} https://accounts.google.com https://sdk.cashfree.com https://translate.google.com https://translate.googleapis.com https://translate-pa.googleapis.com https://www.gstatic.com`,
+  "style-src 'self' 'unsafe-inline' https://accounts.google.com https://www.gstatic.com https://translate.googleapis.com",
   "img-src 'self' data: blob: https:",
-  "font-src 'self' data:",
-  "connect-src 'self' https://accounts.google.com https://*.cashfree.com https://nominatim.openstreetmap.org",
-  'frame-src https://accounts.google.com https://*.cashfree.com',
+  "font-src 'self' data: https://fonts.gstatic.com",
+  "connect-src 'self' https://accounts.google.com https://*.cashfree.com https://nominatim.openstreetmap.org https://translate.googleapis.com https://translate-pa.googleapis.com",
+  "frame-src 'self' https://accounts.google.com https://*.cashfree.com https://translate.google.com https://translate.googleapis.com",
   "form-action 'self' https://*.cashfree.com",
   "frame-ancestors 'none'",
   "base-uri 'self'",

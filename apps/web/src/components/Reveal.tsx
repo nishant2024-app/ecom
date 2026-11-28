@@ -1,10 +1,11 @@
 'use client';
 
-import { motion, useReducedMotion, type HTMLMotionProps } from 'motion/react';
+import { motion, type HTMLMotionProps } from 'motion/react';
+import { useReducedMotionAfterMount } from '@/lib/use-reduced-motion';
 
 /** Fades and lifts children into place the first time they scroll into view. */
 export function Reveal({ delay = 0, y = 24, ...props }: HTMLMotionProps<'div'> & { delay?: number; y?: number }) {
-  const reduce = useReducedMotion();
+  const reduce = useReducedMotionAfterMount();
   return (
     <motion.div
       initial={reduce ? false : { opacity: 0, y }}

@@ -4,7 +4,7 @@ import type { Category } from '@/lib/types';
 
 export function CategoryCircles({ categories }: { categories: Category[] }) {
   return (
-    <ul className="-mx-4 flex snap-x gap-4 overflow-x-auto px-4 pb-2 md:mx-0 md:flex-wrap md:gap-8 md:overflow-visible md:px-0">
+    <ul className="-mx-4 flex snap-x gap-4 no-scrollbar overflow-x-auto px-4 pb-2 md:mx-0 md:flex-wrap md:gap-8 md:overflow-visible md:px-0">
       {categories.map((c) => (
         <li key={c.slug} className="w-[96px] shrink-0 snap-start md:w-[140px]">
           <Link href={`/products?category=${c.slug}`} className="group flex flex-col items-center text-center">

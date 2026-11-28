@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Logo } from './Header';
+import { LanguagePicker } from './LanguagePicker';
 
 export function Footer({ fssai, phone, email }: { fssai?: string; phone?: string; email?: string }) {
   const year = new Date().getFullYear();
@@ -9,7 +10,9 @@ export function Footer({ fssai, phone, email }: { fssai?: string; phone?: string
         <div className="md:col-span-4">
           <div className="flex items-center gap-2">
             <Logo />
-            <p className="text-xl font-extrabold tracking-[-0.03em]">Mulshi Dairy</p>
+            <p className="notranslate text-xl font-extrabold tracking-[-0.03em]" translate="no">
+              Mulshi Dairy
+            </p>
           </div>
           <p className="mt-3 max-w-xs text-[14px] leading-relaxed text-ink-2">Ghee, milk powder, long-life milk and mithai from our farm in Mulshi, Pune. Shipped across India.</p>
           {fssai && (
@@ -43,10 +46,13 @@ export function Footer({ fssai, phone, email }: { fssai?: string; phone?: string
         </Col>
       </div>
       <div className="border-t border-rule">
-        <p className="mx-auto flex max-w-[1280px] flex-wrap justify-between gap-2 px-4 py-4 text-[13px] text-ink-3 md:px-6">
+        <div className="mx-auto flex max-w-[1280px] flex-wrap justify-between gap-2 px-4 py-4 text-[13px] text-ink-3 md:px-6">
           <span>© {year} Mulshi Dairy. All prices include GST.</span>
-          <span>Secure payments by Cashfree · UPI, cards, net banking</span>
-        </p>
+          <div className="flex flex-wrap items-center gap-3">
+            <span>Secure payments by Cashfree · UPI, cards, net banking</span>
+            <LanguagePicker />
+          </div>
+        </div>
       </div>
     </footer>
   );

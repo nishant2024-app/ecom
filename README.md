@@ -9,6 +9,7 @@ Online shop for shelf-stable dairy products (ghee, milk powder, UHT and flavoure
 - **Shop:** catalogue with pack sizes and unit prices, search, product pages with photo galleries and reviews, basket, coupon codes, pincode delivery check, "use my location" with a map pin for the exact delivery address, checkout, order tracking.
 - **Payments:** Cashfree (INR, prepaid only). Sign-in with Google only (no SMS).
 - **Admin panel:** products and photos, stock batches, categories, orders (bulk actions, packing slips with a directions QR), coupons, reviews, storefront banners and content, customers and staff roles, dashboard. The owner needs no code.
+- **Languages:** a language picker (Hindi, Marathi, Gujarati, Tamil, Telugu, Bengali, Kannada, Malayalam, Punjabi) using Google Translate in the visitor's browser. Nothing is stored in the database.
 - **Emails:** order confirmation, shipped, delivered, cancelled and refunded, through Resend or Brevo.
 - **For developers:** documented REST API (OpenAPI), strict TypeScript, tested business rules, one-command local setup, one-server deployment with backups.
 
@@ -19,6 +20,7 @@ Online shop for shelf-stable dairy products (ghee, milk powder, UHT and flavoure
 | Run it on my computer                                                   | [Quick start](#quick-start) below, then [DEVELOPMENT.md](DEVELOPMENT.md)                                                                                                             |
 | Understand how it works                                                 | [ARCHITECTURE.md](ARCHITECTURE.md)                                                                                                                                                   |
 | **Put it live on a VPS** (Nginx, HTTPS, backups, updates)               | [DEPLOYMENT.md](DEPLOYMENT.md)                                                                                                                                                       |
+| **What hosting costs and where to host** (current prices)               | [docs/20-hosting-and-costs.md](docs/20-hosting-and-costs.md)                                                                                                                         |
 | See every setting                                                       | [.env.example](.env.example) (development) · [.env.production.example](.env.production.example) (server)                                                                             |
 | Launch checklist: which accounts and keys to get                        | [docs/14-go-live.md](docs/14-go-live.md)                                                                                                                                             |
 | Use the API (web, Android)                                              | [docs/api/README.md](docs/api/README.md) · [openapi.json](docs/api/openapi.json) · [reference.html](docs/api/reference.html) · [Android integration](docs/13-android-integration.md) |

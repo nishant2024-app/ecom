@@ -12,7 +12,7 @@ export function ShopTabs({ products, categories }: { products: ProductSummary[];
   const tabs = [{ slug: '', name: 'All' }, ...categories];
   return (
     <div>
-      <div role="tablist" aria-label="Filter by category" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 md:mx-0 md:px-0">
+      <div role="tablist" aria-label="Filter by category" className="-mx-4 flex gap-2 no-scrollbar overflow-x-auto px-4 pb-1 md:mx-0 md:px-0">
         {tabs.map((c) => (
           <button
             key={c.slug}

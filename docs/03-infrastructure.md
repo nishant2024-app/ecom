@@ -64,6 +64,8 @@ When you outgrow one server: add API containers behind an Nginx `upstream` (the 
 
 ## Costs
 
+A fuller, plain-language version with current prices is [20 · Hosting and costs](20-hosting-and-costs.md).
+
 | Item | Cost | When |
 |---|---|---|
 | Domain | About ₹700–1,200 a year | Now |

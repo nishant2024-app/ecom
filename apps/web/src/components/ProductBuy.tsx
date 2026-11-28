@@ -2,7 +2,8 @@
 
 import { Money } from '@dairy/ui';
 import { Gallery } from './Gallery';
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { AnimatePresence, motion } from 'motion/react';
+import { useReducedMotionAfterMount } from '@/lib/use-reduced-motion';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { api } from '@/lib/api-client';
 import { useCart } from '@/lib/cart';
@@ -20,7 +21,7 @@ interface Estimate {
 
 export function ProductBuy({ product, children }: { product: ProductDetail; children: ReactNode }) {
   const { add, pincode, setPincode } = useCart();
-  const reduce = useReducedMotion();
+  const reduce = useReducedMotionAfterMount();
   const [variantId, setVariantId] = useState((product.variants.find((v) => v.inStock) ?? product.variants[0]!).id);
   const [qty, setQty] = useState(1);
   const [estimate, setEstimate] = useState<Estimate | null>(null);

@@ -6,6 +6,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
 import { useCart } from '@/lib/cart';
 import { BagIcon, GridIcon, HomeIcon, PinIcon, ReceiptIcon, SearchIcon, UserIcon } from './icons';
+import { LanguagePicker, TranslateHost } from './LanguagePicker';
 import { PincodeSheet } from './PincodeSheet';
 
 const rupees = (p: number) => `₹${(p / 100).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
@@ -47,6 +48,7 @@ export function Header() {
 
   return (
     <>
+      <TranslateHost />
       <header className="sticky top-0 z-40 border-b border-rule bg-paper/95 backdrop-blur">
         <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:rounded-2 focus:bg-paper focus:p-2">
           Skip to content
@@ -54,7 +56,9 @@ export function Header() {
         <div className="mx-auto flex max-w-[1280px] items-center gap-3 px-4 py-3 md:gap-6 md:px-6">
           <Link href="/" className="flex shrink-0 items-center gap-2" aria-label="Mulshi Dairy home">
             <Logo />
-            <span className="text-[19px] font-extrabold tracking-[-0.03em]">Mulshi Dairy</span>
+            <span className="notranslate text-[19px] font-extrabold tracking-[-0.03em]" translate="no">
+              Mulshi Dairy
+            </span>
           </Link>
           <Suspense fallback={<div className="hidden h-11 flex-1 md:block" />}>
             <SearchBox className="hidden max-w-[560px] flex-1 md:flex" />
@@ -74,6 +78,7 @@ export function Header() {
                 <span className="num block text-[13px] font-semibold">{pincode || 'Enter pincode'}</span>
               </span>
             </button>
+            <LanguagePicker className="hidden md:block" />
             <Link href="/account" className="hidden items-center gap-2 rounded-pill px-3 py-2 text-[15px] font-medium hover:bg-paper-2 md:flex">
               <UserIcon /> Account
             </Link>

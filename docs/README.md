@@ -35,6 +35,7 @@ Documentation for the Mulshi Dairy shop: storefront, admin panel, public API, vi
 | 12 | [Development guide](12-development.md) | Moved to [DEVELOPMENT.md](../DEVELOPMENT.md) at the repository root |
 | 13 | [Android integration](13-android-integration.md) | Using the API from the future Android app |
 | 19 | [Coupons](19-coupons.md) | Discount codes: rules, GST and shipping effects, API |
+| 20 | [Hosting and costs](20-hosting-and-costs.md) | What needs hosting, where to host, what each piece costs, payment fees, free tiers, with sources |
 | 18 | [Order emails](18-order-emails.md) | Confirmed / shipped / delivered / cancelled emails, queue, providers and DNS setup |
 | 17 | [Put the shop live on one server](17-deploy-single-server.md) | Points to [DEPLOYMENT.md](../DEPLOYMENT.md); covers the optional Cloudflare Tunnel variant |
 | 16 | [Exact delivery location](16-location-and-delivery.md) | Map pin and GPS on addresses, what couriers see, Android steps, privacy, map and lookup providers at scale |

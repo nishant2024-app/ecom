@@ -61,7 +61,7 @@ export default async function Products({ searchParams }: { searchParams: Promise
         </div>
       </div>
 
-      <nav aria-label="Categories" className="-mx-4 mt-5 flex gap-2 overflow-x-auto px-4 pb-1 md:mx-0 md:px-0">
+      <nav aria-label="Categories" className="-mx-4 mt-5 flex gap-2 no-scrollbar overflow-x-auto px-4 pb-1 md:mx-0 md:px-0">
         <Link href="/products" aria-current={!category ? 'page' : undefined} className={tab(!category && !q)}>
           All
         </Link>

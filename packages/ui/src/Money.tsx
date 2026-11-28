@@ -13,7 +13,7 @@ export function Money({ paise, className, signed }: MoneyProps) {
   const text = formatINR(Math.abs(paise));
   const sign = paise < 0 ? '−' : signed && paise > 0 ? '+' : '';
   return (
-    <span className={cn('num whitespace-nowrap', className)}>
+    <span className={cn('num notranslate whitespace-nowrap', className)} translate="no">
       {sign}
       {text}
     </span>

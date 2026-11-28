@@ -565,9 +565,6 @@ function ProductEditor({
           <Field label="Name (English)">
             <input value={f.nameEn} onChange={(e) => set('nameEn', e.target.value)} className={input} />
           </Field>
-          <Field label="Name (Hindi)" hint="Optional">
-            <input value={f.nameHi} onChange={(e) => set('nameHi', e.target.value)} className={input} lang="hi" />
-          </Field>
           <Field label="URL slug" hint="Lowercase letters, numbers, dashes">
             <input value={f.slug} onChange={(e) => set('slug', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))} className={`${input} num`} />
           </Field>

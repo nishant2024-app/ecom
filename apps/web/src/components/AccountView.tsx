@@ -5,7 +5,7 @@ import { motion } from 'motion/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { api, ApiError } from '@/lib/api-client';
+import { api, ApiError, hasSession } from '@/lib/api-client';
 import { shortDate, STATUS_LABEL } from '@/lib/format';
 import type { Address, Pack } from '@/lib/types';
 import { AddressForm } from './AddressForm';
@@ -39,6 +39,10 @@ export function AccountView() {
   const [adding, setAdding] = useState(false);
 
   useEffect(() => {
+    if (!hasSession()) {
+      setMe('signed-out');
+      return;
+    }
     api<{ name: string; email: string }>('/v1/store/me')
       .then(async (m) => {
         setMe(m);

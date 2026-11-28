@@ -33,6 +33,12 @@ export function legalDocs(b: { name: string; legalName: string; email: string; p
             'Courier partners (name, address, phone and, if you shared it, the map location, to deliver your parcel), Cashfree Payments (to take payment and issue refunds), and service providers that host our systems. We never sell your data.',
           ],
         },
+        {
+          h: 'Reading the shop in another language',
+          p: [
+            'If you choose a language other than English, the text of the page you are viewing is sent to Google Translate so your browser can show it translated. We do not store translations and nothing is sent to Google unless you choose a language. Choose English to turn it off.',
+          ],
+        },
         { h: 'How long we keep it', p: ['Order and invoice records are kept for as long as Indian tax law requires. Everything else is deleted within 30 days of you deleting your account.'] },
         { h: 'Your rights', p: ['You can see and change your details in your account, and delete your account from Account → Delete my account. For any other request write to ' + b.email + '.'] },
         { h: 'Grievance officer', p: [`${b.legalName}, ${b.address}. Email ${b.email}, phone ${b.phone}. We reply within 7 days.`] },

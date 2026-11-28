@@ -5,7 +5,7 @@ import { motion } from 'motion/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { api, ApiError } from '@/lib/api-client';
+import { api, ApiError, hasSession } from '@/lib/api-client';
 import { useCart } from '@/lib/cart';
 import { etaText } from '@/lib/format';
 import type { Address, Order, PaymentStart } from '@/lib/types';
@@ -60,6 +60,10 @@ export function CheckoutView() {
   }, [addressId, JSON.stringify(lines)]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
+    if (!hasSession()) {
+      setMe('signed-out');
+      return;
+    }
     api<{ name: string }>('/v1/store/me')
       .then(async (m) => {
         setMe(m);

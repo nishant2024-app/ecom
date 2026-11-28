@@ -36,6 +36,9 @@ async function refresh(): Promise<boolean> {
   return refreshing;
 }
 
+/** True when this browser holds a sign-in. Anonymous visitors should not ask the API who they are (it would answer 401). */
+export const hasSession = () => !!cookie('csrf_token');
+
 /** Browser call to the API through the storefront's /api proxy, with one automatic token refresh. */
 export async function api<T>(path: string, init: RequestInit & { idempotencyKey?: string } = {}, retried = false): Promise<T> {
   const headers = new Headers(init.headers);

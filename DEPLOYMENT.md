@@ -30,7 +30,7 @@ Time needed: about 2 hours, plus waiting for DNS and for Cashfree to approve you
 | **Email sending** (optional) | A free Resend or Brevo account, see [docs/18-order-emails.md](docs/18-order-emails.md)                                                                                                                                                                                                                                        |
 | **Your computer**            | Windows 10/11, macOS or Linux. Any has `ssh` in its terminal (Windows: Command Prompt or PowerShell)                                                                                                                                                                                                                          |
 
-Where each key comes from is explained in [docs/14-go-live.md](docs/14-go-live.md).
+Where each key comes from is explained in [docs/14-go-live.md](docs/14-go-live.md). For what each item costs and how to choose a provider, read [docs/20-hosting-and-costs.md](docs/20-hosting-and-costs.md).
 
 ---
 

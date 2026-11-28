@@ -51,7 +51,7 @@ export function Gallery({ product, size, variantKey, reduce }: { product: Produc
         )}
       </div>
       {photos.length > 1 && (
-        <ul className="order-2 flex gap-2 overflow-x-auto md:order-1 md:flex-col" aria-label="More photos">
+        <ul className="order-2 flex gap-2 no-scrollbar overflow-x-auto md:order-1 md:flex-col" aria-label="More photos">
           {photos.map((p, i) => (
             <li key={p.url} className="shrink-0">
               <button

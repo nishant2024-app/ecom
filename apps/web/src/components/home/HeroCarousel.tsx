@@ -1,7 +1,8 @@
 'use client';
 
 import { PackShot } from '@dairy/ui';
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { AnimatePresence, motion } from 'motion/react';
+import { useReducedMotionAfterMount } from '@/lib/use-reduced-motion';
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Img, Pack, StoreContent } from '@/lib/types';
@@ -84,7 +85,7 @@ const THEMES: Record<Banner['theme'], { bg: string; ink: string; sub: string; ch
 const INTERVAL = 6000;
 
 export function HeroCarousel({ banners, images, packsFor }: { banners: Banner[]; images: (Img | null)[]; packsFor: Record<string, BannerPack[]> }) {
-  const reduce = useReducedMotion();
+  const reduce = useReducedMotionAfterMount();
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const [dir, setDir] = useState(1);
