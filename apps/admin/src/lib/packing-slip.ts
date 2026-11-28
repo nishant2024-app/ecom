@@ -4,10 +4,10 @@ import { rupees } from './format';
 
 const esc = (s: unknown) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 
-/** Open a print-ready window: one A5-ish slip per order, with a pick list and address label. */
-export async function printPackingSlips(orders: SlipOrder[]) {
+/** Open a print-ready window: one A5-ish slip per order, with a pick list and address label. Returns false when the browser blocked the window. */
+export async function printPackingSlips(orders: SlipOrder[]): Promise<boolean> {
   const w = window.open('', '_blank', 'width=900,height=1000');
-  if (!w) return alert('Allow pop-ups for this site to print packing slips.');
+  if (!w) return false;
   // QR codes the delivery partner scans to open turn-by-turn directions to the pinned door.
   const qr = new Map<string, string>();
   for (const o of orders) {
@@ -45,4 +45,5 @@ export async function printPackingSlips(orders: SlipOrder[]) {
   .note { border: 1px dashed #999; padding: 6px; margin-top: 8px; } footer { margin-top: 12px; font-size: 10px; color: #444; }
   </style></head><body>${slips}<script>window.onload = () => { window.print(); }</script></body></html>`);
   w.document.close();
+  return true;
 }

@@ -68,6 +68,8 @@ export function OrderView({ id }: { id: string }) {
   const [order, setOrder] = useState<Order | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [askCancel, setAskCancel] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const load = useCallback(() => api<Order>(`/v1/store/orders/${id}`).then(setOrder), [id]);
   useEffect(() => {
@@ -109,30 +111,32 @@ export function OrderView({ id }: { id: string }) {
   const cancelled = order.status === 'cancelled' || order.status === 'refunded';
 
   async function cancel() {
-    if (!confirm('Cancel this order? The full amount is refunded to your payment method.')) return;
     setBusy(true);
+    setActionError(null);
     try {
       setOrder(await api<Order>(`/v1/store/orders/${id}/cancel`, { method: 'POST', body: JSON.stringify({}) }));
+      setAskCancel(false);
     } catch (e) {
-      alert(e instanceof ApiError ? (e.problem.detail ?? e.problem.title) : 'Could not cancel');
+      setActionError(e instanceof ApiError ? (e.problem.detail ?? e.problem.title) : 'Could not cancel the order. Please try again.');
     } finally {
       setBusy(false);
     }
   }
   async function payAgain() {
     setBusy(true);
+    setActionError(null);
     try {
       const r = await api<{ payment: PaymentStart }>(`/v1/store/orders/${id}/pay`, { method: 'POST' });
       await startPayment(r.payment, router);
     } catch (e) {
-      alert(e instanceof ApiError ? (e.problem.detail ?? e.problem.title) : 'Could not start payment');
+      setActionError(e instanceof ApiError ? (e.problem.detail ?? e.problem.title) : 'Could not start the payment. Please try again.');
       setBusy(false);
     }
   }
 
   return (
     <div className="mx-auto max-w-[1100px] px-4 py-10 md:px-6">
-      <div className="flex flex-col items-start gap-6 bg-forest p-6 text-on-forest md:flex-row md:items-center md:p-10">
+      <div className="flex flex-col items-start gap-6 bg-forest p-6 text-on-forest md:flex-row md:flex-wrap md:items-center md:p-10">
         {!cancelled && <Parcel done={done} />}
         <div className="flex-1">
           <p className="num text-sm text-on-forest/70">Order {order.number}</p>
@@ -163,12 +167,31 @@ export function OrderView({ id }: { id: string }) {
               Pay now
             </button>
           )}
-          {order.canCancel && (
-            <button type="button" onClick={cancel} disabled={busy} className="border border-on-forest/40 px-5 py-3 rounded-pill">
+          {order.canCancel && !askCancel && (
+            <button type="button" onClick={() => setAskCancel(true)} disabled={busy} className="rounded-pill border border-on-forest/40 px-5 py-3">
               Cancel order
             </button>
           )}
         </div>
+        {order.canCancel && askCancel && (
+          <div role="alertdialog" aria-label="Confirm cancellation" className="w-full rounded-4 bg-on-forest/10 p-4 md:order-last">
+            <p className="font-semibold">Cancel this order?</p>
+            <p className="mt-1 text-sm text-on-forest/80">The full amount is refunded to your payment method.</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button type="button" onClick={cancel} disabled={busy} className="rounded-pill bg-paper px-5 py-2.5 font-semibold text-forest hover:bg-meadow disabled:opacity-60">
+                {busy ? 'Cancelling…' : 'Yes, cancel my order'}
+              </button>
+              <button type="button" onClick={() => setAskCancel(false)} disabled={busy} className="rounded-pill border border-on-forest/40 px-5 py-2.5">
+                Keep my order
+              </button>
+            </div>
+          </div>
+        )}
+        {actionError && (
+          <p role="alert" className="w-full rounded-3 bg-paper px-4 py-3 font-medium text-alert">
+            {actionError}
+          </p>
+        )}
       </div>
 
       {!cancelled && (

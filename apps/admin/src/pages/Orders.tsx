@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react
 import type { ColumnDefinition } from 'tabulator-tables';
 import { el, statusPill, twoLine } from '../components/cells';
 import { DataTable } from '../components/DataTable';
-import { Btn, Card, Field, Page, StatusBadge, input } from '../components/ui';
+import { Btn, Card, Field, Page, ReasonDialog, StatusBadge, input } from '../components/ui';
 import { api, ApiError, download } from '../lib/api';
 import { printPackingSlips } from '../lib/packing-slip';
 import { STATUS, rupees, when, type Money } from '../lib/format';
@@ -124,7 +124,7 @@ export function OrdersPage({ status: initial, permissions = [] }: { status?: str
   }
   async function slips() {
     const r = await api<{ data: SlipOrder[] }>('/v1/admin/orders/packing-slips', { method: 'POST', body: JSON.stringify({ orderIds: picked.map((o) => o.id) }) });
-    printPackingSlips(r.data);
+    if (!(await printPackingSlips(r.data))) setNote('Your browser blocked the print window. Allow pop-ups for this site, then try again.');
   }
 
   return (
@@ -255,6 +255,7 @@ interface Detail {
 export function OrderDetailPage({ id, permissions }: { id: string; permissions: string[] }) {
   const [o, setO] = useState<Detail | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [cancelOpen, setCancelOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   useEffect(() => {
     api<Detail>(`/v1/admin/orders/${id}`)
@@ -387,16 +388,24 @@ export function OrderDetailPage({ id, permissions }: { id: string; permissions: 
             {o.status === 'cancelled' && <p className="text-ink-2">Cancelled: {o.cancelReason}</p>}
             {['pending_payment', 'confirmed', 'packed'].includes(o.status) && can('orders.refund') && (
               <div className="mt-4 rule-t pt-3">
-                <Btn
-                  variant="danger"
-                  disabled={busy}
-                  onClick={() => {
-                    const reason = prompt('Why is this order being cancelled? The customer sees this and is refunded in full.');
-                    if (reason && reason.trim().length >= 3) void act('cancel', { reason: reason.trim() });
-                  }}
-                >
+                <Btn variant="danger" disabled={busy} onClick={() => setCancelOpen(true)}>
                   Cancel and refund
                 </Btn>
+                <ReasonDialog
+                  open={cancelOpen}
+                  danger
+                  busy={busy}
+                  title="Cancel this order?"
+                  description="The customer sees the reason and is refunded in full. Stock is released."
+                  label="Reason"
+                  suggestions={['Customer asked to cancel', 'Item out of stock', 'Address not serviceable', 'Duplicate order']}
+                  confirmLabel="Cancel and refund"
+                  onCancel={() => setCancelOpen(false)}
+                  onConfirm={(reason) => {
+                    setCancelOpen(false);
+                    void act('cancel', { reason });
+                  }}
+                />
               </div>
             )}
           </Card>

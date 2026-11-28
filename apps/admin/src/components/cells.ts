@@ -4,11 +4,12 @@
  */
 import { STATUS } from '../lib/format';
 
-type Attrs = { class?: string; text?: string; title?: string; href?: string; type?: string; ariaLabel?: string; onClick?: (e: MouseEvent) => void; data?: Record<string, string> };
+type Attrs = { class?: string; lang?: string; text?: string; title?: string; href?: string; type?: string; ariaLabel?: string; onClick?: (e: MouseEvent) => void; data?: Record<string, string> };
 
 export function el(tag: string, attrs: Attrs = {}, ...children: (Node | string | null | undefined | false)[]): HTMLElement {
   const node = document.createElement(tag);
   if (attrs.class) node.className = attrs.class;
+  if (attrs.lang) node.lang = attrs.lang;
   if (attrs.text !== undefined) node.textContent = attrs.text;
   if (attrs.title) node.title = attrs.title;
   if (attrs.href) (node as HTMLAnchorElement).href = attrs.href;

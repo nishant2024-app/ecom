@@ -292,6 +292,116 @@ export function ConfirmDialog({
   );
 }
 
+/** Asks for a short written reason (for example why an order is cancelled). Replaces the browser's prompt box. */
+export function ReasonDialog({
+  open,
+  title,
+  description,
+  label,
+  suggestions = [],
+  minLength = 3,
+  confirmLabel,
+  danger = false,
+  busy = false,
+  onConfirm,
+  onCancel,
+}: {
+  open: boolean;
+  title: string;
+  description?: ReactNode;
+  label: string;
+  suggestions?: string[];
+  minLength?: number;
+  confirmLabel: string;
+  danger?: boolean;
+  busy?: boolean;
+  onConfirm: (reason: string) => void;
+  onCancel: () => void;
+}) {
+  const [reason, setReason] = useState('');
+  const [touched, setTouched] = useState(false);
+  const box = useRef<HTMLTextAreaElement>(null);
+  const id = useId();
+  useEffect(() => {
+    if (!open) return;
+    setReason('');
+    setTouched(false);
+    box.current?.focus();
+    const k = (e: KeyboardEvent) => e.key === 'Escape' && onCancel();
+    document.addEventListener('keydown', k);
+    return () => document.removeEventListener('keydown', k);
+  }, [open, onCancel]);
+  if (!open) return null;
+  const clean = reason.trim();
+  const tooShort = clean.length < minLength;
+  return (
+    <div className="fixed inset-0 z-[60] grid place-items-center p-4">
+      <div className="absolute inset-0 bg-ink/40" onClick={onCancel} aria-hidden />
+      <form
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby={`${id}-title`}
+        className="relative w-full max-w-md rounded-4 bg-paper p-5 shadow-float"
+        onSubmit={(e) => {
+          e.preventDefault();
+          setTouched(true);
+          if (!tooShort) onConfirm(clean);
+        }}
+      >
+        <h2 id={`${id}-title`} className="text-xl font-bold">
+          {title}
+        </h2>
+        {description && <div className="mt-2 text-ink-2">{description}</div>}
+        {suggestions.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-2" aria-label="Common reasons">
+            {suggestions.map((sug) => (
+              <button
+                key={sug}
+                type="button"
+                onClick={() => setReason(sug)}
+                className={`rounded-pill border px-3 py-1 text-sm ${clean === sug ? 'border-forest bg-meadow text-forest' : 'border-rule hover:bg-paper-2'}`}
+              >
+                {sug}
+              </button>
+            ))}
+          </div>
+        )}
+        <label htmlFor={`${id}-reason`} className="mt-4 block text-sm text-ink-2">
+          {label}
+        </label>
+        <textarea
+          id={`${id}-reason`}
+          ref={box}
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          rows={3}
+          maxLength={200}
+          aria-invalid={touched && tooShort}
+          aria-describedby={touched && tooShort ? `${id}-err` : undefined}
+          className="mt-1 w-full rounded-2 border border-rule bg-paper px-3 py-2 text-sm focus:border-forest"
+        />
+        {touched && tooShort && (
+          <p id={`${id}-err`} role="alert" className="mt-1 text-sm text-alert">
+            Please write at least {minLength} characters.
+          </p>
+        )}
+        <div className="mt-5 flex justify-end gap-2">
+          <button type="button" onClick={onCancel} className="inline-flex h-9 items-center rounded-pill border border-rule px-4 text-sm hover:bg-paper-2">
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={busy}
+            className={`inline-flex h-9 items-center rounded-pill px-4 text-sm transition-colors disabled:opacity-50 ${danger ? 'border border-alert text-alert hover:bg-alert hover:text-paper' : 'bg-forest text-on-forest hover:bg-forest-2'}`}
+          >
+            {busy ? 'Working…' : confirmLabel}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
 export function Empty({ children }: { children: ReactNode }) {
   return <p className="rounded-4 border border-dashed border-rule p-8 text-center text-ink-2">{children}</p>;
 }

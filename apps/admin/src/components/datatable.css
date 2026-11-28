@@ -259,3 +259,123 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* Inline editing: cells you can click and type in (see Categories, Products prices) */
+.dt .tabulator-cell.dt-editable {
+  cursor: text;
+  position: relative;
+}
+.dt .tabulator-cell.dt-editable:hover {
+  background: var(--paper-2);
+  box-shadow: inset 0 -2px 0 var(--rule);
+}
+.dt .tabulator-cell.dt-editable:hover::after {
+  content: '';
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  margin-top: -7px;
+  opacity: 0.5;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  pointer-events: none;
+}
+.dt .tabulator-cell.tabulator-editing {
+  background: var(--paper);
+  border: 0;
+  box-shadow: inset 0 0 0 2px var(--forest);
+  padding: 0;
+}
+.dt .tabulator-cell.tabulator-editing input {
+  width: 100%;
+  height: 100%;
+  padding: 10px 12px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  outline: none;
+}
+.dt .tabulator-cell.dt-editable:focus-visible {
+  outline: 2px solid var(--forest);
+  outline-offset: -2px;
+}
+.dt .tabulator-cell.dt-saved {
+  animation: dt-saved 1.4s ease-out;
+}
+@keyframes dt-saved {
+  0%,
+  60% {
+    background: var(--meadow);
+    box-shadow: inset 0 0 0 2px var(--forest);
+  }
+  100% {
+    background: transparent;
+    box-shadow: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dt .tabulator-cell.dt-saved {
+    animation: none;
+    background: var(--meadow);
+  }
+}
+
+/* A price box inside a table cell */
+.dt-price {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 2px 0;
+}
+.dt-price-size {
+  color: var(--ink-2);
+  font-size: 0.857rem;
+  white-space: nowrap;
+}
+.dt-price-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 34px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 0 8px;
+  background: transparent;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.dt-price-field:hover {
+  border-color: var(--rule);
+  background: var(--paper-2);
+}
+.dt-price-field:focus-within {
+  border-color: var(--forest);
+  background: var(--paper);
+  box-shadow: 0 0 0 2px var(--meadow);
+}
+.dt-price-field input {
+  width: 64px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: right;
+  outline: none;
+}
+.dt-price-field[data-state='saved'] {
+  border-color: var(--forest);
+  background: var(--meadow);
+}
+.dt-price-field[data-state='error'] {
+  border-color: var(--alert);
+}
+.dt-price-field[data-state='saving'] {
+  opacity: 0.6;
+}

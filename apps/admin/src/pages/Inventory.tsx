@@ -1,5 +1,5 @@
 import { PackShot } from '@dairy/ui';
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import type { ColumnDefinition } from 'tabulator-tables';
 import { el, pill } from '../components/cells';
@@ -165,6 +165,125 @@ export function InventoryPage({ permissions }: { permissions: string[] }) {
   );
 }
 
+type AdjustKind = 'count' | 'wasted' | 'returned';
+
+/** Inline editor shown under a batch row: say what happened, type a number, see the result before saving. */
+function StockAdjuster({ batch, onSave, onCancel }: { batch: Batch; onSave: (delta: number, kind: 'adjusted' | 'wasted' | 'returned', reason: string) => void; onCancel: () => void }) {
+  const [kind, setKind] = useState<AdjustKind>('count');
+  const [value, setValue] = useState(String(batch.onHand));
+  const [note, setNote] = useState('');
+  const [busy, setBusy] = useState(false);
+  const n = Number(value);
+  const valid = value.trim() !== '' && Number.isInteger(n) && n >= 0;
+  const delta = !valid ? 0 : kind === 'count' ? n - batch.onHand : kind === 'wasted' ? -n : n;
+  const after = batch.onHand + delta;
+  let problem: string | null = null;
+  if (!valid) problem = 'Enter a whole number, zero or more.';
+  else if (delta === 0) problem = kind === 'count' ? 'That is the same as the current count.' : 'Enter at least 1.';
+  else if (after < batch.reserved) problem = `${batch.reserved} unit${batch.reserved === 1 ? ' is' : 's are'} reserved for orders, so the count cannot go below ${batch.reserved}.`;
+  const ref = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    ref.current?.focus();
+    ref.current?.select();
+  }, [kind]);
+  const base = kind === 'count' ? 'Stock recount' : kind === 'wasted' ? 'Damaged or spoiled' : 'Returned to stock';
+  const options: { id: AdjustKind; label: string; hint: string }[] = [
+    { id: 'count', label: 'I counted a different number', hint: 'Type what is really on the shelf' },
+    { id: 'wasted', label: 'Some are damaged or spoiled', hint: 'Remove units from stock' },
+    { id: 'returned', label: 'Units came back', hint: 'Add units to stock' },
+  ];
+  return (
+    <form
+      className="space-y-3"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (problem || busy) return;
+        setBusy(true);
+        onSave(delta, kind === 'count' ? 'adjusted' : kind, note.trim() ? `${base}: ${note.trim()}` : base);
+      }}
+      onKeyDown={(e) => e.key === 'Escape' && onCancel()}
+    >
+      <fieldset>
+        <legend className="mb-1 text-sm text-ink-2">What happened to batch {batch.code}?</legend>
+        <div className="flex flex-wrap gap-2" role="radiogroup">
+          {options.map((o) => (
+            <button
+              key={o.id}
+              type="button"
+              role="radio"
+              aria-checked={kind === o.id}
+              title={o.hint}
+              onClick={() => {
+                setKind(o.id);
+                setValue(o.id === 'count' ? String(batch.onHand) : '');
+              }}
+              className={`rounded-pill border px-3.5 py-1.5 text-sm ${kind === o.id ? 'border-forest bg-meadow font-semibold text-forest' : 'border-rule bg-paper hover:border-forest'}`}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+      </fieldset>
+      <div className="flex flex-wrap items-end gap-3">
+        <div>
+          <label htmlFor={`adj-${batch.id}`} className="mb-1 block text-sm text-ink-2">
+            {kind === 'count' ? 'Units on hand now' : kind === 'wasted' ? 'Units to remove' : 'Units to add'}
+          </label>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              aria-label="One less"
+              className="grid h-9 w-9 place-items-center rounded-pill border border-rule bg-paper hover:bg-paper-3"
+              onClick={() => setValue(String(Math.max(0, (valid ? n : 0) - 1)))}
+            >
+              −
+            </button>
+            <input
+              id={`adj-${batch.id}`}
+              ref={ref}
+              inputMode="numeric"
+              value={value}
+              onChange={(e) => setValue(e.target.value.replace(/[^0-9]/g, ''))}
+              className={`${input} num w-24 text-center`}
+              aria-invalid={!!problem && value !== ''}
+            />
+            <button
+              type="button"
+              aria-label="One more"
+              className="grid h-9 w-9 place-items-center rounded-pill border border-rule bg-paper hover:bg-paper-3"
+              onClick={() => setValue(String((valid ? n : 0) + 1))}
+            >
+              +
+            </button>
+          </div>
+        </div>
+        <div className="min-w-[220px] flex-1">
+          <label htmlFor={`note-${batch.id}`} className="mb-1 block text-sm text-ink-2">
+            Note (optional, kept in the stock history)
+          </label>
+          <input id={`note-${batch.id}`} value={note} onChange={(e) => setNote(e.target.value)} maxLength={150} placeholder="For example: dented tins found at packing" className={input} />
+        </div>
+      </div>
+      <p aria-live="polite" className={`text-sm ${problem ? 'text-alert' : 'text-ink-2'}`}>
+        {problem ?? (
+          <>
+            On hand will change from <strong className="num">{batch.onHand}</strong> to <strong className="num">{after}</strong> (
+            <span className={delta < 0 ? 'text-alert' : 'text-forest'}>{delta > 0 ? `+${delta}` : `−${Math.abs(delta)}`}</span>).
+          </>
+        )}
+      </p>
+      <div className="flex gap-2">
+        <Btn variant="primary" type="submit" disabled={!!problem || busy}>
+          {busy ? 'Saving…' : 'Save change'}
+        </Btn>
+        <Btn variant="ghost" onClick={onCancel}>
+          Cancel
+        </Btn>
+      </div>
+    </form>
+  );
+}
+
 function Batches({ row, canWrite, onChanged }: { row: Row; canWrite: boolean; onChanged: () => void }) {
   const [data, setData] = useState<{ data: Batch[]; movements: Movement[] } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -190,16 +309,14 @@ function Batches({ row, canWrite, onChanged }: { row: Row; canWrite: boolean; on
       setError(err instanceof ApiError ? (err.problem.detail ?? err.problem.title) : 'Could not add batch');
     }
   }
-  async function adjust(b: Batch) {
-    const raw = prompt(`Adjust ${b.code}. Enter a change in units (e.g. -3 for damaged, 5 for a recount).`);
-    if (!raw) return;
-    const delta = Number(raw);
-    if (!Number.isInteger(delta) || delta === 0) return;
-    const reason = prompt('Reason (shown in the stock history)') ?? '';
-    if (reason.trim().length < 3) return;
+  const [adjusting, setAdjusting] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  async function adjust(b: Batch, delta: number, kind: 'adjusted' | 'wasted' | 'returned', reason: string) {
     setError(null);
     try {
-      await api('/v1/admin/stock/adjustments', { method: 'POST', body: JSON.stringify({ batchId: b.id, delta, kind: delta < 0 ? 'wasted' : 'adjusted', reason: reason.trim() }) });
+      await api('/v1/admin/stock/adjustments', { method: 'POST', body: JSON.stringify({ batchId: b.id, delta, kind, reason }) });
+      setNotice(`Saved. ${b.code}: ${b.onHand} → ${b.onHand + delta} on hand.`);
+      setAdjusting(null);
       await load();
       onChanged();
     } catch (err) {
@@ -211,8 +328,13 @@ function Batches({ row, canWrite, onChanged }: { row: Row; canWrite: boolean; on
   return (
     <div className="space-y-5">
       {error && (
-        <p role="alert" className="text-alert">
+        <p role="alert" className="rounded-3 bg-paper-3 p-3 text-sm text-alert">
           {error}
+        </p>
+      )}
+      {notice && (
+        <p role="status" className="rounded-3 bg-meadow p-3 text-sm text-forest">
+          {notice}
         </p>
       )}
       <Card title="Batches (first to expire ships first)">
@@ -231,20 +353,38 @@ function Batches({ row, canWrite, onChanged }: { row: Row; canWrite: boolean; on
           </thead>
           <tbody>
             {data?.data.map((b) => (
-              <tr key={b.id} className="rule-b">
-                <td className={`${td} num`}>{b.code}</td>
-                <td className={`${td} num`}>{day(b.manufacturedOn)}</td>
-                <td className={`${td} num ${b.expiresOn < today ? 'text-alert' : ''}`}>{day(b.expiresOn)}</td>
-                <td className={`${td} num text-right`}>{b.onHand}</td>
-                <td className={`${td} num text-right text-ink-2`}>{b.reserved}</td>
-                <td className={`${td} text-right`}>
-                  {canWrite && b.onHand > 0 && (
-                    <Btn variant="ghost" onClick={() => adjust(b)}>
-                      Adjust
-                    </Btn>
-                  )}
-                </td>
-              </tr>
+              <Fragment key={b.id}>
+                <tr className={`rule-b ${adjusting === b.id ? 'bg-paper-2' : ''}`}>
+                  <td className={`${td} num`}>{b.code}</td>
+                  <td className={`${td} num`}>{day(b.manufacturedOn)}</td>
+                  <td className={`${td} num ${b.expiresOn < today ? 'text-alert' : ''}`}>{day(b.expiresOn)}</td>
+                  <td className={`${td} num text-right`}>{b.onHand}</td>
+                  <td className={`${td} num text-right text-ink-2`}>{b.reserved}</td>
+                  <td className={`${td} text-right`}>
+                    {canWrite && b.onHand > 0 && (
+                      <Btn
+                        variant="outline"
+                        aria-expanded={adjusting === b.id}
+                        aria-label={`${adjusting === b.id ? 'Close' : 'Adjust'} stock for batch ${b.code}`}
+                        onClick={() => {
+                          setNotice(null);
+                          setError(null);
+                          setAdjusting(adjusting === b.id ? null : b.id);
+                        }}
+                      >
+                        {adjusting === b.id ? 'Close' : 'Adjust'}
+                      </Btn>
+                    )}
+                  </td>
+                </tr>
+                {adjusting === b.id && (
+                  <tr className="rule-b bg-paper-2">
+                    <td colSpan={6} className="px-3 pb-4 pt-1">
+                      <StockAdjuster batch={b} onSave={(delta, kind, reason) => adjust(b, delta, kind, reason)} onCancel={() => setAdjusting(null)} />
+                    </td>
+                  </tr>
+                )}
+              </Fragment>
             ))}
           </tbody>
         </table>

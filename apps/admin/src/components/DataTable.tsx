@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import {
+  EditModule,
   FilterModule,
   FormatModule,
   InteractionModule,
@@ -15,7 +16,7 @@ import {
 import 'tabulator-tables/dist/css/tabulator.min.css';
 import './datatable.css';
 
-Tabulator.registerModule([FormatModule, SortModule, PageModule, SelectRowModule, InteractionModule, KeybindingsModule, FilterModule, ResizeColumnsModule, ResponsiveLayoutModule]);
+Tabulator.registerModule([EditModule, FormatModule, SortModule, PageModule, SelectRowModule, InteractionModule, KeybindingsModule, FilterModule, ResizeColumnsModule, ResponsiveLayoutModule]);
 
 interface Props<T extends { id: string }> {
   /** Accessible name of the table, read out by screen readers. */

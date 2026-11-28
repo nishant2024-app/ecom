@@ -193,6 +193,36 @@ describe('admin: product delete and status', () => {
   });
 });
 
+describe('admin: quick price edit', () => {
+  it('changes one size price within the MRP, needs pricing.write, and shows in the shop', async () => {
+    const owner = await staffHeaders(t, 'owner');
+    const content = await staffHeaders(t, 'content');
+    const ids = await variantIds(t);
+    const variantId = ids.powder500;
+    const before = (await t.app.inject({ url: '/v1/admin/products', headers: owner }))
+      .json()
+      .data.flatMap((p: { variants: { id: string; price: { amount: number }; mrp: { amount: number } }[] }) => p.variants)
+      .find((v: { id: string }) => v.id === variantId);
+
+    const lower = before.price.amount - 500;
+    const ok = await t.app.inject({ method: 'PATCH', url: `/v1/admin/variants/${variantId}/price`, headers: owner, payload: { pricePaise: lower } });
+    expect(ok.statusCode, ok.body).toBe(200);
+    expect(ok.json()).toMatchObject({ id: variantId, pricePaise: lower, mrpPaise: before.mrp.amount });
+    const shop = (await t.app.inject('/v1/store/products')).json();
+    const priced = JSON.stringify(shop).includes(`"amount":${lower}`);
+    expect(priced).toBe(true);
+
+    const aboveMrp = await t.app.inject({ method: 'PATCH', url: `/v1/admin/variants/${variantId}/price`, headers: owner, payload: { pricePaise: before.mrp.amount + 100 } });
+    expect(aboveMrp.statusCode).toBe(400);
+    expect(aboveMrp.json().detail).toMatch(/above the MRP/);
+    expect((await t.app.inject({ method: 'PATCH', url: `/v1/admin/variants/${variantId}/price`, headers: owner, payload: { pricePaise: 50 } })).statusCode).toBe(400);
+    expect((await t.app.inject({ method: 'PATCH', url: `/v1/admin/variants/${variantId}/price`, headers: content, payload: { pricePaise: lower } })).statusCode).toBe(403);
+    expect((await t.app.inject({ method: 'PATCH', url: '/v1/admin/variants/var_nope/price', headers: owner, payload: { pricePaise: lower } })).statusCode).toBe(404);
+
+    await t.app.inject({ method: 'PATCH', url: `/v1/admin/variants/${variantId}/price`, headers: owner, payload: { pricePaise: before.price.amount } });
+  });
+});
+
 describe('admin: store details', () => {
   it('lets the owner edit legal and contact details, validates them, and keeps other roles read-only', async () => {
     const owner = await staffHeaders(t, 'owner');

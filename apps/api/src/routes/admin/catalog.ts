@@ -322,6 +322,31 @@ export default async function adminCatalogRoutes(fastify: FastifyInstance) {
     },
   );
 
+  app.patch(
+    '/variants/:variantId/price',
+    {
+      config: { auth: 'staff', permission: 'pricing.write' },
+      schema: {
+        tags: ['Admin'],
+        summary: 'Change the price of one size',
+        description: 'Quick edit used by the product list. The price cannot be above the MRP; raise the MRP in the product editor first if needed.',
+        params: IdParam('variantId'),
+        body: Type.Object({ pricePaise: Type.Integer({ minimum: 100 }) }, { additionalProperties: false }),
+        response: { 200: Type.Object({ id: Type.String(), sku: Type.String(), pricePaise: Type.Integer(), mrpPaise: Type.Integer() }) },
+      },
+    },
+    async (req) => {
+      const [before] = await db.select().from(s.productVariants).where(eq(s.productVariants.id, req.params.variantId));
+      if (!before) throw notFound('Size');
+      if (req.body.pricePaise > before.mrpPaise) {
+        throw new AppError('VALIDATION_FAILED', 400, `The price cannot be above the MRP (₹${before.mrpPaise / 100}). Raise the MRP in the product editor first.`);
+      }
+      const [after] = await db.update(s.productVariants).set({ pricePaise: req.body.pricePaise, updatedAt: new Date() }).where(eq(s.productVariants.id, before.id)).returning();
+      await audit(db, req, 'variant.price', 'product', before.productId, { sku: before.sku, pricePaise: before.pricePaise }, { sku: before.sku, pricePaise: req.body.pricePaise });
+      return { id: after!.id, sku: after!.sku, pricePaise: after!.pricePaise, mrpPaise: after!.mrpPaise };
+    },
+  );
+
   app.delete(
     '/products/:productId',
     {

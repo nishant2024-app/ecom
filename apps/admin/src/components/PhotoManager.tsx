@@ -1,7 +1,7 @@
 import { Reorder } from 'motion/react';
 import { useEffect, useRef, useState, type DragEvent } from 'react';
 import { api, ApiError, thumb, upload, type Image } from '../lib/api';
-import { Btn, input } from './ui';
+import { Btn, ConfirmDialog, input } from './ui';
 
 const ACCEPT = 'image/jpeg,image/png,image/webp,image/heic,image/heif,image/avif';
 
@@ -65,8 +65,12 @@ export function PhotoManager({ productId, readOnly }: { productId: string; readO
 
   const add = (files: File[]) => run(async () => setPhotos((await upload<{ data: Image[] }>(base, files)).data));
   const saveOrder = (list: Image[]) => run(async () => setPhotos((await api<{ data: Image[] }>(`${base}/order`, { method: 'PUT', body: JSON.stringify({ ids: list.map((p) => p.id) }) })).data));
-  const remove = (p: Image) => {
-    if (!confirm('Delete this photo? This cannot be undone.')) return;
+  const [toDelete, setToDelete] = useState<Image | null>(null);
+  const remove = (p: Image) => setToDelete(p);
+  const confirmRemove = () => {
+    const p = toDelete;
+    setToDelete(null);
+    if (!p) return;
     void run(async () => {
       await api(`/v1/admin/media/${p.id}`, { method: 'DELETE' });
       setPhotos((xs) => xs?.filter((x) => x.id !== p.id) ?? null);
@@ -82,6 +86,9 @@ export function PhotoManager({ productId, readOnly }: { productId: string; readO
 
   return (
     <div className="space-y-3">
+      <ConfirmDialog open={!!toDelete} danger title="Delete this photo?" confirmLabel="Delete photo" onConfirm={confirmRemove} onCancel={() => setToDelete(null)}>
+        <p>The photo is removed from the product and from storage. This cannot be undone.</p>
+      </ConfirmDialog>
       {photos && photos.length > 0 && (
         <Reorder.Group axis="x" values={photos} onReorder={setPhotos} className="flex gap-3 overflow-x-auto pb-1" aria-label="Photos, drag to reorder. The first photo is the main image.">
           {photos.map((p, i) => (

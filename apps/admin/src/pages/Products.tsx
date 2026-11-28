@@ -71,7 +71,74 @@ const blankVariant = (): VariantForm => ({
 
 type ProductRow = Row & { minPrice: number; totalStock: number };
 
-function productColumns(act: { current: { open: (id?: string) => Promise<void>; openMenu: (row: Row, anchor: HTMLElement) => void; canWrite: boolean } }): ColumnDefinition[] {
+type ProductActions = {
+  open: (id?: string) => Promise<void>;
+  openMenu: (row: Row, anchor: HTMLElement) => void;
+  canWrite: boolean;
+  canPrice: boolean;
+  priceOf: (variantId: string, fallbackPaise: number) => number;
+  savePrice: (row: Row, variantId: string, packSize: string, paise: number) => Promise<void>;
+};
+
+/** One size's price: a box you can type in. Enter or leaving the box saves, Esc puts the old price back. */
+function priceLine(act: { current: ProductActions }, p: ProductRow, v: ProductRow['variants'][number]): HTMLElement {
+  const line = el('div', {}, null);
+  const row = el('div', { class: 'dt-price' }, el('span', { class: 'dt-price-size', text: p.variants.filter((x) => x.status === 'active').length > 1 ? v.packSize : '' }));
+  line.append(row);
+  const current = act.current.priceOf(v.id, v.price.amount);
+  if (!act.current.canPrice) {
+    row.append(el('span', { class: 'dt-num', text: rupees(current) }));
+    return line;
+  }
+  const field = el('label', { class: 'dt-price-field', title: `MRP ${rupees(v.mrp.amount)}. The price cannot be above it.` }, '₹');
+  const input = document.createElement('input');
+  input.inputMode = 'decimal';
+  input.value = String(current / 100);
+  input.setAttribute('aria-label', `Price of ${p.name}${p.variants.filter((x) => x.status === 'active').length > 1 ? ` ${v.packSize}` : ''}, in rupees`);
+  field.append(input);
+  row.append(field);
+  const note = el('span', { class: 'dt-sub dt-alert' });
+  note.setAttribute('role', 'alert');
+  line.append(note);
+  let saved = current;
+  const fail = (text: string) => {
+    field.dataset.state = 'error';
+    note.textContent = text;
+    input.value = String(saved / 100);
+  };
+  input.addEventListener('focus', () => input.select());
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') input.blur();
+    if (e.key === 'Escape') {
+      input.value = String(saved / 100);
+      note.textContent = '';
+      delete field.dataset.state;
+      input.blur();
+    }
+  });
+  input.addEventListener('change', async () => {
+    note.textContent = '';
+    const rupeesValue = Number(input.value.replace(/,/g, ''));
+    const paise = Math.round(rupeesValue * 100);
+    if (!Number.isFinite(rupeesValue) || input.value.trim() === '') return fail('Enter a price in rupees.');
+    if (paise < 100) return fail('The price must be at least ₹1.');
+    if (paise > v.mrp.amount) return fail(`Above the MRP of ${rupees(v.mrp.amount)}. Raise the MRP in the product editor first.`);
+    if (paise === saved) return void delete field.dataset.state;
+    field.dataset.state = 'saving';
+    try {
+      await act.current.savePrice(p, v.id, v.packSize, paise);
+      saved = paise;
+      input.value = String(paise / 100);
+      field.dataset.state = 'saved';
+      setTimeout(() => field.dataset.state === 'saved' && delete field.dataset.state, 1600);
+    } catch (e) {
+      fail(e instanceof Error ? e.message : 'Could not save the price.');
+    }
+  });
+  return line;
+}
+
+function productColumns(act: { current: ProductActions }): ColumnDefinition[] {
   return [
     {
       title: 'Product',
@@ -125,19 +192,17 @@ function productColumns(act: { current: { open: (id?: string) => Promise<void>; 
     {
       title: 'Price',
       field: 'minPrice',
-      width: 160,
+      width: 210,
       responsive: 1,
       hozAlign: 'right',
       cssClass: 'dt-right',
       sorter: 'number',
-      formatter: (cell) =>
-        el('span', {
-          class: 'dt-num',
-          text: (cell.getData() as ProductRow).variants
-            .filter((v) => v.status === 'active')
-            .map((v) => rupees(v.price.amount))
-            .join(' · '),
-        }),
+      formatter: (cell) => {
+        const p = cell.getData() as ProductRow;
+        const box = el('div', {});
+        for (const v of p.variants.filter((x) => x.status === 'active')) box.append(priceLine(act, p, v));
+        return box;
+      },
     },
     {
       title: 'In stock',
@@ -197,7 +262,11 @@ export function ProductsPage({ permissions }: { permissions: string[] }) {
   const [busy, setBusy] = useState(false);
   const [menu, setMenu] = useState<{ row: Row; anchor: HTMLElement } | null>(null);
   const canWrite = permissions.includes('catalog.write');
-  const load = () => api<{ data: Row[] }>(`/v1/admin/products${q ? `?q=${encodeURIComponent(q)}` : ''}`).then((r) => setRows(r.data));
+  const load = () =>
+    api<{ data: Row[] }>(`/v1/admin/products${q ? `?q=${encodeURIComponent(q)}` : ''}`).then((r) => {
+      priceEdits.current.clear(); // the server's prices are the truth again
+      setRows(r.data);
+    });
   useEffect(() => {
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -261,7 +330,19 @@ export function ProductsPage({ permissions }: { permissions: string[] }) {
   const shown = useMemo(() => (tab === 'all' ? rows : rows.filter((r) => r.status === tab)), [rows, tab]);
 
   // Columns are built once; they reach the page's latest handlers through this ref.
-  const act = useRef({ open: (_id?: string) => Promise.resolve(), openMenu: (_row: Row, _anchor: HTMLElement) => {}, canWrite });
+  const canPrice = permissions.includes('pricing.write');
+  // Prices typed into the table are remembered here, so the table does not need to redraw (which would drop your cursor).
+  const priceEdits = useRef(new Map<string, number>());
+  const act = useRef<ProductActions>({ open: () => Promise.resolve(), openMenu: () => {}, canWrite, canPrice, priceOf: (_id, fallback) => fallback, savePrice: () => Promise.resolve() });
+  async function savePrice(row: Row, variantId: string, packSize: string, paise: number) {
+    try {
+      await api(`/v1/admin/variants/${variantId}/price`, { method: 'PATCH', body: JSON.stringify({ pricePaise: paise }) });
+    } catch (e) {
+      throw new Error(problem(e, 'Could not save the price.'));
+    }
+    priceEdits.current.set(variantId, paise);
+    setNotice({ kind: 'ok', text: `Price of ${row.name}${row.variants.filter((v) => v.status === 'active').length > 1 ? ` (${packSize})` : ''} is now ${rupees(paise)}.` });
+  }
   const tableRows = useMemo(
     () =>
       shown.map((p) => {
@@ -320,7 +401,7 @@ export function ProductsPage({ permissions }: { permissions: string[] }) {
     });
   }
 
-  act.current = { open, openMenu: (row, anchor) => setMenu({ row, anchor }), canWrite };
+  act.current = { open, openMenu: (row, anchor) => setMenu({ row, anchor }), canWrite, canPrice, priceOf: (id, fallback) => priceEdits.current.get(id) ?? fallback, savePrice };
 
   return (
     <Page

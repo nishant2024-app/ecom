@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { ColumnDefinition } from 'tabulator-tables';
+import type { CellComponent, ColumnDefinition } from 'tabulator-tables';
 import { button, el } from '../components/cells';
 import { DataTable } from '../components/DataTable';
 import { Btn, ConfirmDialog, Field, Page, input } from '../components/ui';
@@ -24,24 +24,54 @@ const slugify = (s: string) =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '');
 
-function categoryColumns(act: { current: { edit: (c: Category) => void; del: (c: Category) => void; canWrite: boolean } }): ColumnDefinition[] {
+type CategoryActions = { edit: (c: Category) => void; del: (c: Category) => void; save: (cell: CellComponent) => void; canWrite: boolean };
+
+function categoryColumns(act: { current: CategoryActions }): ColumnDefinition[] {
+  // Cells the owner can click and type in. Enter saves, Escape cancels, a wrong value is put back with a message.
+  const editable = (title: string, field: keyof Category, extra: Partial<ColumnDefinition> = {}): ColumnDefinition => ({
+    title,
+    field,
+    ...(act.current.canWrite ? { editor: 'input', cssClass: 'dt-editable', cellEdited: (cell: CellComponent) => act.current.save(cell) } : {}),
+    ...extra,
+  });
   return [
-    { title: '#', field: 'sort', width: 70, responsive: 3, sorter: 'number', formatter: (c) => el('span', { class: 'dt-num dt-muted', text: String(c.getValue()) }) },
-    {
-      title: 'Category',
-      field: 'nameEn',
-      minWidth: 240,
+    editable('Order', 'sort', {
+      width: 110,
+      responsive: 3,
+      sorter: 'number',
+      editor: act.current.canWrite ? 'number' : undefined,
+      editorParams: { min: 0, step: 1 },
+      formatter: (c) => el('span', { class: 'dt-num', text: String(c.getValue()) }),
+    }),
+    editable('Name (English)', 'nameEn', {
+      minWidth: 170,
       responsive: 0,
-      formatter: (cell) => {
-        const c = cell.getData() as Category;
-        return el('div', {}, el('span', {}, c.nameEn, el('span', { class: 'dt-muted', text: ` · ${c.nameHi}` })), el('span', { class: 'dt-sub dt-num', text: `/products?category=${c.slug}` }));
-      },
+      editorParams: { elementAttributes: { maxlength: '60', 'aria-label': 'Name in English' } },
+      formatter: (c) => el('span', { text: String(c.getValue() ?? '') }),
+    }),
+    editable('Name (Hindi)', 'nameHi', {
+      minWidth: 170,
+      responsive: 2,
+      editorParams: { elementAttributes: { maxlength: '60', lang: 'hi', 'aria-label': 'Name in Hindi' } },
+      formatter: (c) => el('span', { lang: 'hi', text: String(c.getValue() ?? '') }),
+    }),
+    editable('Description', 'blurb', {
+      minWidth: 220,
+      responsive: 4,
+      editorParams: { elementAttributes: { maxlength: '140', 'aria-label': 'Description' } },
+      formatter: (c) => el('span', { class: 'dt-muted', text: String(c.getValue() ?? '') }),
+    }),
+    {
+      title: 'Web address',
+      field: 'slug',
+      width: 190,
+      responsive: 5,
+      formatter: (c) => el('span', { class: 'dt-num dt-muted', text: `/products?category=${String(c.getValue())}` }),
     },
-    { title: 'Description', field: 'blurb', minWidth: 200, responsive: 2, formatter: (c) => el('span', { class: 'dt-muted', text: String(c.getValue() ?? '') }) },
     {
       title: 'Products',
       field: 'productCount',
-      width: 120,
+      width: 110,
       responsive: 1,
       hozAlign: 'right',
       cssClass: 'dt-right',
@@ -51,7 +81,7 @@ function categoryColumns(act: { current: { edit: (c: Category) => void; del: (c:
     {
       title: 'Actions',
       field: 'actions',
-      width: 170,
+      width: 190,
       responsive: 0,
       hozAlign: 'right',
       cssClass: 'dt-right',
@@ -61,7 +91,7 @@ function categoryColumns(act: { current: { edit: (c: Category) => void; del: (c:
         const c = cell.getData() as Category;
         const box = el('span', { class: 'dt-actions' });
         if (!act.current.canWrite) return box;
-        box.append(button('Edit', () => act.current.edit(c), { ariaLabel: `Edit ${c.nameEn}` }));
+        box.append(button('Edit all', () => act.current.edit(c), { ariaLabel: `Edit all details of ${c.nameEn}` }));
         box.append(
           button('Delete', () => act.current.del(c), {
             ariaLabel: `Delete ${c.nameEn}`,
@@ -81,6 +111,7 @@ export function CategoriesPage({ permissions }: { permissions: string[] }) {
   const [form, setForm] = useState<Form | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [toDelete, setToDelete] = useState<Category | null>(null);
+  const [saved, setSaved] = useState<string | null>(null);
   const canWrite = permissions.includes('catalog.write');
   const load = () => api<{ data: Category[] }>('/v1/admin/categories').then((r) => setRows(r.data));
   useEffect(() => {
@@ -110,8 +141,39 @@ export function CategoriesPage({ permissions }: { permissions: string[] }) {
       setMsg(e instanceof ApiError ? (e.problem.detail ?? e.problem.title) : 'Could not delete');
     }
   }
-  const act = useRef({ edit: (_c: Category) => {}, del: (_c: Category) => {}, canWrite });
-  act.current = { edit: (c) => setForm({ id: c.id, slug: c.slug, nameEn: c.nameEn, nameHi: c.nameHi, blurb: c.blurb, sort: c.sort }), del: (c) => setToDelete(c), canWrite };
+  const act = useRef<CategoryActions>({ edit: () => {}, del: () => {}, save: () => {}, canWrite });
+  async function saveCell(cell: CellComponent) {
+    const row = cell.getRow().getData() as Category;
+    const field = cell.getField() as keyof Category;
+    const value = field === 'sort' ? Number(cell.getValue()) : String(cell.getValue() ?? '').trim();
+    const back = (text: string) => {
+      cell.restoreOldValue();
+      setSaved(null);
+      setMsg(`${text} Your change was undone.`);
+    };
+    if (field === 'sort' && (!Number.isInteger(value) || (value as number) < 0)) return back('Order must be a whole number, zero or more.');
+    if ((field === 'nameEn' || field === 'nameHi') && String(value).length < 2)
+      return back(field === 'nameEn' ? 'The English name needs at least 2 letters.' : 'The Hindi name needs at least 2 letters.');
+    try {
+      await api(`/v1/admin/categories/${row.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ slug: row.slug, nameEn: row.nameEn, nameHi: row.nameHi, blurb: row.blurb, sort: row.sort, [field]: value }),
+      });
+      setMsg(null);
+      setSaved(`Saved “${field === 'nameEn' ? value : row.nameEn}”.`);
+      const el = cell.getElement();
+      el.classList.add('dt-saved');
+      setTimeout(() => el.classList.remove('dt-saved'), 1500);
+    } catch (e) {
+      back(e instanceof ApiError ? (e.problem.errors?.[0] ? `${e.problem.errors[0].message}` : (e.problem.detail ?? e.problem.title)) : 'Could not save. Your change was undone.');
+    }
+  }
+  act.current = {
+    edit: (c) => setForm({ id: c.id, slug: c.slug, nameEn: c.nameEn, nameHi: c.nameHi, blurb: c.blurb, sort: c.sort }),
+    del: (c) => setToDelete(c),
+    save: (cell) => void saveCell(cell),
+    canWrite,
+  };
   const columns = useMemo<ColumnDefinition[]>(() => categoryColumns(act), []);
 
   return (
@@ -156,10 +218,16 @@ export function CategoriesPage({ permissions }: { permissions: string[] }) {
         </div>
       )}
       {msg && (
-        <p role="alert" className="mb-3 text-alert">
+        <p role="alert" className="mb-3 rounded-3 bg-paper-3 p-3 text-sm text-alert">
           {msg}
         </p>
       )}
+      {saved && !msg && (
+        <p role="status" className="mb-3 rounded-3 bg-meadow p-3 text-sm text-forest">
+          {saved}
+        </p>
+      )}
+      {canWrite && rows.length > 0 && <p className="mb-3 text-sm text-ink-2">Tip: click a name, description or order to change it. Press Enter to save or Esc to cancel.</p>}
       <DataTable label="Categories" data={rows} columns={columns} initialSort={[{ column: 'sort', dir: 'asc' }]} placeholder="No categories yet." />
       <ConfirmDialog open={!!toDelete} danger title={`Delete ${toDelete?.nameEn ?? ''}?`} confirmLabel="Delete category" onConfirm={() => void remove()} onCancel={() => setToDelete(null)}>
         <p>The category disappears from the shop menu. This cannot be undone. A category that still has products cannot be deleted.</p>
