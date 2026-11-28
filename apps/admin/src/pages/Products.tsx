@@ -520,7 +520,7 @@ function ProductEditor({
             <PackShot kind={f.pack.kind} color={f.pack.color} accent={f.pack.accent} label={f.nameEn || 'Product'} size={f.variants[0]?.packSize} className="w-full" />
           </div>
           <div className="mt-3 space-y-2">
-            <Field label="Pack">
+            <Field label="Drawn pack shape" hint="Shown until you add photos">
               <select value={f.pack.kind} onChange={(e) => set('pack', { ...f.pack, kind: e.target.value })} className={input}>
                 {['jar', 'tin', 'tetra', 'can', 'box', 'pouch'].map((k) => (
                   <option key={k}>{k}</option>
@@ -528,10 +528,10 @@ function ProductEditor({
               </select>
             </Field>
             <div className="flex gap-2">
-              <Field label="Colour">
+              <Field label="Pack colour">
                 <input type="color" value={f.pack.color} onChange={(e) => set('pack', { ...f.pack, color: e.target.value.toUpperCase() })} className="h-9 w-full rounded-2" />
               </Field>
-              <Field label="Label">
+              <Field label="Label colour">
                 <input type="color" value={f.pack.accent} onChange={(e) => set('pack', { ...f.pack, accent: e.target.value.toUpperCase() })} className="h-9 w-full rounded-2" />
               </Field>
             </div>
@@ -618,15 +618,19 @@ function ProductEditor({
           ))}
         </div>
       </Card>
-      {error && (
-        <p role="alert" className="text-alert">
-          {error}
-        </p>
-      )}
-      {!readOnly && (
-        <Btn variant="primary" onClick={save} disabled={busy}>
-          {busy ? 'Saving…' : 'Save product'}
-        </Btn>
+      {(!readOnly || error) && (
+        <div className="sticky bottom-0 -mx-5 -mb-5 flex flex-wrap items-center gap-3 border-t border-rule bg-paper px-5 py-3">
+          {!readOnly && (
+            <Btn variant="primary" onClick={save} disabled={busy}>
+              {busy ? 'Saving…' : 'Save product'}
+            </Btn>
+          )}
+          {error && (
+            <p role="alert" className="text-sm text-alert">
+              {error}
+            </p>
+          )}
+        </div>
       )}
       {readOnly && <p className="text-ink-2">Your role can view products but not change them.</p>}
     </fieldset>

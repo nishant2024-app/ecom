@@ -89,6 +89,7 @@ export function CustomerDetailPage({ id }: { id: string }) {
   useEffect(() => {
     api<typeof c>(`/v1/admin/customers/${id}`).then(setC);
   }, [id]);
+  const paid = (c?.orders ?? []).filter((o) => ['confirmed', 'packed', 'shipped', 'delivered'].includes(o.status));
   if (!c)
     return (
       <Page title="Customer">
@@ -98,7 +99,7 @@ export function CustomerDetailPage({ id }: { id: string }) {
   return (
     <Page
       title={c.name}
-      subtitle={`${c.email} · joined ${day(c.joinedAt)}`}
+      subtitle={`${c.email} · joined ${day(c.joinedAt)} · ${paid.length} paid order${paid.length === 1 ? '' : 's'}, ${rupees(paid.reduce((n, o) => n + o.total.amount, 0))} spent`}
       actions={
         <Btn variant="outline" onClick={() => history.back()}>
           ← Back
@@ -111,7 +112,11 @@ export function CustomerDetailPage({ id }: { id: string }) {
             <tbody>
               {c.orders.map((o) => (
                 <tr key={o.id} onClick={() => (location.hash = `#/orders/${o.id}`)} className="cursor-pointer rule-b hover:bg-paper-2">
-                  <td className={`${td} num`}>{o.number}</td>
+                  <td className={td}>
+                    <a href={`#/orders/${o.id}`} className="num font-semibold hover:underline">
+                      {o.number}
+                    </a>
+                  </td>
                   <td className={`${td} num text-ink-2`}>{when(o.placedAt)}</td>
                   <td className={td}>
                     <StatusBadge status={o.status} />

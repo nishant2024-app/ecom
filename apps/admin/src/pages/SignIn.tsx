@@ -49,44 +49,58 @@ export function SignIn({ onSignedIn }: { onSignedIn: () => void }) {
   }, [clientId, onSignedIn]);
 
   return (
-    <div className="mx-auto max-w-sm px-6 py-24">
-      <p className="text-2xl font-extrabold tracking-[-0.03em]">Mulshi Dairy admin</p>
-      <p className="mt-2 text-ink-2">Team members only. Ask the owner to invite your Google account.</p>
-      <div className="mt-6" ref={ref} />
-      {dev && (
-        <form
-          className="mt-6 rounded-4 border border-dashed border-rule p-4"
-          onSubmit={async (e) => {
-            e.preventDefault();
-            setError(null);
-            try {
-              await api('/v1/dev/staff-sign-in', { method: 'POST', body: JSON.stringify({ email }) });
-              onSignedIn();
-            } catch (err) {
-              setError(err instanceof ApiError ? (err.problem.detail ?? err.problem.title) : 'Sign-in failed');
-            }
-          }}
-        >
-          <p className="text-sm font-semibold">Local testing</p>
-          <p className="mt-1 text-xs text-ink-2">Sign in as the owner email you set in SEED_OWNER_EMAIL. This form is off in production.</p>
-          <input
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="owner@example.com"
-            aria-label="Staff email"
-            className="mt-3 h-10 w-full rounded-3 border border-rule bg-paper px-3 text-sm"
-          />
-          <button className="mt-2 h-10 w-full rounded-pill bg-forest text-sm font-semibold text-on-forest">Sign in</button>
-        </form>
-      )}
-      {clientId === '' && !dev && <p className="mt-4 text-ink-2">Set GOOGLE_WEB_CLIENT_ID on the API to enable sign-in.</p>}
-      {error && (
-        <p role="alert" className="mt-4 text-alert">
-          {error}
-        </p>
-      )}
-    </div>
+    <main className="grid min-h-dvh place-items-center bg-paper-2 px-4 py-10">
+      <div className="w-full max-w-sm rounded-4 border border-rule bg-paper p-6 shadow-card">
+        <div className="flex items-center gap-3">
+          <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden>
+            <rect width="40" height="40" rx="12" fill="var(--forest)" />
+            <path d="M20 8c4.5 6 8 10.3 8 14.5a8 8 0 0 1-16 0C12 18.3 15.5 14 20 8Z" fill="#fff" />
+          </svg>
+          <div>
+            <h1 className="text-xl font-extrabold leading-none tracking-[-0.03em]">Mulshi Dairy</h1>
+            <p className="mt-1 text-xs uppercase tracking-[0.14em] text-ink-3">Admin</p>
+          </div>
+        </div>
+        <p className="mt-5 text-ink-2">Sign in with the Google account your owner invited. Team members only.</p>
+        <div className={clientId ? 'mt-5 flex min-h-[44px] justify-center' : 'hidden'} ref={ref} />
+        {dev && (
+          <form
+            className="mt-5 rounded-3 border border-dashed border-rule p-4"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              setError(null);
+              try {
+                await api('/v1/dev/staff-sign-in', { method: 'POST', body: JSON.stringify({ email }) });
+                onSignedIn();
+              } catch (err) {
+                setError(err instanceof ApiError ? (err.problem.detail ?? err.problem.title) : 'Sign-in failed');
+              }
+            }}
+          >
+            <p className="text-sm font-semibold">Local testing</p>
+            <p className="mt-1 text-xs text-ink-2">Sign in as the owner email you set in SEED_OWNER_EMAIL. This form is off in production.</p>
+            <label className="sr-only" htmlFor="staff-email">
+              Staff email
+            </label>
+            <input
+              id="staff-email"
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="owner@example.com"
+              className="mt-3 h-10 w-full rounded-3 border border-rule bg-paper px-3 text-sm"
+            />
+            <button className="mt-2 h-10 w-full rounded-pill bg-forest text-sm font-semibold text-on-forest hover:bg-forest-2">Sign in</button>
+          </form>
+        )}
+        {clientId === '' && !dev && <p className="mt-4 text-ink-2">Google sign-in is not set up yet. Add GOOGLE_WEB_CLIENT_ID to the server settings.</p>}
+        {error && (
+          <p role="alert" className="mt-4 text-alert">
+            {error}
+          </p>
+        )}
+      </div>
+    </main>
   );
 }

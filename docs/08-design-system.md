@@ -48,7 +48,7 @@ kens
 | Gallery | Product page | Main photo with thumbnails and counter; drawn pack that changes with size if no photos |
 | "On the label" | Product page | Back-of-pack style: milk source, ingredients, process, shelf life, storage, nutrition, HSN, FSSAI |
 | Cart drawer | Global | Live server quote, free-shipping progress, pincode ETA |
-| Admin | Admin | Dense, calm: forest sidebar, drawers for editing, photo manager with drag-to-reorder, storefront editor with character counters, bulk order actions, icon sidebar with a profile and sign-out card, visible row actions with confirm dialogs, cards instead of tables on phones |
+| Admin | Admin | Dense, calm: forest sidebar, drawers for editing, photo manager with drag-to-reorder, storefront editor with character counters, bulk order actions, icon sidebar with a profile and sign-out card, visible row actions with confirm dialogs, Tabulator data tables themed with the tokens (sort, page, bulk select), cards instead of tables on phones |
 
 ## Motion rules
 

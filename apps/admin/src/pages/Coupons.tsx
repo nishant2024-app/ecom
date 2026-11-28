@@ -298,14 +298,16 @@ export function CouponsPage({ permissions }: { permissions: string[] }) {
             <p className="rounded-3 bg-paper-2 p-3 text-xs text-ink-2">
               Free shipping is decided on the amount customers pay for products <strong>after</strong> the discount. GST is recalculated on the discounted prices. Cancelled orders give the use back.
             </p>
-            {error && (
-              <p role="alert" className="text-alert">
-                {error}
-              </p>
-            )}
-            <Btn variant="primary" onClick={save}>
-              {form.id ? 'Save changes' : 'Create coupon'}
-            </Btn>
+            <div className="sticky bottom-0 -mx-5 -mb-5 flex flex-wrap items-center gap-3 border-t border-rule bg-paper px-5 py-3">
+              <Btn variant="primary" onClick={save}>
+                {form.id ? 'Save changes' : 'Create coupon'}
+              </Btn>
+              {error && (
+                <p role="alert" className="text-sm text-alert">
+                  {error}
+                </p>
+              )}
+            </div>
           </div>
         )}
       </Drawer>

@@ -124,7 +124,7 @@ Google sign-in is tested with a locally generated key set that goes through the 
 
 **A setting:** add it to the schema in `apps/api/src/config.ts` (with a default or a production check), then document it in `.env.example` and `.env.production.example`.
 
-**An admin page:** add `apps/admin/src/pages/X.tsx`, add it to the menu and routes in `apps/admin/src/App.tsx`, and gate the menu entry with a permission.
+**An admin page:** add `apps/admin/src/pages/X.tsx`, add it to the menu and routes in `apps/admin/src/App.tsx`, and gate the menu entry with a permission. Lists use the shared `DataTable` (`apps/admin/src/components/DataTable.tsx`, a themed wrapper around [Tabulator](https://tabulator.info)): define the columns once (`useMemo`), build cells with the helpers in `components/cells.ts` (they use DOM nodes, never HTML strings, so data cannot inject markup), give every row a real link or button for keyboard users, memoize the `data` array so the table only re-renders when the data changes, and keep the phone card layout (`md:hidden`) beside the table. Row action menus use `FloatingMenu`; destructive actions use `ConfirmDialog`.
 
 ## Troubleshooting
 
