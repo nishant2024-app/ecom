@@ -2,7 +2,7 @@ import { PackShot } from '@dairy/ui';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Btn, Card, Drawer, Field, Page, input, td, th } from '../components/ui';
 import { api, ApiError } from '../lib/api';
-import { day, when } from '../lib/format';
+import { day, dayYear, todayIST, when } from '../lib/format';
 
 interface Row {
   variantId: string;
@@ -92,7 +92,17 @@ export function InventoryPage({ permissions }: { permissions: string[] }) {
                 <td className={`${td} num text-right`}>
                   <span className={r.low ? 'rounded-pill bg-[#fdecc8] text-[#7a4b00] px-2 py-0.5' : ''}>{r.available}</span>
                 </td>
-                <td className={`${td} num`}>{r.nextExpiry ? day(r.nextExpiry) : '—'}</td>
+                <td className={`${td} num`}>
+                  {r.nextExpiry ? (
+                    r.nextExpiry < todayIST() ? (
+                      <span className="rounded-pill bg-paper-3 px-2 py-0.5 text-xs font-semibold text-alert">Expired {dayYear(r.nextExpiry)}</span>
+                    ) : (
+                      dayYear(r.nextExpiry)
+                    )
+                  ) : (
+                    '—'
+                  )}
+                </td>
                 <td className={`${td} num text-right`}>{r.batches}</td>
               </tr>
             ))}
@@ -148,7 +158,7 @@ function Batches({ row, canWrite, onChanged }: { row: Row; canWrite: boolean; on
     }
   }
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayIST();
   return (
     <div className="space-y-5">
       {error && (

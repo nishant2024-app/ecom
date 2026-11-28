@@ -36,6 +36,8 @@ Staff only (`client: "admin"` sign-in). Each endpoint requires the permission sh
 | POST | `/v1/admin/stock/adjustments` | `inventory.write` | `{batchId, delta, kind: adjusted|wasted|returned, reason}`; can't go below reserved |
 | GET | `/v1/admin/customers?q=` | `customers.read` | Customers with paid order count and total spent |
 | GET | `/v1/admin/customers/{id}` | `customers.read` | Addresses and orders |
+| GET | `/v1/admin/store` | `catalog.read` | Store details: shop and legal name, GSTIN, FSSAI, state, address, support phone and email |
+| PUT | `/v1/admin/store` | `settings.write` | Update store details (validates GSTIN, 14-digit FSSAI, phone, email). Shown by `/v1/app-config`, the shop footer and policy pages |
 | GET | `/v1/admin/shipping-zones` | `catalog.read` | Zones |
 | PUT | `/v1/admin/shipping-zones/{code}` | `settings.write` | Update prefixes, fee, free-above, weight rules, delivery days, serviceable |
 | GET / POST | `/v1/admin/staff` | `staff.manage` | Team / invite by Google email with a role |

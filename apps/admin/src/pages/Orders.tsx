@@ -116,7 +116,37 @@ export function OrdersPage({ status: initial, permissions = [] }: { status?: str
           {note}
         </p>
       )}
-      <div tabIndex={0} className="mt-4 overflow-x-auto rounded-4 border border-rule bg-paper">
+      <ul className="mt-4 space-y-3 md:hidden" aria-label="Orders">
+        {data?.data.map((o) => (
+          <li key={o.id} className={`rounded-4 border border-rule bg-paper p-3 ${selected.has(o.id) ? 'bg-meadow/20' : ''}`}>
+            <div className="flex items-start gap-3">
+              <input type="checkbox" aria-label={`Select order ${o.number}`} checked={selected.has(o.id)} onChange={() => toggle(o.id)} className="mt-1 h-5 w-5 accent-[var(--forest)]" />
+              <a href={`#/orders/${o.id}`} className="block min-w-0 flex-1">
+                <span className="flex items-center justify-between gap-2">
+                  <span className="num font-semibold">{o.number}</span>
+                  <StatusBadge status={o.status} />
+                </span>
+                <span className="mt-1 block text-sm">
+                  {o.customer}{' '}
+                  <span className="text-ink-2">
+                    · {o.city} {o.pincode}
+                  </span>
+                </span>
+                <span className="block truncate text-sm text-ink-2">
+                  {o.firstItem}
+                  {o.items > 1 ? ` +${o.items - 1}` : ''}
+                </span>
+                <span className="mt-1 flex items-center justify-between text-xs text-ink-2">
+                  <span>{when(o.placedAt)}</span>
+                  <span className="num text-sm font-semibold text-ink">{rupees(o.total.amount)}</span>
+                </span>
+              </a>
+            </div>
+          </li>
+        ))}
+      </ul>
+      {data && data.data.length === 0 && <p className="mt-4 text-ink-2">No orders match.</p>}
+      <div tabIndex={0} className="mt-4 hidden overflow-x-auto rounded-4 border border-rule bg-paper md:block">
         <table className="w-full min-w-[820px]">
           <thead>
             <tr className="rule-b">

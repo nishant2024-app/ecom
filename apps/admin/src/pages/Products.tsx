@@ -148,7 +148,7 @@ export function ProductsPage({ permissions }: { permissions: string[] }) {
               <th className={th}>Product</th>
               <th className={th}>Sizes</th>
               <th className={`${th} text-right`}>Price</th>
-              <th className={`${th} text-right`}>Available</th>
+              <th className={`${th} text-right`}>In stock</th>
               <th className={th}>Status</th>
             </tr>
           </thead>
@@ -175,11 +175,17 @@ export function ProductsPage({ permissions }: { permissions: string[] }) {
                   <td className={td}>{active.map((v) => v.packSize).join(', ')}</td>
                   <td className={`${td} num text-right`}>{active.map((v) => rupees(v.price.amount)).join(' · ')}</td>
                   <td className={`${td} num text-right`}>
-                    {active.map((v) => (
-                      <span key={v.id} className={`ml-2 ${v.available <= v.lowStockThreshold ? 'text-alert' : ''}`}>
-                        {v.available}
-                      </span>
-                    ))}
+                    {(() => {
+                      const total = active.reduce((n, v) => n + v.available, 0);
+                      const low = active.some((v) => v.available <= v.lowStockThreshold);
+                      return (
+                        <>
+                          <span className={total === 0 ? 'font-semibold text-alert' : low ? 'text-alert' : ''}>{total === 0 ? 'Out of stock' : total}</span>
+                          {active.length > 1 && <span className="block text-xs text-ink-2">{active.map((v) => `${v.packSize}: ${v.available}`).join(' · ')}</span>}
+                          {low && total > 0 && <span className="block text-xs text-alert">{active.length > 1 ? 'low on one size' : 'running low'}</span>}
+                        </>
+                      );
+                    })()}
                   </td>
                   <td className={td}>
                     <span className={`rounded-pill px-2.5 py-0.5 text-xs ${p.status === 'active' ? 'bg-meadow' : 'bg-paper-3'}`}>{p.status}</span>

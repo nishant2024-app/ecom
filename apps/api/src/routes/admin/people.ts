@@ -8,7 +8,7 @@ import { audit } from '../../lib/audit';
 import { AppError, notFound } from '../../lib/errors';
 import { IdParam, money } from '../../lib/schemas';
 import { revokedKey } from '../../plugins/auth';
-import { resetStoreCache } from '../../services/store';
+import { defaultSellerId, resetStoreCache } from '../../services/store';
 import { ACCESS_TTL_SECONDS } from '../../services/tokens';
 
 const PAID = ['confirmed', 'packed', 'shipped', 'delivered'];
@@ -75,6 +75,90 @@ export default async function adminPeopleRoutes(fastify: FastifyInstance) {
         addresses,
         orders: orders.map((o) => ({ id: o.id, number: o.number, status: o.status, total: money(o.totalPaise), placedAt: o.createdAt.toISOString() })),
       };
+    },
+  );
+
+  // ── Store details (shown in the shop footer, policy pages, invoices and emails) ──
+  const StoreOut = Type.Object({
+    name: Type.String(),
+    legalName: Type.String(),
+    gstin: Type.String(),
+    fssaiNumber: Type.String(),
+    state: Type.String(),
+    address: Type.String(),
+    supportPhone: Type.String(),
+    supportEmail: Type.String(),
+  });
+  const loadStore = async () => {
+    const sellerId = await defaultSellerId(db);
+    const [seller] = await db.select().from(s.sellers).where(eq(s.sellers.id, sellerId));
+    const rows = await db
+      .select()
+      .from(s.settings)
+      .where(and(eq(s.settings.sellerId, sellerId), inArray(s.settings.key, ['store.address', 'support.phone', 'support.email'])));
+    const v = (k: string) => String(rows.find((r) => r.key === k)?.value ?? '');
+    return {
+      sellerId,
+      out: {
+        name: seller!.name,
+        legalName: seller!.legalName,
+        gstin: seller!.gstin ?? '',
+        fssaiNumber: seller!.fssaiNumber ?? '',
+        state: seller!.state,
+        address: v('store.address'),
+        supportPhone: v('support.phone'),
+        supportEmail: v('support.email'),
+      },
+    };
+  };
+
+  app.get('/store', { config: { auth: 'staff', permission: 'catalog.read' }, schema: { tags: ['Admin'], summary: 'Store details', response: { 200: StoreOut } } }, async () => (await loadStore()).out);
+
+  app.put(
+    '/store',
+    {
+      config: { auth: 'staff', permission: 'settings.write' },
+      schema: {
+        tags: ['Admin'],
+        summary: 'Update store details',
+        body: Type.Object(
+          {
+            name: Type.String({ minLength: 2, maxLength: 80 }),
+            legalName: Type.String({ minLength: 2, maxLength: 120 }),
+            gstin: Type.String({ pattern: '^([0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z])?$' }),
+            fssaiNumber: Type.String({ pattern: '^([0-9]{14})?$' }),
+            state: Type.String({ minLength: 2, maxLength: 60 }),
+            address: Type.String({ maxLength: 300 }),
+            supportPhone: Type.String({ pattern: '^(\\+?[0-9 -]{7,16})?$' }),
+            supportEmail: Type.String({ pattern: '^([^@\\s]+@[^@\\s]+\\.[^@\\s]+)?$' }),
+          },
+          { additionalProperties: false },
+        ),
+        response: { 200: StoreOut },
+      },
+    },
+    async (req) => {
+      const { sellerId, out: before } = await loadStore();
+      const b = req.body;
+      await db.transaction(async (tx) => {
+        await tx
+          .update(s.sellers)
+          .set({ name: b.name, legalName: b.legalName, gstin: b.gstin || null, fssaiNumber: b.fssaiNumber || null, state: b.state, updatedAt: new Date() })
+          .where(eq(s.sellers.id, sellerId));
+        for (const [key, value] of [
+          ['store.address', b.address],
+          ['support.phone', b.supportPhone],
+          ['support.email', b.supportEmail],
+        ] as const) {
+          await tx
+            .insert(s.settings)
+            .values({ sellerId, key, value })
+            .onConflictDoUpdate({ target: [s.settings.sellerId, s.settings.key], set: { value, updatedAt: new Date() } });
+        }
+      });
+      resetStoreCache();
+      await audit(db, req, 'store.update', 'seller', sellerId, before, b);
+      return (await loadStore()).out;
     },
   );
 

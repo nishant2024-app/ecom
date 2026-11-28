@@ -144,6 +144,99 @@ interface Staff {
 }
 const ROLES = ['owner', 'admin', 'ops_manager', 'warehouse', 'support', 'content', 'accountant'];
 
+interface StoreDetails {
+  name: string;
+  legalName: string;
+  gstin: string;
+  fssaiNumber: string;
+  state: string;
+  address: string;
+  supportPhone: string;
+  supportEmail: string;
+}
+
+/** Business details shown in the shop footer, policy pages, packing slips and emails. */
+function StoreDetailsCard({ canEdit }: { canEdit: boolean }) {
+  const [form, setForm] = useState<StoreDetails | null>(null);
+  const [state, setState] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    api<StoreDetails>('/v1/admin/store').then(setForm);
+  }, []);
+  if (!form) return null;
+  const set = (patch: Partial<StoreDetails>) => setForm((f) => (f ? { ...f, ...patch } : f));
+  async function save(e: FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setState(null);
+    try {
+      setForm(await api<StoreDetails>('/v1/admin/store', { method: 'PUT', body: JSON.stringify(form) }));
+      setState({ kind: 'ok', text: 'Saved. The shop shows the new details within a minute.' });
+    } catch (err) {
+      const first = err instanceof ApiError ? err.problem.errors?.[0] : undefined;
+      setState({ kind: 'error', text: err instanceof ApiError ? (first ? `${first.field}: ${first.message}` : (err.problem.detail ?? err.problem.title)) : 'Could not save' });
+    } finally {
+      setBusy(false);
+    }
+  }
+  const ro = !canEdit;
+  return (
+    <Card title="Store details" className="mb-4">
+      <form onSubmit={save} className="grid gap-3 md:grid-cols-2">
+        <Field label="Shop name" hint="Shown to customers">
+          <input value={form.name} onChange={(e) => set({ name: e.target.value })} readOnly={ro} required minLength={2} className={input} />
+        </Field>
+        <Field label="Legal business name" hint="On invoices and the policy pages">
+          <input value={form.legalName} onChange={(e) => set({ legalName: e.target.value })} readOnly={ro} required minLength={2} className={input} />
+        </Field>
+        <Field label="FSSAI licence number" hint="14 digits. Shown in the shop footer">
+          <input value={form.fssaiNumber} onChange={(e) => set({ fssaiNumber: e.target.value.replace(/\D/g, '').slice(0, 14) })} readOnly={ro} inputMode="numeric" className={`${input} num`} />
+        </Field>
+        <Field label="GSTIN" hint="15 characters, for example 27ABCDE1234F1Z5">
+          <input
+            value={form.gstin}
+            onChange={(e) =>
+              set({
+                gstin: e.target.value
+                  .toUpperCase()
+                  .replace(/[^0-9A-Z]/g, '')
+                  .slice(0, 15),
+              })
+            }
+            readOnly={ro}
+            className={`${input} num`}
+          />
+        </Field>
+        <Field label="State" hint="Where you dispatch from (decides GST type)">
+          <input value={form.state} onChange={(e) => set({ state: e.target.value })} readOnly={ro} required className={input} />
+        </Field>
+        <Field label="Support phone">
+          <input value={form.supportPhone} onChange={(e) => set({ supportPhone: e.target.value })} readOnly={ro} inputMode="tel" className={`${input} num`} />
+        </Field>
+        <Field label="Support email">
+          <input type="email" value={form.supportEmail} onChange={(e) => set({ supportEmail: e.target.value })} readOnly={ro} className={input} />
+        </Field>
+        <Field label="Registered address" hint="Shown on the contact and policy pages">
+          <input value={form.address} onChange={(e) => set({ address: e.target.value })} readOnly={ro} maxLength={300} className={input} />
+        </Field>
+        <div className="flex items-center gap-3 md:col-span-2">
+          {canEdit && (
+            <Btn variant="primary" type="submit" disabled={busy}>
+              {busy ? 'Saving…' : 'Save store details'}
+            </Btn>
+          )}
+          {state && (
+            <p role={state.kind === 'error' ? 'alert' : 'status'} className={`text-sm ${state.kind === 'error' ? 'text-alert' : 'text-forest'}`}>
+              {state.text}
+            </p>
+          )}
+          {!canEdit && <p className="text-sm text-ink-2">Only the owner or an admin can change these.</p>}
+        </div>
+      </form>
+    </Card>
+  );
+}
+
 export function SettingsPage({ permissions, meId }: { permissions: string[]; meId: string }) {
   const [zones, setZones] = useState<Zone[]>([]);
   const [staff, setStaff] = useState<Staff[]>([]);
@@ -187,12 +280,13 @@ export function SettingsPage({ permissions, meId }: { permissions: string[]; meI
 
   const rupee = (p: number | null) => (p === null ? '' : String(p / 100));
   return (
-    <Page title="Settings" subtitle="Shipping rates and your team.">
+    <Page title="Settings" subtitle="Store details, shipping rates and your team.">
       {msg && (
         <p role="status" className="mb-4 rounded-3 bg-paper-2 p-3">
           {msg}
         </p>
       )}
+      <StoreDetailsCard canEdit={canSettings} />
       <Card title="Shipping zones (longest pincode prefix wins)">
         <div className="space-y-3">
           {zones.map((z, i) => {

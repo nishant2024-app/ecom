@@ -139,6 +139,40 @@ describe('admin: catalog and inventory', () => {
   });
 });
 
+describe('admin: store details', () => {
+  it('lets the owner edit legal and contact details, validates them, and keeps other roles read-only', async () => {
+    const owner = await staffHeaders(t, 'owner');
+    const content = await staffHeaders(t, 'content');
+    const before = (await t.app.inject({ url: '/v1/admin/store', headers: owner })).json();
+    expect(before).toMatchObject({ state: expect.any(String), supportEmail: expect.any(String) });
+
+    const next = {
+      ...before,
+      name: 'Mulshi Farms',
+      gstin: '27ABCDE1234F1Z5',
+      fssaiNumber: '12345678901234',
+      address: 'Gat 12, Mulshi, Pune 412108',
+      supportPhone: '+91 98765 43210',
+      supportEmail: 'help@mulshi.in',
+    };
+    const saved = await t.app.inject({ method: 'PUT', url: '/v1/admin/store', headers: owner, payload: next });
+    expect(saved.statusCode, saved.body).toBe(200);
+    expect(saved.json()).toMatchObject({ name: 'Mulshi Farms', gstin: '27ABCDE1234F1Z5', supportEmail: 'help@mulshi.in' });
+
+    // The public app config (footer, policy pages, Android app) now shows the new details.
+    const pub = (await t.app.inject({ url: '/v1/app-config' })).json();
+    expect(pub.support).toEqual({ phone: '+91 98765 43210', email: 'help@mulshi.in' });
+    expect(pub.legal).toMatchObject({ fssai: '12345678901234', address: 'Gat 12, Mulshi, Pune 412108' });
+
+    expect((await t.app.inject({ method: 'PUT', url: '/v1/admin/store', headers: owner, payload: { ...next, fssaiNumber: '123' } })).statusCode).toBe(400);
+    expect((await t.app.inject({ method: 'PUT', url: '/v1/admin/store', headers: owner, payload: { ...next, gstin: 'nope' } })).statusCode).toBe(400);
+    expect((await t.app.inject({ url: '/v1/admin/store', headers: content })).statusCode).toBe(200);
+    expect((await t.app.inject({ method: 'PUT', url: '/v1/admin/store', headers: content, payload: next })).statusCode).toBe(403);
+
+    await t.app.inject({ method: 'PUT', url: '/v1/admin/store', headers: owner, payload: before });
+  });
+});
+
 describe('admin tools', () => {
   it('manages categories and refuses to delete one with products', async () => {
     const t = await createTestApp();
