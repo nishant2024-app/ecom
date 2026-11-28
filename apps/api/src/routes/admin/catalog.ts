@@ -39,7 +39,7 @@ const ProductInput = Type.Object(
     slug: Type.String({ minLength: 2, maxLength: 80, pattern: '^[a-z0-9-]+$' }),
     categoryId: Type.String(),
     nameEn: Type.String({ minLength: 2, maxLength: 80 }),
-    nameHi: Type.String({ minLength: 1, maxLength: 80 }),
+    nameHi: Type.Optional(Type.String({ maxLength: 80 })),
     tagline: Type.Optional(Type.String({ maxLength: 120 })),
     descriptionEn: Type.Optional(Type.String({ maxLength: 4000 })),
     descriptionHi: Type.Optional(Type.String({ maxLength: 4000 })),
@@ -85,7 +85,7 @@ export default async function adminCatalogRoutes(fastify: FastifyInstance) {
     {
       slug: Type.String({ minLength: 2, maxLength: 60, pattern: '^[a-z0-9-]+$' }),
       nameEn: Type.String({ minLength: 2, maxLength: 60 }),
-      nameHi: Type.String({ minLength: 1, maxLength: 60 }),
+      nameHi: Type.Optional(Type.String({ maxLength: 60 })),
       blurb: Type.Optional(Type.String({ maxLength: 200 })),
       sort: Type.Optional(Type.Integer({ minimum: 0, maximum: 1000 })),
     },
@@ -105,7 +105,7 @@ export default async function adminCatalogRoutes(fastify: FastifyInstance) {
     const [{ top } = { top: 0 }] = await db.select({ top: sql<number>`coalesce(max(${s.categories.sort}), 0)::int` }).from(s.categories);
     const [row] = await db
       .insert(s.categories)
-      .values({ id: newId('cat'), ...req.body, blurb: req.body.blurb ?? '', sort: req.body.sort ?? Number(top) + 1 })
+      .values({ id: newId('cat'), ...req.body, nameHi: req.body.nameHi ?? '', blurb: req.body.blurb ?? '', sort: req.body.sort ?? Number(top) + 1 })
       .returning();
     await audit(db, req, 'category.create', 'category', row!.id, null, row);
     return reply.status(201).send(row);
@@ -120,7 +120,7 @@ export default async function adminCatalogRoutes(fastify: FastifyInstance) {
       if (!before) throw notFound('Category');
       const [row] = await db
         .update(s.categories)
-        .set({ ...req.body, blurb: req.body.blurb ?? before.blurb, sort: req.body.sort ?? before.sort })
+        .set({ ...req.body, nameHi: req.body.nameHi ?? before.nameHi, blurb: req.body.blurb ?? before.blurb, sort: req.body.sort ?? before.sort })
         .where(eq(s.categories.id, before.id))
         .returning();
       await audit(db, req, 'category.update', 'category', before.id, before, row);
@@ -282,7 +282,7 @@ export default async function adminCatalogRoutes(fastify: FastifyInstance) {
         categoryId: b.categoryId,
         slug: b.slug,
         nameEn: b.nameEn,
-        nameHi: b.nameHi,
+        nameHi: b.nameHi ?? '',
         tagline: b.tagline ?? '',
         descriptionEn: b.descriptionEn ?? '',
         descriptionHi: b.descriptionHi ?? '',
@@ -422,7 +422,7 @@ export default async function adminCatalogRoutes(fastify: FastifyInstance) {
             categoryId: b.categoryId,
             slug: b.slug,
             nameEn: b.nameEn,
-            nameHi: b.nameHi,
+            ...(b.nameHi !== undefined ? { nameHi: b.nameHi } : {}),
             tagline: b.tagline ?? '',
             descriptionEn: b.descriptionEn ?? '',
             descriptionHi: b.descriptionHi ?? '',

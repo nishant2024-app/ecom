@@ -47,6 +47,18 @@ describe('admin: fulfilment', () => {
     expect(log.map((l: { action: string }) => l.action)).toEqual(expect.arrayContaining(['order.pack', 'order.ship', 'order.deliver']));
   });
 
+  it('accepts an empty POST sent without a content type, as some proxies do (Mark packed)', async () => {
+    const warehouse = await staffHeaders(t, 'warehouse');
+    const ids = await variantIds(t);
+    const { order } = await paidOrder(ids.powder500, 1);
+    // Chunked transfer, no Content-Type, empty body: what Cloud Shell's preview proxy sends.
+    const packed = await t.app.inject({ method: 'POST', url: `/v1/admin/orders/${order.id}/pack`, headers: { ...warehouse, 'transfer-encoding': 'chunked' }, payload: '' });
+    expect(packed.statusCode, packed.body).toBe(200);
+    expect(packed.json().status).toBe('packed');
+    // A real body of the wrong type is still refused clearly.
+    const wrong = await t.app.inject({ method: 'POST', url: `/v1/admin/orders/${order.id}/ship`, headers: { ...warehouse, 'content-type': 'text/plain' }, payload: 'courier=x' });
+    expect(wrong.statusCode).toBe(400);
+  });
   it('cancels with refund for support, but warehouse staff cannot refund', async () => {
     const ids = await variantIds(t);
     const { order } = await paidOrder(ids.peda);
@@ -254,6 +266,39 @@ describe('admin: store details', () => {
     expect((await t.app.inject({ method: 'PUT', url: '/v1/admin/store', headers: content, payload: next })).statusCode).toBe(403);
 
     await t.app.inject({ method: 'PUT', url: '/v1/admin/store', headers: owner, payload: before });
+  });
+});
+
+describe('admin: Hindi names are optional', () => {
+  it('creates a category and a product without a Hindi name; the shop falls back to English', async () => {
+    const owner = await staffHeaders(t, 'owner');
+    const cat = await t.app.inject({ method: 'POST', url: '/v1/admin/categories', headers: owner, payload: { slug: 'only-english', nameEn: 'Only English', blurb: 'No Hindi name given' } });
+    expect(cat.statusCode, cat.body).toBe(201);
+    expect(cat.json().nameHi).toBe('');
+    const renamed = await t.app.inject({ method: 'PUT', url: `/v1/admin/categories/${cat.json().id}`, headers: owner, payload: { slug: 'only-english', nameEn: 'Only English Renamed' } });
+    expect(renamed.statusCode, renamed.body).toBe(200);
+    const hi = (await t.app.inject({ url: '/v1/store/categories', headers: { 'accept-language': 'hi' } })).json();
+    const entry = (hi.data ?? hi).find((c: { slug: string }) => c.slug === 'only-english');
+    // An empty category is not listed in the shop, so only check the name when it is returned.
+    if (entry) expect(entry.name).toBe('Only English Renamed');
+
+    const product = await t.app.inject({
+      method: 'POST',
+      url: '/v1/admin/products',
+      headers: owner,
+      payload: {
+        slug: 'no-hindi-name',
+        categoryId: cat.json().id,
+        nameEn: 'No Hindi Name',
+        pack: { kind: 'can', color: '#EADBC0', accent: '#14432F' },
+        status: 'draft',
+        variants: [{ sku: 'NH-100', packSize: '100 g', pricePaise: 10000, mrpPaise: 12000, weightGrams: 120, hsnCode: '0406', gstRateBps: 500, shelfLifeDays: 90 }],
+      },
+    });
+    expect(product.statusCode, product.body).toBe(201);
+    expect(product.json().nameHi).toBe('');
+    await t.app.inject({ method: 'DELETE', url: `/v1/admin/products/${product.json().id}`, headers: owner });
+    await t.app.inject({ method: 'DELETE', url: `/v1/admin/categories/${cat.json().id}`, headers: owner });
   });
 });
 

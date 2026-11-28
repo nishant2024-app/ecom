@@ -136,9 +136,9 @@ export default async function catalogRoutes(fastify: FastifyInstance) {
         summary: {
           id: p.id,
           slug: p.slug,
-          name: language === 'hi' ? p.nameHi : p.nameEn,
+          name: language === 'hi' ? p.nameHi || p.nameEn : p.nameEn,
           tagline: p.tagline,
-          category: { slug: c.slug, name: language === 'hi' ? c.nameHi : c.nameEn },
+          category: { slug: c.slug, name: language === 'hi' ? c.nameHi || c.nameEn : c.nameEn },
           pack: p.pack,
           image: gallery[0] ?? null,
           isVeg: p.isVeg,
@@ -196,7 +196,7 @@ export default async function catalogRoutes(fastify: FastifyInstance) {
       return {
         data: rows.map((c) => {
           const ps = products.filter((p) => p.categoryId === c.id);
-          return { id: c.id, slug: c.slug, name: language === 'hi' ? c.nameHi : c.nameEn, blurb: c.blurb, productCount: ps.length, packs: ps.slice(0, 3).map((p) => p.pack) };
+          return { id: c.id, slug: c.slug, name: language === 'hi' ? c.nameHi || c.nameEn : c.nameEn, blurb: c.blurb, productCount: ps.length, packs: ps.slice(0, 3).map((p) => p.pack) };
         }),
       };
     },

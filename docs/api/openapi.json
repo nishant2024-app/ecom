@@ -7900,8 +7900,7 @@
                 "type": "object",
                 "required": [
                   "slug",
-                  "nameEn",
-                  "nameHi"
+                  "nameEn"
                 ],
                 "properties": {
                   "slug": {
@@ -7916,7 +7915,6 @@
                     "type": "string"
                   },
                   "nameHi": {
-                    "minLength": 1,
                     "maxLength": 60,
                     "type": "string"
                   },
@@ -8014,8 +8012,7 @@
                 "type": "object",
                 "required": [
                   "slug",
-                  "nameEn",
-                  "nameHi"
+                  "nameEn"
                 ],
                 "properties": {
                   "slug": {
@@ -8030,7 +8027,6 @@
                     "type": "string"
                   },
                   "nameHi": {
-                    "minLength": 1,
                     "maxLength": 60,
                     "type": "string"
                   },
@@ -8338,7 +8334,6 @@
                   "slug",
                   "categoryId",
                   "nameEn",
-                  "nameHi",
                   "variants"
                 ],
                 "properties": {
@@ -8357,7 +8352,6 @@
                     "type": "string"
                   },
                   "nameHi": {
-                    "minLength": 1,
                     "maxLength": 80,
                     "type": "string"
                   },
@@ -8840,7 +8834,6 @@
                   "slug",
                   "categoryId",
                   "nameEn",
-                  "nameHi",
                   "variants"
                 ],
                 "properties": {
@@ -8859,7 +8852,6 @@
                     "type": "string"
                   },
                   "nameHi": {
-                    "minLength": 1,
                     "maxLength": 80,
                     "type": "string"
                   },

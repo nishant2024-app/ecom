@@ -72,6 +72,12 @@ export async function buildApp(deps: AppDeps, opts: { logger?: boolean | object 
   app.decorate('deps', deps);
   app.addSchema(MoneySchema);
   app.addSchema(Problem);
+  // Some proxies (Google Cloud Shell's preview, for one) send an empty POST as a chunked request with no content type.
+  // Accept an empty body whatever its type; any other body must still be JSON (or a file upload).
+  app.addContentTypeParser('*', { parseAs: 'buffer' }, (_req, body, done) => {
+    if ((body as Buffer).length === 0) return done(null, undefined);
+    done(Object.assign(new Error('Send the body as JSON (Content-Type: application/json).'), { statusCode: 415, code: 'FST_ERR_CTP_INVALID_MEDIA_TYPE' }), undefined);
+  });
   app.setErrorHandler(errorHandler);
   app.setNotFoundHandler((req, reply) => sendProblem(req, reply, 'NOT_FOUND', 404, `No route for ${req.method} ${req.url.split('?')[0]}`));
   app.addHook('onSend', async (req, reply) => {

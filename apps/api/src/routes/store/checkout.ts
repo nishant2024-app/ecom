@@ -113,7 +113,7 @@ export default async function checkoutRoutes(fastify: FastifyInstance) {
         lines: q.lines.map((l) => ({
           variantId: l.variantId,
           slug: l.slug,
-          name: language === 'hi' ? l.nameHi : l.name,
+          name: language === 'hi' ? l.nameHi || l.name : l.name,
           packSize: l.packSize,
           pack: l.pack,
           quantity: l.quantity,

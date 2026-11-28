@@ -9,14 +9,13 @@ interface Category {
   id: string;
   slug: string;
   nameEn: string;
-  nameHi: string;
   blurb: string;
   sort: number;
   productCount: number;
 }
 type Form = Omit<Category, 'id' | 'productCount'> & { id?: string };
 
-const blank: Form = { slug: '', nameEn: '', nameHi: '', blurb: '', sort: 0 };
+const blank: Form = { slug: '', nameEn: '', blurb: '', sort: 0 };
 const slugify = (s: string) =>
   s
     .toLowerCase()
@@ -43,17 +42,11 @@ function categoryColumns(act: { current: CategoryActions }): ColumnDefinition[] 
       editorParams: { min: 0, step: 1 },
       formatter: (c) => el('span', { class: 'dt-num', text: String(c.getValue()) }),
     }),
-    editable('Name (English)', 'nameEn', {
+    editable('Name', 'nameEn', {
       minWidth: 170,
       responsive: 0,
-      editorParams: { elementAttributes: { maxlength: '60', 'aria-label': 'Name in English' } },
+      editorParams: { elementAttributes: { maxlength: '60', 'aria-label': 'Category name' } },
       formatter: (c) => el('span', { text: String(c.getValue() ?? '') }),
-    }),
-    editable('Name (Hindi)', 'nameHi', {
-      minWidth: 170,
-      responsive: 2,
-      editorParams: { elementAttributes: { maxlength: '60', lang: 'hi', 'aria-label': 'Name in Hindi' } },
-      formatter: (c) => el('span', { lang: 'hi', text: String(c.getValue() ?? '') }),
     }),
     editable('Description', 'blurb', {
       minWidth: 220,
@@ -71,7 +64,7 @@ function categoryColumns(act: { current: CategoryActions }): ColumnDefinition[] 
     {
       title: 'Products',
       field: 'productCount',
-      width: 110,
+      width: 130,
       responsive: 1,
       hozAlign: 'right',
       cssClass: 'dt-right',
@@ -152,12 +145,11 @@ export function CategoriesPage({ permissions }: { permissions: string[] }) {
       setMsg(`${text} Your change was undone.`);
     };
     if (field === 'sort' && (!Number.isInteger(value) || (value as number) < 0)) return back('Order must be a whole number, zero or more.');
-    if ((field === 'nameEn' || field === 'nameHi') && String(value).length < 2)
-      return back(field === 'nameEn' ? 'The English name needs at least 2 letters.' : 'The Hindi name needs at least 2 letters.');
+    if (field === 'nameEn' && String(value).length < 2) return back('The name needs at least 2 letters.');
     try {
       await api(`/v1/admin/categories/${row.id}`, {
         method: 'PUT',
-        body: JSON.stringify({ slug: row.slug, nameEn: row.nameEn, nameHi: row.nameHi, blurb: row.blurb, sort: row.sort, [field]: value }),
+        body: JSON.stringify({ slug: row.slug, nameEn: row.nameEn, blurb: row.blurb, sort: row.sort, [field]: value }),
       });
       setMsg(null);
       setSaved(`Saved “${field === 'nameEn' ? value : row.nameEn}”.`);
@@ -169,7 +161,7 @@ export function CategoriesPage({ permissions }: { permissions: string[] }) {
     }
   }
   act.current = {
-    edit: (c) => setForm({ id: c.id, slug: c.slug, nameEn: c.nameEn, nameHi: c.nameHi, blurb: c.blurb, sort: c.sort }),
+    edit: (c) => setForm({ id: c.id, slug: c.slug, nameEn: c.nameEn, blurb: c.blurb, sort: c.sort }),
     del: (c) => setToDelete(c),
     save: (cell) => void saveCell(cell),
     canWrite,
@@ -189,12 +181,9 @@ export function CategoriesPage({ permissions }: { permissions: string[] }) {
       }
     >
       {form && (
-        <div className="mb-4 grid gap-3 rounded-4 border border-rule bg-paper-2 p-4 md:grid-cols-5">
+        <div className="mb-4 grid gap-3 rounded-4 border border-rule bg-paper-2 p-4 md:grid-cols-4">
           <Field label="Name (English)">
             <input autoFocus value={form.nameEn} onChange={(e) => setForm({ ...form, nameEn: e.target.value, slug: form.id ? form.slug : slugify(e.target.value) })} className={input} />
-          </Field>
-          <Field label="Name (Hindi)">
-            <input lang="hi" value={form.nameHi} onChange={(e) => setForm({ ...form, nameHi: e.target.value })} className={input} />
           </Field>
           <Field label="URL slug">
             <input value={form.slug} onChange={(e) => setForm({ ...form, slug: slugify(e.target.value) })} className={`${input} num`} />
@@ -202,12 +191,12 @@ export function CategoriesPage({ permissions }: { permissions: string[] }) {
           <Field label="Order">
             <input type="number" min={0} value={form.sort} onChange={(e) => setForm({ ...form, sort: Number(e.target.value) })} className={`${input} num`} />
           </Field>
-          <div className="md:col-span-5">
+          <div className="md:col-span-4">
             <Field label="One-line description">
               <input value={form.blurb} onChange={(e) => setForm({ ...form, blurb: e.target.value })} className={input} />
             </Field>
           </div>
-          <div className="flex gap-2 md:col-span-5">
+          <div className="flex gap-2 md:col-span-4">
             <Btn variant="primary" onClick={save}>
               Save
             </Btn>
